@@ -1,0 +1,34 @@
+name: Bug Report
+description: Report a bug
+labels: [ "bug" ]
+body:
+  - type: input
+    id: zrisk-version
+    attributes:
+      label: zRisk Version
+      description: What zRisk version are you using?
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Describe the issue here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Trace
+      description: Please provide output of the error.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: verified-not-exists
+    attributes:
+      label: Is there an existing issue for this?
+      options:
+        - label: I have searched the existing issues and verified no issue exits for this problem.

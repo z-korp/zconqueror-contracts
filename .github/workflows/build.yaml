@@ -1,14 +1,14 @@
-name: Test
+name: Build
 
 on:
   push:
   pull_request:
 
 jobs:
-  sozo-test:
+  sozo-build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - run: curl -L https://install.dojoengine.org | bash
     - run: /home/runner/.config/.dojo/bin/dojoup
-    - run: /home/runner/.config/.dojo/bin/sozo test
+    - run: /home/runner/.config/.dojo/bin/sozo build
