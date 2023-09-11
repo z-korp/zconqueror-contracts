@@ -1,0 +1,21 @@
+% Copy this before \begin{document}
+
+\usepackage[normalem]{ulem}
+\newenvironment{mld}
+  {\par\begin{minipage}{\linewidth}\begin{tabular}{rp{0.7\linewidth}}}
+  {\end{tabular}\end{minipage}\par}
+\newcommand{\relat}[1]{\textsc{#1}}
+\newcommand{\attr}[1]{\emph{#1}}
+\newcommand{\prim}[1]{\uline{#1}}
+\newcommand{\foreign}[1]{\#\textsl{#1}}
+
+% Copy that after \begin{document}
+
+\begin{mld}
+  Card & (\prim{card\_id}, \attr{name}, \foreign{player\_id})\\
+  Game & (\prim{game\_id}, \attr{status}, \attr{wager})\\
+  Player & (\prim{player\_id}, \attr{address}, \attr{color}, \foreign{game\_id})\\
+  Supplies & (\foreign{\prim{unit\_id}}, \foreign{\prim{card\_id}})\\
+  Territory & (\prim{territory\_id}, \attr{name}, \attr{position}, \attr{neighbors}, \foreign{card\_id}, \foreign{player\_id})\\
+  Unit & (\prim{unit\_id}, \attr{name}, \attr{strength}, \foreign{territory\_id}, \foreign{player\_id})\\
+\end{mld}

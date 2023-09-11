@@ -1,0 +1,29 @@
+:
+CARD: card_id, name
+:
+:
+:
+
+:
+LOCATES, 11 TERRITORY, 11 CARD
+:
+HAS, 0N PLAYER, 01 CARD
+:
+
+SUPPLIES, 1N UNIT, 1N CARD
+TERRITORY: territory_id, name, position, neighbors
+OWNS, 0N PLAYER, 01 TERRITORY
+:
+:
+
+:
+BELONGS_TO, 01 UNIT, 0N TERRITORY
+PLAYER: player_id, address, color
+PLAYS, 01 PLAYER, 0N GAME
+GAME: game_id, status, wager
+
+:
+UNIT: unit_id, name, strength
+COMMANDS, 0N PLAYER, 11 UNIT
+:
+:

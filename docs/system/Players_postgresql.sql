@@ -1,0 +1,58 @@
+CREATE DATABASE CARDS;
+\c CARDS;
+
+CREATE TABLE CARD (
+  card_id VARCHAR(42),
+  name VARCHAR(42),
+  player_id VARCHAR(42),
+  PRIMARY KEY (card_id)
+);
+
+CREATE TABLE GAME (
+  game_id VARCHAR(42),
+  status VARCHAR(42),
+  wager VARCHAR(42),
+  PRIMARY KEY (game_id)
+);
+
+CREATE TABLE PLAYER (
+  player_id VARCHAR(42),
+  address VARCHAR(42),
+  color VARCHAR(42),
+  game_id VARCHAR(42),
+  PRIMARY KEY (player_id)
+);
+
+CREATE TABLE SUPPLIES (
+  unit_id VARCHAR(42),
+  card_id VARCHAR(42),
+  PRIMARY KEY (unit_id, card_id)
+);
+
+CREATE TABLE TERRITORY (
+  territory_id VARCHAR(42),
+  name VARCHAR(42),
+  position VARCHAR(42),
+  neighbors VARCHAR(42),
+  card_id VARCHAR(42),
+  player_id VARCHAR(42),
+  PRIMARY KEY (territory_id)
+);
+
+CREATE TABLE UNIT (
+  unit_id VARCHAR(42),
+  name VARCHAR(42),
+  strength VARCHAR(42),
+  territory_id VARCHAR(42),
+  player_id VARCHAR(42),
+  PRIMARY KEY (unit_id)
+);
+
+ALTER TABLE CARD ADD FOREIGN KEY (player_id) REFERENCES PLAYER (player_id);
+ALTER TABLE PLAYER ADD FOREIGN KEY (game_id) REFERENCES GAME (game_id);
+ALTER TABLE SUPPLIES ADD FOREIGN KEY (card_id) REFERENCES CARD (card_id);
+ALTER TABLE SUPPLIES ADD FOREIGN KEY (unit_id) REFERENCES UNIT (unit_id);
+ALTER TABLE TERRITORY ADD FOREIGN KEY (player_id) REFERENCES PLAYER (player_id);
+ALTER TABLE TERRITORY ADD FOREIGN KEY (card_id) REFERENCES CARD (card_id);
+ALTER TABLE UNIT ADD FOREIGN KEY (player_id) REFERENCES PLAYER (player_id);
+ALTER TABLE UNIT ADD FOREIGN KEY (territory_id) REFERENCES TERRITORY (territory_id);

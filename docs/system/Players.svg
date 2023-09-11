@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="602" height="510" viewBox="0 0 602 510" xmlns="http://www.w3.org/2000/svg">
+<rect id="frame" x="0" y="0" width="602" height="510" fill="#f5f5f5" stroke="none" stroke-width="0"/>
+
+<!-- Association LOCATES -->
+<g>
+	<line x1="205" y1="246" x2="205" y2="138" stroke="#bf812d" stroke-width="1"/>
+	<text x="210" y="183" fill="#01665e" font-family="Futura" font-size="11">1,1</text>
+	<line x1="205" y1="47" x2="205" y2="138" stroke="#bf812d" stroke-width="1"/>
+	<text x="210" y="101" fill="#01665e" font-family="Futura" font-size="11">1,1</text>
+	<g>
+		<path d="M241 109 a14 14 90 0 1 14 14 V137 h-100 V123 a14 14 90 0 1 14 -14" fill="#dfc27d" stroke="#dfc27d" stroke-width="0"/>
+		<path d="M255 137 v16 a14 14 90 0 1 -14 14 H169 a14 14 90 0 1 -14 -14 V137 H100" fill="#f6e8c3" stroke="#f6e8c3" stroke-width="0"/>
+		<rect x="155" y="109" width="100" height="58" fill="none" rx="14" stroke="#bf812d" stroke-width="1.5"/>
+		<line x1="155" y1="137" x2="255" y2="137" stroke="#bf812d" stroke-width="1.5"/>
+		<text x="162" y="130.3" fill="#000" font-family="Copperplate" font-size="18">LOCATES</text>
+	</g>
+</g>
+
+<!-- Association HAS -->
+<g>
+	<line x1="347" y1="354" x2="457" y2="138" stroke="#bf812d" stroke-width="1"/>
+	<text x="350.91" y="299" fill="#01665e" font-family="Futura" font-size="11">0,N</text>
+	<line x1="205" y1="47" x2="457" y2="138" stroke="#bf812d" stroke-width="1"/>
+	<text x="244" y="54.1" fill="#01665e" font-family="Futura" font-size="11">0,1</text>
+	<g>
+		<path d="M470 109 a14 14 90 0 1 14 14 V137 h-54 V123 a14 14 90 0 1 14 -14" fill="#dfc27d" stroke="#dfc27d" stroke-width="0"/>
+		<path d="M484 137 v16 a14 14 90 0 1 -14 14 H444 a14 14 90 0 1 -14 -14 V137 H54" fill="#f6e8c3" stroke="#f6e8c3" stroke-width="0"/>
+		<rect x="430" y="109" width="54" height="58" fill="none" rx="14" stroke="#bf812d" stroke-width="1.5"/>
+		<line x1="430" y1="137" x2="484" y2="137" stroke="#bf812d" stroke-width="1.5"/>
+		<text x="438" y="130.3" fill="#000" font-family="Copperplate" font-size="18">HAS</text>
+	</g>
+</g>
+
+<!-- Association SUPPLIES -->
+<g>
+	<line x1="205" y1="454" x2="62" y2="246" stroke="#bf812d" stroke-width="1"/>
+	<text x="172.44" y="399" fill="#01665e" font-family="Futura" font-size="11">1,N</text>
+	<line x1="205" y1="47" x2="62" y2="246" stroke="#bf812d" stroke-width="1"/>
+	<text x="177.24" y="101" fill="#01665e" font-family="Futura" font-size="11">1,N</text>
+	<g>
+		<path d="M101 217 a14 14 90 0 1 14 14 V245 h-106 V231 a14 14 90 0 1 14 -14" fill="#dfc27d" stroke="#dfc27d" stroke-width="0"/>
+		<path d="M115 245 v16 a14 14 90 0 1 -14 14 H23 a14 14 90 0 1 -14 -14 V245 H106" fill="#f6e8c3" stroke="#f6e8c3" stroke-width="0"/>
+		<rect x="9" y="217" width="106" height="58" fill="none" rx="14" stroke="#bf812d" stroke-width="1.5"/>
+		<line x1="9" y1="245" x2="115" y2="245" stroke="#bf812d" stroke-width="1.5"/>
+		<text x="17" y="238.3" fill="#000" font-family="Copperplate" font-size="18">SUPPLIES</text>
+	</g>
+</g>
+
+<!-- Association OWNS -->
+<g>
+	<line x1="347" y1="354" x2="347" y2="246" stroke="#bf812d" stroke-width="1"/>
+	<text x="323" y="299" fill="#01665e" font-family="Futura" font-size="11">0,N</text>
+	<line x1="205" y1="246" x2="347" y2="246" stroke="#bf812d" stroke-width="1"/>
+	<text x="271" y="262" fill="#01665e" font-family="Futura" font-size="11">0,1</text>
+	<g>
+		<path d="M369 217 a14 14 90 0 1 14 14 V245 h-72 V231 a14 14 90 0 1 14 -14" fill="#dfc27d" stroke="#dfc27d" stroke-width="0"/>
+		<path d="M383 245 v16 a14 14 90 0 1 -14 14 H325 a14 14 90 0 1 -14 -14 V245 H72" fill="#f6e8c3" stroke="#f6e8c3" stroke-width="0"/>
+		<rect x="311" y="217" width="72" height="58" fill="none" rx="14" stroke="#bf812d" stroke-width="1.5"/>
+		<line x1="311" y1="245" x2="383" y2="245" stroke="#bf812d" stroke-width="1.5"/>
+		<text x="318" y="238.3" fill="#000" font-family="Copperplate" font-size="18">OWNS</text>
+	</g>
+</g>
+
+<!-- Association BELONGS_TO -->
+<g>
+	<line x1="205" y1="454" x2="205" y2="354" stroke="#bf812d" stroke-width="1"/>
+	<text x="210" y="399" fill="#01665e" font-family="Futura" font-size="11">0,1</text>
+	<line x1="205" y1="246" x2="205" y2="354" stroke="#bf812d" stroke-width="1"/>
+	<text x="210" y="317" fill="#01665e" font-family="Futura" font-size="11">0,N</text>
+	<g>
+		<path d="M260 325 a14 14 90 0 1 14 14 V353 h-138 V339 a14 14 90 0 1 14 -14" fill="#dfc27d" stroke="#dfc27d" stroke-width="0"/>
+		<path d="M274 353 v16 a14 14 90 0 1 -14 14 H150 a14 14 90 0 1 -14 -14 V353 H138" fill="#f6e8c3" stroke="#f6e8c3" stroke-width="0"/>
+		<rect x="136" y="325" width="138" height="58" fill="none" rx="14" stroke="#bf812d" stroke-width="1.5"/>
+		<line x1="136" y1="353" x2="274" y2="353" stroke="#bf812d" stroke-width="1.5"/>
+		<text x="143" y="346.3" fill="#000" font-family="Copperplate" font-size="18">BELONGS_TO</text>
+	</g>
+</g>
+
+<!-- Association PLAYS -->
+<g>
+	<line x1="347" y1="354" x2="457" y2="354" stroke="#bf812d" stroke-width="1"/>
+	<text x="396" y="370" fill="#01665e" font-family="Futura" font-size="11">0,1</text>
+	<line x1="558" y1="354" x2="457" y2="354" stroke="#bf812d" stroke-width="1"/>
+	<text x="499" y="370" fill="#01665e" font-family="Futura" font-size="11">0,N</text>
+	<g>
+		<path d="M480 325 a14 14 90 0 1 14 14 V353 h-74 V339 a14 14 90 0 1 14 -14" fill="#dfc27d" stroke="#dfc27d" stroke-width="0"/>
+		<path d="M494 353 v16 a14 14 90 0 1 -14 14 H434 a14 14 90 0 1 -14 -14 V353 H74" fill="#f6e8c3" stroke="#f6e8c3" stroke-width="0"/>
+		<rect x="420" y="325" width="74" height="58" fill="none" rx="14" stroke="#bf812d" stroke-width="1.5"/>
+		<line x1="420" y1="353" x2="494" y2="353" stroke="#bf812d" stroke-width="1.5"/>
+		<text x="428" y="346.3" fill="#000" font-family="Copperplate" font-size="18">PLAYS</text>
+	</g>
+</g>
+
+<!-- Association COMMANDS -->
+<g>
+	<line x1="347" y1="354" x2="347" y2="454" stroke="#bf812d" stroke-width="1"/>
+	<text x="352" y="417" fill="#01665e" font-family="Futura" font-size="11">0,N</text>
+	<line x1="205" y1="454" x2="347" y2="454" stroke="#bf812d" stroke-width="1"/>
+	<text x="244" y="470" fill="#01665e" font-family="Futura" font-size="11">1,1</text>
+	<g>
+		<path d="M395 425 a14 14 90 0 1 14 14 V453 h-124 V439 a14 14 90 0 1 14 -14" fill="#dfc27d" stroke="#dfc27d" stroke-width="0"/>
+		<path d="M409 453 v16 a14 14 90 0 1 -14 14 H299 a14 14 90 0 1 -14 -14 V453 H124" fill="#f6e8c3" stroke="#f6e8c3" stroke-width="0"/>
+		<rect x="285" y="425" width="124" height="58" fill="none" rx="14" stroke="#bf812d" stroke-width="1.5"/>
+		<line x1="285" y1="453" x2="409" y2="453" stroke="#bf812d" stroke-width="1.5"/>
+		<text x="293" y="446.3" fill="#000" font-family="Copperplate" font-size="18">COMMANDS</text>
+	</g>
+</g>
+
+<!-- Entity CARD -->
+<g>
+	<g>
+		<rect x="171" y="9" width="68" height="30" fill="#80cdc1" stroke="#80cdc1" stroke-width="0" opacity="1"/>
+		<rect x="171" y="39" width="68" height="46" fill="#c7eae5" stroke="#c7eae5" stroke-width="0" opacity="1"/>
+		<rect x="171" y="9" width="68" height="76" fill="none" stroke="#35978f" stroke-width="1.5" opacity="1"/>
+		<line x1="171" y1="39" x2="239" y2="39" stroke="#35978f" stroke-width="1.5"/>
+	</g>
+	<text x="179" y="30.3" fill="#000" font-family="Copperplate" font-size="18">CARD</text>
+	<text x="179" y="56.1" fill="#000" font-family="Gill Sans" font-size="15">card_id</text>
+	<line x1="179" y1="59" x2="227" y2="59" stroke="#000" stroke-width="1"/>
+	<text x="179" y="73.1" fill="#000" font-family="Gill Sans" font-size="15">name</text>
+</g>
+
+<!-- Entity TERRITORY -->
+<g>
+	<g>
+		<rect x="144" y="191" width="122" height="30" fill="#80cdc1" stroke="#80cdc1" stroke-width="0" opacity="1"/>
+		<rect x="144" y="221" width="122" height="80" fill="#c7eae5" stroke="#c7eae5" stroke-width="0" opacity="1"/>
+		<rect x="144" y="191" width="122" height="110" fill="none" stroke="#35978f" stroke-width="1.5" opacity="1"/>
+		<line x1="144" y1="221" x2="266" y2="221" stroke="#35978f" stroke-width="1.5"/>
+	</g>
+	<text x="153" y="212.3" fill="#000" font-family="Copperplate" font-size="18">TERRITORY</text>
+	<text x="152" y="238.1" fill="#000" font-family="Gill Sans" font-size="15">territory_id</text>
+	<line x1="152" y1="241" x2="227" y2="241" stroke="#000" stroke-width="1"/>
+	<text x="152" y="255.1" fill="#000" font-family="Gill Sans" font-size="15">name</text>
+	<text x="152" y="272.1" fill="#000" font-family="Gill Sans" font-size="15">position</text>
+	<text x="152" y="289" fill="#000" font-family="Gill Sans" font-size="15">neighbors</text>
+</g>
+
+<!-- Entity PLAYER -->
+<g>
+	<g>
+		<rect x="303" y="307" width="88" height="30" fill="#80cdc1" stroke="#80cdc1" stroke-width="0" opacity="1"/>
+		<rect x="303" y="337" width="88" height="64" fill="#c7eae5" stroke="#c7eae5" stroke-width="0" opacity="1"/>
+		<rect x="303" y="307" width="88" height="94" fill="none" stroke="#35978f" stroke-width="1.5" opacity="1"/>
+		<line x1="303" y1="337" x2="391" y2="337" stroke="#35978f" stroke-width="1.5"/>
+	</g>
+	<text x="311" y="328.3" fill="#000" font-family="Copperplate" font-size="18">PLAYER</text>
+	<text x="311" y="354.1" fill="#000" font-family="Gill Sans" font-size="15">player_id</text>
+	<line x1="311" y1="357" x2="369" y2="357" stroke="#000" stroke-width="1"/>
+	<text x="311" y="371.1" fill="#000" font-family="Gill Sans" font-size="15">address</text>
+	<text x="311" y="388" fill="#000" font-family="Gill Sans" font-size="15">color</text>
+</g>
+
+<!-- Entity GAME -->
+<g>
+	<g>
+		<rect x="523" y="307" width="70" height="30" fill="#80cdc1" stroke="#80cdc1" stroke-width="0" opacity="1"/>
+		<rect x="523" y="337" width="70" height="64" fill="#c7eae5" stroke="#c7eae5" stroke-width="0" opacity="1"/>
+		<rect x="523" y="307" width="70" height="94" fill="none" stroke="#35978f" stroke-width="1.5" opacity="1"/>
+		<line x1="523" y1="337" x2="593" y2="337" stroke="#35978f" stroke-width="1.5"/>
+	</g>
+	<text x="532" y="328.3" fill="#000" font-family="Copperplate" font-size="18">GAME</text>
+	<text x="531" y="354.1" fill="#000" font-family="Gill Sans" font-size="15">game_id</text>
+	<line x1="531" y1="357" x2="584" y2="357" stroke="#000" stroke-width="1"/>
+	<text x="531" y="371.1" fill="#000" font-family="Gill Sans" font-size="15">status</text>
+	<text x="531" y="388" fill="#000" font-family="Gill Sans" font-size="15">wager</text>
+</g>
+
+<!-- Entity UNIT -->
+<g>
+	<g>
+		<rect x="171" y="407" width="68" height="30" fill="#80cdc1" stroke="#80cdc1" stroke-width="0" opacity="1"/>
+		<rect x="171" y="437" width="68" height="64" fill="#c7eae5" stroke="#c7eae5" stroke-width="0" opacity="1"/>
+		<rect x="171" y="407" width="68" height="94" fill="none" stroke="#35978f" stroke-width="1.5" opacity="1"/>
+		<line x1="171" y1="437" x2="239" y2="437" stroke="#35978f" stroke-width="1.5"/>
+	</g>
+	<text x="183" y="428.3" fill="#000" font-family="Copperplate" font-size="18">UNIT</text>
+	<text x="179" y="454.1" fill="#000" font-family="Gill Sans" font-size="15">unit_id</text>
+	<line x1="179" y1="457" x2="223" y2="457" stroke="#000" stroke-width="1"/>
+	<text x="179" y="471.1" fill="#000" font-family="Gill Sans" font-size="15">name</text>
+	<text x="179" y="488" fill="#000" font-family="Gill Sans" font-size="15">strength</text>
+</g>
+</svg>

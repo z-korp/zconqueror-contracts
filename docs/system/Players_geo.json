@@ -1,0 +1,49 @@
+{
+  "width": 602,
+  "height": 510,
+  "cx": [
+    [ "CARD", 205 ],
+    [ "LOCATES", 205 ],
+    [ "HAS", 457 ],
+    [ "SUPPLIES", 62 ],
+    [ "TERRITORY", 205 ],
+    [ "OWNS", 347 ],
+    [ "BELONGS_TO", 205 ],
+    [ "PLAYER", 347 ],
+    [ "PLAYS", 457 ],
+    [ "GAME", 558 ],
+    [ "UNIT", 205 ],
+    [ "COMMANDS", 347 ]
+  ],
+  "cy": [
+    [ "CARD", 47 ],
+    [ "LOCATES", 138 ],
+    [ "HAS", 138 ],
+    [ "SUPPLIES", 246 ],
+    [ "TERRITORY", 246 ],
+    [ "OWNS", 246 ],
+    [ "BELONGS_TO", 354 ],
+    [ "PLAYER", 354 ],
+    [ "PLAYS", 354 ],
+    [ "GAME", 354 ],
+    [ "UNIT", 454 ],
+    [ "COMMANDS", 454 ]
+  ],
+  "shift": [
+    [ "LOCATES,TERRITORY,0", 0 ],
+    [ "LOCATES,CARD,0", 0 ],
+    [ "HAS,PLAYER,0", 0 ],
+    [ "HAS,CARD,0", 0 ],
+    [ "SUPPLIES,UNIT,0", 0 ],
+    [ "SUPPLIES,CARD,0", 0 ],
+    [ "OWNS,PLAYER,0", 0 ],
+    [ "OWNS,TERRITORY,0", 0 ],
+    [ "BELONGS_TO,UNIT,0", 0 ],
+    [ "BELONGS_TO,TERRITORY,0", 0 ],
+    [ "PLAYS,PLAYER,0", 0 ],
+    [ "PLAYS,GAME,0", 0 ],
+    [ "COMMANDS,PLAYER,0", 0 ],
+    [ "COMMANDS,UNIT,0", 0 ]
+  ],
+  "ratio": []
+}

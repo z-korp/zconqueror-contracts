@@ -1,0 +1,101 @@
+<html>
+<head>
+<meta charset='utf-8'>
+<style>
+  #mld .relation { font-variant: small-caps; font-weight: bold }
+  #mld .primary { text-decoration: underline }
+  #mld .foreign { font-style: oblique }
+  #mld .normal { }
+  #mld strong { font-weight: bold }
+  #mld i { font-style: italic }
+  #mld ul { list-style-type:square; margin: 0 0 1em 2em }
+</style>
+</head>
+<body>
+<div id='mld'>
+<div>
+  <details><summary><span class='relation'>CARD</span> (
+    <span title='primary_key (None)' class='primary'>card_id</span>,
+    <span title='normal_attribute (None)' class='normal'>name</span>,
+    <span title='foreign_key (PLAYER)' class='foreign'>#player_id</span>
+  )</summary>
+  <ul>
+    <li>Le champ <i>card_id</i> constitue la clé primaire de la table. C'était déjà un identifiant de l'entité <i>CARD</i>.</li>
+    <li>Le champ <i>name</i> était déjà un simple attribut de l'entité <i>CARD</i>.</li>
+    <li>Le champ <i>player_id</i> est une clé étrangère. Il a migré par l'association de dépendance fonctionnelle <i>HAS</i> à partir de l'entité <i>PLAYER</i> en perdant son caractère identifiant.</li>
+  </ul></details>
+</div>
+
+<div>
+  <details><summary><span class='relation'>GAME</span> (
+    <span title='primary_key (None)' class='primary'>game_id</span>,
+    <span title='normal_attribute (None)' class='normal'>status</span>,
+    <span title='normal_attribute (None)' class='normal'>wager</span>
+  )</summary>
+  <ul>
+    <li>Le champ <i>game_id</i> constitue la clé primaire de la table. C'était déjà un identifiant de l'entité <i>GAME</i>.</li>
+    <li>Les champs <i>status</i> et <i>wager</i> étaient déjà de simples attributs de l'entité <i>GAME</i>.</li>
+  </ul></details>
+</div>
+
+<div>
+  <details><summary><span class='relation'>PLAYER</span> (
+    <span title='primary_key (None)' class='primary'>player_id</span>,
+    <span title='normal_attribute (None)' class='normal'>address</span>,
+    <span title='normal_attribute (None)' class='normal'>color</span>,
+    <span title='foreign_key (GAME)' class='foreign'>#game_id</span>
+  )</summary>
+  <ul>
+    <li>Le champ <i>player_id</i> constitue la clé primaire de la table. C'était déjà un identifiant de l'entité <i>PLAYER</i>.</li>
+    <li>Les champs <i>address</i> et <i>color</i> étaient déjà de simples attributs de l'entité <i>PLAYER</i>.</li>
+    <li>Le champ <i>game_id</i> est une clé étrangère. Il a migré par l'association de dépendance fonctionnelle <i>PLAYS</i> à partir de l'entité <i>GAME</i> en perdant son caractère identifiant.</li>
+  </ul></details>
+</div>
+
+<div>
+  <details><summary><span class='relation'>SUPPLIES</span> (
+    <span title='primary_foreign_key (UNIT)' class='foreign primary'>#unit_id</span>,
+    <span title='primary_foreign_key (CARD)' class='foreign primary'>#card_id</span>
+  )</summary>
+  <ul>
+    <li>Le champ <i>unit_id</i> fait partie de la clé primaire de la table. C'est une clé étrangère qui a migré directement à partir de l'entité <i>UNIT</i>.</li>
+    <li>Le champ <i>card_id</i> fait partie de la clé primaire de la table. C'est une clé étrangère qui a migré directement à partir de l'entité <i>CARD</i>.</li>
+  </ul></details>
+</div>
+
+<div>
+  <details><summary><span class='relation'>TERRITORY</span> (
+    <span title='primary_key (None)' class='primary'>territory_id</span>,
+    <span title='normal_attribute (None)' class='normal'>name</span>,
+    <span title='normal_attribute (None)' class='normal'>position</span>,
+    <span title='normal_attribute (None)' class='normal'>neighbors</span>,
+    <span title='foreign_key (CARD)' class='foreign'>#card_id</span>,
+    <span title='foreign_key (PLAYER)' class='foreign'>#player_id</span>
+  )</summary>
+  <ul>
+    <li>Le champ <i>territory_id</i> constitue la clé primaire de la table. C'était déjà un identifiant de l'entité <i>TERRITORY</i>.</li>
+    <li>Les champs <i>name</i>, <i>position</i> et <i>neighbors</i> étaient déjà de simples attributs de l'entité <i>TERRITORY</i>.</li>
+    <li>Le champ <i>card_id</i> est une clé étrangère. Il a migré par l'association de dépendance fonctionnelle <i>LOCATES</i> à partir de l'entité <i>CARD</i> en perdant son caractère identifiant.</li>
+    <li>Le champ <i>player_id</i> est une clé étrangère. Il a migré par l'association de dépendance fonctionnelle <i>OWNS</i> à partir de l'entité <i>PLAYER</i> en perdant son caractère identifiant.</li>
+  </ul></details>
+</div>
+
+<div>
+  <details><summary><span class='relation'>UNIT</span> (
+    <span title='primary_key (None)' class='primary'>unit_id</span>,
+    <span title='normal_attribute (None)' class='normal'>name</span>,
+    <span title='normal_attribute (None)' class='normal'>strength</span>,
+    <span title='foreign_key (TERRITORY)' class='foreign'>#territory_id</span>,
+    <span title='foreign_key (PLAYER)' class='foreign'>#player_id</span>
+  )</summary>
+  <ul>
+    <li>Le champ <i>unit_id</i> constitue la clé primaire de la table. C'était déjà un identifiant de l'entité <i>UNIT</i>.</li>
+    <li>Les champs <i>name</i> et <i>strength</i> étaient déjà de simples attributs de l'entité <i>UNIT</i>.</li>
+    <li>Le champ <i>territory_id</i> est une clé étrangère. Il a migré par l'association de dépendance fonctionnelle <i>BELONGS_TO</i> à partir de l'entité <i>TERRITORY</i> en perdant son caractère identifiant.</li>
+    <li>Le champ <i>player_id</i> est une clé étrangère. Il a migré par l'association de dépendance fonctionnelle <i>COMMANDS</i> à partir de l'entité <i>PLAYER</i> en perdant son caractère identifiant.</li>
+  </ul></details>
+</div>
+
+</div>
+</body>
+</html>

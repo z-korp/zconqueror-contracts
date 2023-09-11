@@ -1,0 +1,15 @@
+- card_id
+- name
+- game_id
+- status
+- wager
+- player_id
+- address
+- color
+- territory_id
+- name
+- position
+- neighbors
+- unit_id
+- name
+- strength

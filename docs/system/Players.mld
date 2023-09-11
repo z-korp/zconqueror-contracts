@@ -1,0 +1,24 @@
+%%mocodo
+:::
+CARD: card_id, name, #player_id->PLAYER->player_id
+:::::
+
+
+
+:
+SUPPLIES: #unit_id->UNIT->unit_id, _#card_id->CARD->card_id
+:
+TERRITORY: territory_id, name, position, neighbors, #card_id->CARD->card_id, #player_id->PLAYER->player_id
+:::::
+
+
+:::::
+PLAYER: player_id, address, color, #game_id->GAME->game_id
+:
+GAME: game_id, status, wager
+:
+
+
+:::
+UNIT: unit_id, name, strength, #territory_id->TERRITORY->territory_id, #player_id->PLAYER->player_id
+:::::

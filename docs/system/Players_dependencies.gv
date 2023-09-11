@@ -1,0 +1,11 @@
+digraph {
+  node [shape=box]
+  "PLAYER" -> "CARD"
+  "GAME" -> "PLAYER"
+  "UNIT" -> "SUPPLIES"
+  "CARD" -> "SUPPLIES"
+  "CARD" -> "TERRITORY"
+  "PLAYER" -> "TERRITORY"
+  "TERRITORY" -> "UNIT"
+  "PLAYER" -> "UNIT"
+}

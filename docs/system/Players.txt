@@ -1,0 +1,6 @@
+CARD (_card_id_, name, #player_id)
+GAME (_game_id_, status, wager)
+PLAYER (_player_id_, address, color, #game_id)
+SUPPLIES (_#unit_id_, _#card_id_)
+TERRITORY (_territory_id_, name, position, neighbors, #card_id, #player_id)
+UNIT (_unit_id_, name, strength, #territory_id, #player_id)
