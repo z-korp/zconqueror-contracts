@@ -8,6 +8,8 @@ on:
 jobs:
   book:
     runs-on: ubuntu-20.04
+    permissions:
+      pages: write
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
