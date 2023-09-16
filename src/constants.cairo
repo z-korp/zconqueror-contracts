@@ -1,1 +1,1 @@
-const OFFSET: felt252 = 1000;
+const DICE_FACES: u8 = 6;
