@@ -7,6 +7,7 @@ version = "0.1.0"
 sierra-replace-ids = true
 
 [dependencies]
+starknet = ">=2.2.0"
 dojo = { git = "https://github.com/dojoengine/dojo", tag = "v0.2.2" }
 
 [[target.dojo]]

@@ -8,9 +8,9 @@ use traits::Into;
 
 // Local imports
 
-use zrisk::constants::DICE_FACES;
+use zrisk::constants::DICE_FACES_NUMBER;
 
-/// A dice struct with a seed and a nonce.
+/// Dice struct.
 #[derive(Drop)]
 struct Dice {
     seed: felt252,
@@ -35,17 +35,19 @@ trait DiceTrait {
 
 /// Implementation of the `DiceTrait` trait for the `Dice` struct.
 impl DiceImpl of DiceTrait {
+    #[inline(always)]
     fn new(seed: felt252) -> Dice {
         Dice { seed, nonce: 0 }
     }
 
+    #[inline(always)]
     fn roll(ref self: Dice) -> u8 {
         let mut state = PoseidonTrait::new();
         state = state.update(self.seed);
         state = state.update(self.nonce);
         self.nonce += 1;
-        let seed: u256 = state.finalize().into();
-        (seed % DICE_FACES.into() + 1).try_into().unwrap()
+        let random: u256 = state.finalize().into();
+        (random % DICE_FACES_NUMBER.into() + 1).try_into().unwrap()
     }
 }
 
@@ -70,7 +72,7 @@ mod Tests {
     #[available_gas(2000000)]
     fn test_dice_new_roll_overflow() {
         let mut dice = DiceTrait::new('seed');
-        dice.nonce = 0x800000000000011000000000000000000000000000000000000000000000000;  // PRIME - 1
+        dice.nonce = 0x800000000000011000000000000000000000000000000000000000000000000; // PRIME - 1
         dice.roll();
         assert(dice.nonce == 0, 'Wrong dice nonce');
     }
