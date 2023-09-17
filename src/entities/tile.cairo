@@ -21,9 +21,11 @@ struct Tile {
 mod Errors {
     const INVALID_DISPATCHED: felt252 = 'Tile: invalid dispatched';
     const INVALID_ARRAY: felt252 = 'Tile: invalid array';
+    const INVALID_OWNER: felt252 = 'Tile: invalid owner';
+    const INVALID_ARMY_TRANSFER: felt252 = 'Tile: invalid army transfer';
 }
 
-/// Trait to initialize, attack, defend and supply from the Tile.
+/// Trait to initialize and manage army from the Tile.
 trait TileTrait {
     /// Returns a new `Tile` struct.
     /// # Arguments
@@ -50,6 +52,12 @@ trait TileTrait {
     /// * `self` - The tile.
     /// * `army` - The army to supply.
     fn supply(ref self: Tile, army: u8);
+    /// Transfers an army from the tile to another tile.
+    /// # Arguments
+    /// * `self` - The tile.
+    /// * `to` - The tile to transfer the army to.
+    /// * `army` - The army to transfer.
+    fn transfer(ref self: Tile, ref to: Tile, army: u8);
 }
 
 /// Implementation of the `TileTrait` for the `Tile` struct.
@@ -82,6 +90,17 @@ impl TileImpl of TileTrait {
 
     fn supply(ref self: Tile, army: u8) {
         self.army += army;
+    }
+
+    fn transfer(ref self: Tile, ref to: Tile, army: u8) {
+        // [Check] Both tiles are owned by the same player
+        assert(self.owner == to.owner, Errors::INVALID_OWNER);
+        // [Check] From tile army is greater than the transfered army
+        assert(self.army > army, Errors::INVALID_ARMY_TRANSFER);
+        // [Check] Both tiles are connected by a owned path
+        // TODO: when neighbors are defined and implemented
+        self.army -= army;
+        to.army += army;
     }
 }
 
@@ -248,6 +267,34 @@ mod Tests {
         assert(tile.army == 4, 'Tile: wrong tile army');
         tile.supply(2);
         assert(tile.army == 6, 'Tile: wrong tile army');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    fn test_tile_transfer() {
+        let mut from = TileTrait::new(0, 4, 'a');
+        let mut to = TileTrait::new(0, 2, 'a');
+        from.transfer(ref to, 2);
+        assert(from.army == 2, 'Tile: wrong from army');
+        assert(to.army == 4, 'Tile: wrong to army');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid owner',))]
+    fn test_tile_transfer_revert_invalid_owner() {
+        let mut from = TileTrait::new(0, 4, 'a');
+        let mut to = TileTrait::new(0, 2, 'b');
+        from.transfer(ref to, 2);
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid army transfer',))]
+    fn test_tile_transfer_revert_invalid_army_transfer() {
+        let mut from = TileTrait::new(0, 4, 'a');
+        let mut to = TileTrait::new(0, 2, 'a');
+        from.transfer(ref to, 5);
     }
 
     #[test]
