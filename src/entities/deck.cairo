@@ -23,12 +23,12 @@ struct Deck {
 
 /// Errors module.
 mod Errors {
-    const NO_CARDS_LEFT: felt252 = 'Deck: no card left';
+    const NO_CARD_LEFT: felt252 = 'Deck: no card left';
 }
 
 /// Trait to initialize, draw and discard a card from the Deck.
 trait DeckTrait {
-    /// Returns a fresh `Deck` struct.
+    /// Returns a new `Deck` struct.
     /// # Arguments
     /// * `seed` - A seed to initialize the deck.
     /// # Returns
@@ -61,7 +61,7 @@ impl DeckImpl of DeckTrait {
 
     fn draw(ref self: Deck) -> u8 {
         // [Check] Enough cards left.
-        assert(self.remaining > 0, Errors::NO_CARDS_LEFT);
+        assert(self.remaining > 0, Errors::NO_CARD_LEFT);
         // [Compute] Draw a random card from remaining not owned cards.
         let mut index: u32 = 0;
         loop {

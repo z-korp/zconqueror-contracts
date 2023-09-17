@@ -19,7 +19,7 @@ struct Dice {
 
 /// Trait to initialize and roll a dice.
 trait DiceTrait {
-    /// Returns a fresh `Dice` struct.
+    /// Returns a new `Dice` struct.
     /// # Arguments
     /// * `seed` - A seed to initialize the dice.
     /// # Returns
