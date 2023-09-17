@@ -67,7 +67,9 @@ impl TileImpl of TileTrait {
 
     fn defend(ref self: Tile, ref attacker: Tile, ref dice: Dice) {
         // [Compute] Battle and get survivors
-        let (defensive_survivors, offensive_survivors) = _battle(self.army, attacker.dispatched, ref dice);
+        let (defensive_survivors, offensive_survivors) = _battle(
+            self.army, attacker.dispatched, ref dice
+        );
         // [Effect] Apply losses and update ownership
         self.army = defensive_survivors;
         attacker.dispatched = offensive_survivors;
@@ -96,8 +98,18 @@ fn _battle(mut defensives: u8, mut offensives: u8, ref dice: Dice) -> (u8, u8) {
         if defensives == 0 || offensives == 0 {
             break;
         };
-        let defensive = if defensives > 1 { 2 } else { 1 };
-        let offensive = if offensives > 2 { 3 } else if offensives > 1 { 2 } else { 1 };
+        let defensive = if defensives > 1 {
+            2
+        } else {
+            1
+        };
+        let offensive = if offensives > 2 {
+            3
+        } else if offensives > 1 {
+            2
+        } else {
+            1
+        };
         let (defensive_losses, offensive_losses) = _round(defensive, offensive, ref dice);
         defensives -= defensive_losses;
         offensives -= offensive_losses;
@@ -173,7 +185,7 @@ fn _duel(ref defensive: Span<u8>, ref offensive: Span<u8>) -> (u8, u8) {
 #[inline(always)]
 fn _sort(values: Span<u8>) -> Span<u8> {
     // [Check] Values len is between 1 and 3
-    assert(values.len() >=1 && values.len() <= 3, Errors::INVALID_ARRAY);
+    assert(values.len() >= 1 && values.len() <= 3, Errors::INVALID_ARRAY);
     // [Case] Values len is 1
     if values.len() == 1 {
         return values;
