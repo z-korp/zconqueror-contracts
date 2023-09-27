@@ -4,8 +4,13 @@
 
 use array::{ArrayTrait, SpanTrait};
 
+// External imports
+
+use alexandria_data_structures::array_ext::SpanTraitExt;
+
 // Internal imports
 
+use zrisk::entities::faction;
 use zrisk::entities::dice::{Dice, DiceTrait};
 
 /// Tile struct.
@@ -15,14 +20,18 @@ struct Tile {
     army: u8,
     owner: u8,
     dispatched: u8,
+    faction: felt252,
+    neighbors: Span<u8>
 }
 
 /// Errors module
 mod errors {
+    const INVLID_ID: felt252 = 'Tile: invalid id';
     const INVALID_DISPATCHED: felt252 = 'Tile: invalid dispatched';
     const INVALID_ARRAY: felt252 = 'Tile: invalid array';
     const INVALID_OWNER: felt252 = 'Tile: invalid owner';
     const INVALID_ARMY_TRANSFER: felt252 = 'Tile: invalid army transfer';
+    const INVALID_NEIGHBOR: felt252 = 'Tile: invalid neighbor';
 }
 
 /// Trait to initialize and manage army from the Tile.
@@ -35,6 +44,14 @@ trait TileTrait {
     /// # Returns
     /// * The initialized `Tile`.
     fn new(id: u8, army: u8, owner: u8) -> Tile;
+    /// Returns a new `Option<Tile>` struct.
+    /// # Arguments
+    /// * `id` - The territory id.
+    /// * `army` - The initial army supply.
+    /// * `owner` - The owner id of the territory.
+    /// # Returns
+    /// * The initialized `Option<Tile>`.
+    fn try_new(id: u8, army: u8, owner: u8) -> Option<Tile>;
     /// Dispatches an army from the tile.
     /// # Arguments
     /// * `self` - The tile.
@@ -63,17 +80,43 @@ trait TileTrait {
 /// Implementation of the `TileTrait` for the `Tile` struct.
 impl TileImpl of TileTrait {
     fn new(id: u8, army: u8, owner: u8) -> Tile {
-        Tile { id, army, owner, dispatched: 0 }
+        let faction = _faction(id).expect(errors::INVLID_ID);
+        let neighbors = _neighbors(id).expect(errors::INVLID_ID);
+        Tile { id, army, owner, dispatched: 0, faction, neighbors: neighbors }
+    }
+
+    fn try_new(id: u8, army: u8, owner: u8) -> Option<Tile> {
+        let wrapped_faction = _faction(id);
+        let wrapped_neighbors = _neighbors(id);
+        match wrapped_faction {
+            Option::Some(faction) => {
+                match wrapped_neighbors {
+                    Option::Some(neighbors) => {
+                        let tile = Tile {
+                            id, army, owner, dispatched: 0, faction, neighbors: neighbors
+                        };
+                        Option::Some(tile)
+                    },
+                    Option::None => Option::None,
+                }
+            },
+            Option::None => Option::None,
+        }
     }
 
     fn attack(ref self: Tile, dispatched: u8, ref defender: Tile) {
         // [Check] Dispatched < army
         assert(dispatched < self.army, errors::INVALID_DISPATCHED);
+        // [Check] Attack a neighbor
+        assert(self.neighbors.contains(defender.id), errors::INVALID_NEIGHBOR);
+        // [Effect] Update attacker
         self.army -= dispatched;
         self.dispatched = dispatched;
     }
 
     fn defend(ref self: Tile, ref attacker: Tile, ref dice: Dice) {
+        // [Check] Attack from neighbor
+        assert(self.neighbors.contains(attacker.id), errors::INVALID_NEIGHBOR);
         // [Compute] Battle and get survivors
         let (defensive_survivors, offensive_survivors) = _battle(
             self.army, attacker.dispatched, ref dice
@@ -101,6 +144,146 @@ impl TileImpl of TileTrait {
         // TODO: when neighbors are defined and implemented
         self.army -= army;
         to.army += army;
+    }
+}
+
+/// Return tile faction based on id.
+/// # Arguments
+/// * `id` - The tile id.
+/// # Returns
+/// * The corresponding faction.
+#[inline(always)]
+fn _faction(id: u8) -> Option<felt252> {
+    if id < 6 {
+        return Option::Some(faction::FACTION_01);
+    } else if id < 14 {
+        return Option::Some(faction::FACTION_02);
+    } else if id < 19 {
+        return Option::Some(faction::FACTION_03);
+    } else if id < 26 {
+        return Option::Some(faction::FACTION_04);
+    } else if id < 32 {
+        return Option::Some(faction::FACTION_05);
+    } else if id < 36 {
+        return Option::Some(faction::FACTION_06);
+    } else if id < 41 {
+        return Option::Some(faction::FACTION_07);
+    } else if id < 50 {
+        return Option::Some(faction::FACTION_08);
+    } else {
+        return Option::None;
+    }
+}
+
+/// Return tile neighbors based on id.
+/// # Arguments
+/// * `id` - The tile id.
+/// # Returns
+/// * The corresponding neighbors.
+#[inline(always)]
+fn _neighbors(id: u8) -> Option<Span<u8>> {
+    if id == 0 {
+        return Option::Some(array![1].span());
+    } else if id == 1 {
+        return Option::Some(array![0, 2].span());
+    } else if id == 2 {
+        return Option::Some(array![1, 2, 3, 4].span());
+    } else if id == 3 {
+        return Option::Some(array![2, 4].span());
+    } else if id == 4 {
+        return Option::Some(array![3, 2, 5].span());
+    } else if id == 5 {
+        return Option::Some(array![4, 2].span());
+    } else if id == 6 {
+        return Option::Some(array![3, 7, 8].span());
+    } else if id == 7 {
+        return Option::Some(array![6, 8, 11].span());
+    } else if id == 8 {
+        return Option::Some(array![6, 7, 11, 9].span());
+    } else if id == 9 {
+        return Option::Some(array![8, 10].span());
+    } else if id == 10 {
+        return Option::Some(array![9, 12, 14, 41].span());
+    } else if id == 11 {
+        return Option::Some(array![8, 7, 12].span());
+    } else if id == 12 {
+        return Option::Some(array![10, 11, 13, 15].span());
+    } else if id == 13 {
+        return Option::Some(array![12, 15, 16, 24].span());
+    } else if id == 14 {
+        return Option::Some(array![10, 15].span());
+    } else if id == 15 {
+        return Option::Some(array![14, 12, 13, 16, 17].span());
+    } else if id == 16 {
+        return Option::Some(array![15, 13].span());
+    } else if id == 17 {
+        return Option::Some(array![15, 18].span());
+    } else if id == 18 {
+        return Option::Some(array![17, 19, 22].span());
+    } else if id == 19 {
+        return Option::Some(array![18, 20, 21].span());
+    } else if id == 20 {
+        return Option::Some(array![19, 20].span());
+    } else if id == 21 {
+        return Option::Some(array![19, 22].span());
+    } else if id == 22 {
+        return Option::Some(array![18, 21, 23, 30].span());
+    } else if id == 23 {
+        return Option::Some(array![22, 24, 25].span());
+    } else if id == 24 {
+        return Option::Some(array![13, 23].span());
+    } else if id == 25 {
+        return Option::Some(array![4, 23, 26].span());
+    } else if id == 26 {
+        return Option::Some(array![25, 27].span());
+    } else if id == 27 {
+        return Option::Some(array![5, 26, 28].span());
+    } else if id == 28 {
+        return Option::Some(array![27, 29].span());
+    } else if id == 29 {
+        return Option::Some(array![30, 28].span());
+    } else if id == 30 {
+        return Option::Some(array![20, 22, 29, 31].span());
+    } else if id == 31 {
+        return Option::Some(array![49, 30, 32].span());
+    } else if id == 32 {
+        return Option::Some(array![31, 33, 34, 36].span());
+    } else if id == 33 {
+        return Option::Some(array![32].span());
+    } else if id == 34 {
+        return Option::Some(array![32, 35].span());
+    } else if id == 35 {
+        return Option::Some(array![34].span());
+    } else if id == 36 {
+        return Option::Some(array![32, 38, 37].span());
+    } else if id == 37 {
+        return Option::Some(array![36, 38].span());
+    } else if id == 38 {
+        return Option::Some(array![36, 37, 39, 40, 45].span());
+    } else if id == 39 {
+        return Option::Some(array![38].span());
+    } else if id == 40 {
+        return Option::Some(array![38, 42].span());
+    } else if id == 41 {
+        return Option::Some(array![10, 42].span());
+    } else if id == 42 {
+        return Option::Some(array![40, 41, 43].span());
+    } else if id == 43 {
+        return Option::Some(array![44, 42, 45].span());
+    } else if id == 44 {
+        return Option::Some(array![43].span());
+    } else if id == 45 {
+        return Option::Some(array![38, 43, 46].span());
+    } else if id == 46 {
+        return Option::Some(array![47, 45, 48].span());
+    } else if id == 47 {
+        return Option::Some(array![46].span());
+    } else if id == 48 {
+        return Option::Some(array![49, 46].span());
+    } else if id == 49 {
+        return Option::Some(array![31, 48].span());
+    } else {
+        return Option::None;
     }
 }
 
@@ -249,16 +432,41 @@ fn _sort(values: Span<u8>) -> Span<u8> {
 }
 
 #[cfg(test)]
-mod Tests {
+mod tests {
     // Core imports
 
-    use array::{ArrayTrait, SpanTrait};
     use debug::PrintTrait;
+
+    // Internal imports
+
+    use zrisk::entities::dice::{Dice, DiceTrait};
 
     // Local imports
 
-    use zrisk::entities::dice::{Dice, DiceTrait};
-    use zrisk::entities::tile::{Tile, TileTrait, _sort, _battle, _round, _duel};
+    use super::{Tile, TileTrait, _sort, _battle, _round, _duel};
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_new_revert_invalid_id() {
+        TileTrait::new(100, 4, 'a');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    fn test_tile_try_new() {
+        let wrapped_tile = TileTrait::try_new(0, 4, 'a');
+        let tile = wrapped_tile.unwrap();
+        assert(tile.army == 4, 'Tile: wrong tile army');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_try_new_revert_invalid_id() {
+        let wrapped_tile = TileTrait::try_new(100, 4, 'a');
+        wrapped_tile.expect('Tile: invalid id');
+    }
 
     #[test]
     #[available_gas(1_000_000)]

@@ -100,15 +100,18 @@ impl DeckImpl of DeckTrait {
 }
 
 #[cfg(test)]
-mod Tests {
+mod tests {
     // Core imports
 
     use debug::PrintTrait;
 
-    // Local imports
+    // Internal imports
 
     use zrisk::constants::DECK_CARDS_NUMBER;
-    use zrisk::entities::deck::DeckTrait;
+
+    // Local imports
+
+    use super::DeckTrait;
 
     #[test]
     #[available_gas(4_625_000)]

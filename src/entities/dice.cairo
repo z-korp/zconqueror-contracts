@@ -52,8 +52,13 @@ impl DiceImpl of DiceTrait {
 }
 
 #[cfg(test)]
-mod Tests {
+mod tests {
+    // Core imports
+
     use debug::PrintTrait;
+
+    // Local imports
+
     use super::DiceTrait;
 
     #[test]

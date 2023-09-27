@@ -4,6 +4,8 @@ mod entities {
     mod tile;
     mod dice;
     mod deck;
+    mod map;
+    mod faction;
 }
 
 mod components {}
