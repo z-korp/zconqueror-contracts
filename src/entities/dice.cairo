@@ -6,7 +6,7 @@ use poseidon::PoseidonTrait;
 use hash::HashStateTrait;
 use traits::Into;
 
-// Local imports
+// Internal imports
 
 use zrisk::constants::DICE_FACES_NUMBER;
 

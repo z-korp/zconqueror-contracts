@@ -8,7 +8,7 @@ use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableRes
 use poseidon::PoseidonTrait;
 use traits::{Into, Drop};
 
-// Local imports
+// Internal imports
 
 use zrisk::constants::DECK_CARDS_NUMBER;
 
@@ -22,7 +22,7 @@ struct Deck {
 }
 
 /// Errors module.
-mod Errors {
+mod errors {
     const NO_CARD_LEFT: felt252 = 'Deck: no card left';
 }
 
@@ -61,7 +61,7 @@ impl DeckImpl of DeckTrait {
 
     fn draw(ref self: Deck) -> u8 {
         // [Check] Enough cards left.
-        assert(self.remaining > 0, Errors::NO_CARD_LEFT);
+        assert(self.remaining > 0, errors::NO_CARD_LEFT);
         // [Compute] Draw a random card from remaining not owned cards.
         let mut index: u32 = 0;
         loop {

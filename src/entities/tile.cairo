@@ -4,7 +4,7 @@
 
 use array::{ArrayTrait, SpanTrait};
 
-// Local imports
+// Internal imports
 
 use zrisk::entities::dice::{Dice, DiceTrait};
 
@@ -18,7 +18,7 @@ struct Tile {
 }
 
 /// Errors module
-mod Errors {
+mod errors {
     const INVALID_DISPATCHED: felt252 = 'Tile: invalid dispatched';
     const INVALID_ARRAY: felt252 = 'Tile: invalid array';
     const INVALID_OWNER: felt252 = 'Tile: invalid owner';
@@ -68,7 +68,7 @@ impl TileImpl of TileTrait {
 
     fn attack(ref self: Tile, dispatched: u8, ref defender: Tile) {
         // [Check] Dispatched < army
-        assert(dispatched < self.army, Errors::INVALID_DISPATCHED);
+        assert(dispatched < self.army, errors::INVALID_DISPATCHED);
         self.army -= dispatched;
         self.dispatched = dispatched;
     }
@@ -94,9 +94,9 @@ impl TileImpl of TileTrait {
 
     fn transfer(ref self: Tile, ref to: Tile, army: u8) {
         // [Check] Both tiles are owned by the same player
-        assert(self.owner == to.owner, Errors::INVALID_OWNER);
+        assert(self.owner == to.owner, errors::INVALID_OWNER);
         // [Check] From tile army is greater than the transfered army
-        assert(self.army > army, Errors::INVALID_ARMY_TRANSFER);
+        assert(self.army > army, errors::INVALID_ARMY_TRANSFER);
         // [Check] Both tiles are connected by a owned path
         // TODO: when neighbors are defined and implemented
         self.army -= army;
@@ -204,7 +204,7 @@ fn _duel(ref defensive: Span<u8>, ref offensive: Span<u8>) -> (u8, u8) {
 #[inline(always)]
 fn _sort(values: Span<u8>) -> Span<u8> {
     // [Check] Values len is between 1 and 3
-    assert(values.len() >= 1 && values.len() <= 3, Errors::INVALID_ARRAY);
+    assert(values.len() >= 1 && values.len() <= 3, errors::INVALID_ARRAY);
     // [Case] Values len is 1
     if values.len() == 1 {
         return values;
