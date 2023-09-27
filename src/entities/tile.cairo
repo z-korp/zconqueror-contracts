@@ -12,13 +12,14 @@ use alexandria_data_structures::array_ext::SpanTraitExt;
 
 use zrisk::entities::faction;
 use zrisk::entities::dice::{Dice, DiceTrait};
+use zrisk::components::tile::{Tile as TileComponent};
 
 /// Tile struct.
-#[derive(Drop, Serde)]
+#[derive(Drop, Copy, Serde)]
 struct Tile {
     id: u8,
     army: u8,
-    owner: u8,
+    owner: u32,
     dispatched: u8,
     faction: felt252,
     neighbors: Span<u8>
@@ -43,7 +44,7 @@ trait TileTrait {
     /// * `owner` - The owner id of the territory.
     /// # Returns
     /// * The initialized `Tile`.
-    fn new(id: u8, army: u8, owner: u8) -> Tile;
+    fn new(id: u8, army: u8, owner: u32) -> Tile;
     /// Returns a new `Option<Tile>` struct.
     /// # Arguments
     /// * `id` - The territory id.
@@ -51,7 +52,12 @@ trait TileTrait {
     /// * `owner` - The owner id of the territory.
     /// # Returns
     /// * The initialized `Option<Tile>`.
-    fn try_new(id: u8, army: u8, owner: u8) -> Option<Tile>;
+    fn try_new(id: u8, army: u8, owner: u32) -> Option<Tile>;
+    /// Convert Tile into TileComponent.
+    /// # Arguments
+    /// * `self` - The tile.
+    /// * `game_id` - The game id.
+    fn convert(self: @Tile, game_id: u32) -> TileComponent;
     /// Dispatches an army from the tile.
     /// # Arguments
     /// * `self` - The tile.
@@ -79,13 +85,13 @@ trait TileTrait {
 
 /// Implementation of the `TileTrait` for the `Tile` struct.
 impl TileImpl of TileTrait {
-    fn new(id: u8, army: u8, owner: u8) -> Tile {
+    fn new(id: u8, army: u8, owner: u32) -> Tile {
         let faction = _faction(id).expect(errors::INVLID_ID);
         let neighbors = _neighbors(id).expect(errors::INVLID_ID);
         Tile { id, army, owner, dispatched: 0, faction, neighbors: neighbors }
     }
 
-    fn try_new(id: u8, army: u8, owner: u8) -> Option<Tile> {
+    fn try_new(id: u8, army: u8, owner: u32) -> Option<Tile> {
         let wrapped_faction = _faction(id);
         let wrapped_neighbors = _neighbors(id);
         match wrapped_faction {
@@ -101,6 +107,16 @@ impl TileImpl of TileTrait {
                 }
             },
             Option::None => Option::None,
+        }
+    }
+
+    fn convert(self: @Tile, game_id: u32) -> TileComponent {
+        TileComponent {
+            game_id: game_id,
+            tile_id: *self.id,
+            army: *self.army,
+            owner: *self.owner,
+            dispatched: *self.dispatched,
         }
     }
 

@@ -8,8 +8,14 @@ mod entities {
     mod faction;
 }
 
-mod components {}
+mod components {
+    mod game;
+    mod player;
+    mod tile;
+}
 
-mod systems {}
+mod systems {
+    mod create;
+}
 
 mod tests {}

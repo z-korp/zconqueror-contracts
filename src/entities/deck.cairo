@@ -8,16 +8,13 @@ use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableRes
 use poseidon::PoseidonTrait;
 use traits::{Into, Drop};
 
-// Internal imports
-
-use zrisk::constants::DECK_CARDS_NUMBER;
-
 /// Deck struct.
 #[derive(Destruct)]
 struct Deck {
     seed: felt252,
     owned: Felt252Dict<Nullable<bool>>,
-    remaining: u8,
+    total: u32,
+    remaining: u32,
     nonce: u8,
 }
 
@@ -31,9 +28,10 @@ trait DeckTrait {
     /// Returns a new `Deck` struct.
     /// # Arguments
     /// * `seed` - A seed to initialize the deck.
+    /// * `number` - The initial number of cards.
     /// # Returns
     /// * The initialized `Deck`.
-    fn new(seed: felt252) -> Deck;
+    fn new(seed: felt252, number: u32) -> Deck;
     /// Returns a card type after a draw.
     /// # Arguments
     /// * `self` - The Deck.
@@ -55,8 +53,8 @@ trait DeckTrait {
 /// Implementation of the `DeckTrait` trait for the `Deck` struct.
 impl DeckImpl of DeckTrait {
     #[inline(always)]
-    fn new(seed: felt252) -> Deck {
-        Deck { seed, owned: Default::default(), remaining: DECK_CARDS_NUMBER, nonce: 0 }
+    fn new(seed: felt252, number: u32) -> Deck {
+        Deck { seed, owned: Default::default(), total: number, remaining: number, nonce: 0 }
     }
 
     fn draw(ref self: Deck) -> u8 {
@@ -71,7 +69,7 @@ impl DeckImpl of DeckTrait {
             state = state.update(index.into());
             let random: u256 = state.finalize().into();
 
-            let card: u8 = (random % DECK_CARDS_NUMBER.into() + 1).try_into().unwrap();
+            let card: u8 = (random % self.total.into() + 1).try_into().unwrap();
             let owned = match match_nullable(self.owned.get(card.into())) {
                 FromNullableResult::Null => false,
                 FromNullableResult::NotNull(status) => status.unbox(),
@@ -105,18 +103,19 @@ mod tests {
 
     use debug::PrintTrait;
 
-    // Internal imports
-
-    use zrisk::constants::DECK_CARDS_NUMBER;
-
     // Local imports
 
     use super::DeckTrait;
 
+    // Constants
+
+    const DECK_CARDS_NUMBER: u32 = 42;
+
     #[test]
-    #[available_gas(4_625_000)]
+    #[available_gas(4_725_000)]
     fn test_deck_new_draw() {
-        let mut deck = DeckTrait::new('seed');
+        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER);
+        assert(deck.total == DECK_CARDS_NUMBER, 'Wrong total');
         assert(deck.remaining == DECK_CARDS_NUMBER, 'Wrong remaining');
         assert(deck.draw() == 0x28, 'Wrong card 01');
         assert(deck.draw() == 0x1c, 'Wrong card 02');
@@ -160,6 +159,7 @@ mod tests {
         assert(deck.draw() == 0x0b, 'Wrong card 40');
         assert(deck.draw() == 0x05, 'Wrong card 41');
         assert(deck.draw() == 0x1a, 'Wrong card 42');
+        assert(deck.total == DECK_CARDS_NUMBER, 'Wrong total');
         assert(deck.remaining == 0, 'Wrong remaining');
     }
 
@@ -167,15 +167,15 @@ mod tests {
     #[available_gas(27_000)]
     #[should_panic(expected: ('Deck: no card left',))]
     fn test_deck_new_draw_revert_no_card_left() {
-        let mut deck = DeckTrait::new('seed');
+        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER);
         deck.remaining = 0;
         deck.draw();
     }
 
     #[test]
-    #[available_gas(6_468_000)]
+    #[available_gas(6_568_000)]
     fn test_deck_new_discard() {
-        let mut deck = DeckTrait::new('seed');
+        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER);
         loop {
             if deck.remaining == 0 {
                 break;
@@ -190,7 +190,7 @@ mod tests {
     #[test]
     #[available_gas(7_927_000)]
     fn test_deck_new_set_owned() {
-        let mut deck = DeckTrait::new('seed');
+        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER);
         let mut card: u8 = 1;
         loop {
             if deck.remaining == 0 {
