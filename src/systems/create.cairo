@@ -30,21 +30,21 @@ mod create {
     // Errors
 
     mod errors {
-        const TILES_UNBOX_ISSUE: felt252 = 'Tiles unbox issue';
+        const TILES_UNBOX_ISSUE: felt252 = 'Tiles: unbox issue';
     }
 
-    fn execute(ctx: Context, player: felt252, seed: felt252, name: felt252, number: u8) {
+    fn execute(ctx: Context, account: felt252, seed: felt252, name: felt252, player_count: u8) {
         // [Command] Game entity
         let game_id = ctx.world.uuid();
-        let mut game = GameTrait::new(player, game_id, seed, number);
+        let mut game = GameTrait::new(account, game_id, seed, player_count);
         set!(ctx.world, (game));
 
         // [Command] Player entities
         // Use the deck mechanism to define the player order, human player is 1
-        let mut deck = DeckTrait::new(game.seed, game.number.into());
-        let mut index = 0;
+        let mut deck = DeckTrait::new(game.seed, game.player_count.into());
+        let mut player_index = 0;
         loop {
-            if index == game.number {
+            if player_index == game.player_count {
                 break;
             }
             let card = deck.draw() - 1;
@@ -54,19 +54,20 @@ mod create {
                 PlayerTrait::new(game_id, card, card.into())
             };
             set!(ctx.world, (player));
+            player_index += 1;
         };
 
         // [Command] Tile entities
         let mut map = MapTrait::new(
             id: 1,
             seed: game.seed,
-            player_number: game.number.into(),
-            tile_number: TILE_NUMBER,
-            army_number: ARMY_NUMBER
+            player_count: game.player_count.into(),
+            tile_count: TILE_NUMBER,
+            army_count: ARMY_NUMBER
         );
         let mut player_index = 0;
         loop {
-            if player_index == game.number {
+            if player_index == game.player_count {
                 break;
             }
             let mut tiles = match match_nullable(map.realms.get(player_index.into())) {
@@ -76,7 +77,7 @@ mod create {
             loop {
                 match tiles.pop_front() {
                     Option::Some(tile) => {
-                        let tile: TileComponent = tile.convert(game.game_id);
+                        let tile: TileComponent = tile.convert(game.id);
                         set!(ctx.world, (tile));
                     },
                     Option::None => {

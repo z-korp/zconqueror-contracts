@@ -7,6 +7,7 @@ use array::{ArrayTrait, SpanTrait};
 use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
 use poseidon::PoseidonTrait;
 use hash::HashStateTrait;
+use debug::PrintTrait;
 
 // Internal imports
 
@@ -27,6 +28,8 @@ struct Map {
 /// Errors module
 mod errors {
     const INVALID_ARMY_COUNT: felt252 = 'Map: Invalid army count';
+    const TILES_EMPTY: felt252 = 'Map: Tiles empty';
+    const INVALID_TILE_NUMBER: felt252 = 'Map: Invalid tile number';
 }
 
 /// Trait to initialize and manage tile from the Map.
@@ -35,37 +38,39 @@ trait MapTrait {
     /// # Arguments
     /// * `id` - The territory id.
     /// * `seed` - A seed to generate the map.
-    /// * `player_number` - The number of players.
-    /// * `tile_number` - The number of tiles.
-    /// * `army_number` - The number of army of each player.
+    /// * `player_count` - The number of players.
+    /// * `tile_count` - The number of tiles.
+    /// * `army_count` - The number of army of each player.
     /// # Returns
     /// * The initialized `Map`.
-    fn new(id: u8, seed: felt252, player_number: u32, tile_number: u32, army_number: u32) -> Map;
+    fn new(id: u8, seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map;
 }
 
 /// Implementation of the `TileTrait` for the `Tile` struct.
 impl MapImpl of MapTrait {
-    fn new(id: u8, seed: felt252, player_number: u32, tile_number: u32, army_number: u32) -> Map {
+    fn new(id: u8, seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map {
         // [Check] There is enough army to supply at least 1 unit per tile
-        assert(player_number * army_number >= tile_number, errors::INVALID_ARMY_COUNT);
+        assert(player_count * army_count >= tile_count, errors::INVALID_ARMY_COUNT);
         // [Compute] Seed in u256 for futher operations
         let base_seed: u256 = seed.into();
         // Use the deck mechanism to shuffle the tiles
-        let mut deck = DeckTrait::new(seed, tile_number);
+        let mut deck = DeckTrait::new(seed, tile_count);
         // Each player draw R/N where R is the remaining cards and N the number of players left
         let mut realms: Felt252Dict<Nullable<Span<Tile>>> = Default::default();
         let mut player_index: u32 = 0;
         loop {
-            if player_index == player_number {
+            if player_index == player_count {
                 break;
             }
-            let turns_number = deck.remaining / (player_number - player_index);
+            let turns_count = deck.remaining / (player_count - player_index);
+            // [Check] At least 1 tile per player
+            assert(turns_count > 0, errors::INVALID_TILE_NUMBER);
             let mut turn_index = 0;
             // Draw the tiles for the current player with a single unit army
-            let mut remaining_army = army_number;
+            let mut remaining_army = army_count;
             let mut tiles: Array<Tile> = array![];
             loop {
-                if turn_index == turns_number {
+                if turn_index == turns_count {
                     break;
                 }
                 let tile_id = deck.draw() - 1;
@@ -75,7 +80,7 @@ impl MapImpl of MapTrait {
                 turn_index += 1;
             };
             // Spread army on the tiles
-            let mut remaining_army = army_number - turns_number;
+            let mut remaining_army = army_count - turns_count;
             let mut tile_index = 0;
             let mut nonce = 0;
             loop {
@@ -83,9 +88,10 @@ impl MapImpl of MapTrait {
                     break;
                 }
                 // Random number between 0 or 1
-                let (unit, nonce) = _random(seed, nonce);
+                let (unit, new_nonce) = _random(seed, nonce);
+                nonce = new_nonce;
                 // Increase army of the current tile with the unit
-                let mut tile: Tile = tiles.pop_front().unwrap();
+                let mut tile: Tile = tiles.pop_front().expect(errors::TILES_EMPTY);
                 // TODO: Check if it is better to conditonate the following lines
                 tile.army += unit;
                 remaining_army -= unit.into();
@@ -121,9 +127,9 @@ mod tests {
 
     const SEED: felt252 = 'seed';
     const PLAYER_NUMBER: u32 = 4;
-    const TILE_NUMBER: u32 = 42;
-    const ARMY_NUMBER: u32 = 30;
-    const NONCE: u32 = 12;
+    const TILE_NUMBER: u32 = 10;
+    const ARMY_NUMBER: u32 = 4;
+    const NONCE: u32 = 0;
 
     #[test]
     #[available_gas(100_000)]

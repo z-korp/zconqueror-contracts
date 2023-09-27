@@ -18,4 +18,8 @@ mod systems {
     mod create;
 }
 
-mod tests {}
+#[cfg(test)]
+mod tests {
+    mod setup;
+    mod create;
+}
