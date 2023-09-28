@@ -495,14 +495,14 @@ fn _connected(
 /// # Returns
 /// * The connection status.
 fn _connected_iter(
-    target: u8, owner: @u32, tiles: Span<Tile>, ref visiteds: Array<u8>, ref unvisited: Span<u8>
+    target: u8, owner: @u32, tiles: Span<Tile>, ref visiteds: Array<u8>, ref unvisiteds: Span<u8>
 ) -> bool {
-    match unvisited.pop_front() {
+    match unvisiteds.pop_front() {
         Option::Some(neighbour) => {
             if _connected(*neighbour, target, owner, tiles, ref visiteds) {
                 return true;
             }
-            return _connected_iter(target, owner, tiles, ref visiteds, ref unvisited);
+            return _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds);
         },
         Option::None => {
             return false;
@@ -866,8 +866,8 @@ mod tests {
             tiles.append(TileTrait::new(index, 0, 'a'));
             index += 1;
         };
-        let mut visited = array![];
-        let connection = _connected(0, 49, @'a', tiles.span(), ref visited);
+        let mut visiteds = array![];
+        let connection = _connected(0, 49, @'a', tiles.span(), ref visiteds);
         assert(connection, 'Tile: wrong connection status');
     }
 
@@ -885,8 +885,8 @@ mod tests {
             index += 1;
         };
         tiles.append(TileTrait::new(1, 0, 'a'));
-        let mut visited = array![];
-        let connection = _connected(0, 49, @'a', tiles.span(), ref visited);
+        let mut visiteds = array![];
+        let connection = _connected(0, 49, @'a', tiles.span(), ref visiteds);
         assert(!connection, 'Tile: wrong connection status');
     }
 }
