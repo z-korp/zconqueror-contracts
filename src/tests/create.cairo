@@ -70,7 +70,7 @@ fn test_create() {
         }
         let tile: Tile = get!(world, (0, tile_index).into(), (Tile));
         assert(tile.game_id == game.id, 'Tile: wrong game id');
-        assert(tile.tile_id == tile_index, 'Tile: wrong tile id');
+        assert(tile.id == tile_index, 'Tile: wrong tile id');
         assert(tile.army > 0, 'Tile: wrong army');
         assert(tile.owner < PLAYER_COUNT.into(), 'Tile: wrong owner');
         assert(tile.dispatched == 0, 'Tile: wrong dispatched');

@@ -53,11 +53,16 @@ trait TileTrait {
     /// # Returns
     /// * The initialized `Option<Tile>`.
     fn try_new(id: u8, army: u8, owner: u32) -> Option<Tile>;
-    /// Convert Tile into TileComponent.
+    /// Load Tile from TileComponent.
+    /// # Arguments
+    /// * `self` - The tile.
+    /// * `tile` - The tile component to load.
+    fn load(tile: @TileComponent) -> Tile;
+    /// Save Tile into TileComponent.
     /// # Arguments
     /// * `self` - The tile.
     /// * `game_id` - The game id.
-    fn convert(self: @Tile, game_id: u32) -> TileComponent;
+    fn save(self: @Tile, game_id: u32) -> TileComponent;
     /// Dispatches an army from the tile.
     /// # Arguments
     /// * `self` - The tile.
@@ -110,10 +115,22 @@ impl TileImpl of TileTrait {
         }
     }
 
-    fn convert(self: @Tile, game_id: u32) -> TileComponent {
+    fn load(tile: @TileComponent) -> Tile {
+        let id = *tile.id;
+        Tile {
+            id: id,
+            army: *tile.army,
+            owner: *tile.owner,
+            dispatched: *tile.dispatched,
+            faction: _faction(id).expect(errors::INVLID_ID),
+            neighbors: _neighbors(id).expect(errors::INVLID_ID),
+        }
+    }
+
+    fn save(self: @Tile, game_id: u32) -> TileComponent {
         TileComponent {
             game_id: game_id,
-            tile_id: *self.id,
+            id: *self.id,
             army: *self.army,
             owner: *self.owner,
             dispatched: *self.dispatched,
@@ -203,13 +220,13 @@ fn _neighbors(id: u8) -> Option<Span<u8>> {
     } else if id == 1 {
         return Option::Some(array![0, 2].span());
     } else if id == 2 {
-        return Option::Some(array![1, 2, 3, 4].span());
+        return Option::Some(array![1, 3, 4, 5].span());
     } else if id == 3 {
-        return Option::Some(array![2, 4].span());
+        return Option::Some(array![2, 4, 6].span());
     } else if id == 4 {
         return Option::Some(array![3, 2, 5].span());
     } else if id == 5 {
-        return Option::Some(array![4, 2].span());
+        return Option::Some(array![4, 2, 27].span());
     } else if id == 6 {
         return Option::Some(array![3, 7, 8].span());
     } else if id == 7 {
@@ -447,6 +464,83 @@ fn _sort(values: Span<u8>) -> Span<u8> {
     array.span()
 }
 
+/// Returns true if 2 tiles are connected by an owned path of tiles.
+/// # Arguments
+/// * `source` - The tile id to start with.
+/// * `target` - The tile id to find out.
+/// * `owner` - The owner id of the path.
+/// * `tiles` - The tiles including their respective owner.
+/// * `visiteds` - The visited tiles.
+/// # Returns
+/// * The connection status.
+fn _connected(
+    source: u8, target: u8, owner: @u32, tiles: Span<Tile>, ref visiteds: Array<u8>
+) -> bool {
+    if source == target && tiles.at(source.into()).owner == owner {
+        return true;
+    };
+    let mut neighbors = _neighbors(source).expect(errors::INVLID_ID);
+    let mut unvisiteds = _owned_dedup(ref neighbors, tiles, visiteds.span(), owner);
+    visiteds.append(source);
+    _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds)
+}
+
+/// The connected sub function used for recursion.
+/// # Arguments
+/// * `target` - The tile id to find out.
+/// * `owner` - The owner id of the path.
+/// * `tiles` - The tiles including their respective owner.
+/// * `visiteds` - The visited tiles.
+/// * `unvisiteds` - The unvisited tiles.
+/// # Returns
+/// * The connection status.
+fn _connected_iter(
+    target: u8, owner: @u32, tiles: Span<Tile>, ref visiteds: Array<u8>, ref unvisited: Span<u8>
+) -> bool {
+    match unvisited.pop_front() {
+        Option::Some(neighbour) => {
+            if _connected(*neighbour, target, owner, tiles, ref visiteds) {
+                return true;
+            }
+            return _connected_iter(target, owner, tiles, ref visiteds, ref unvisited);
+        },
+        Option::None => {
+            return false;
+        },
+    }
+}
+
+/// Returns the input array without the drop and not owned elements.
+/// # Arguments
+/// * `array` - The array to dedup.
+/// * `tiles` - The tiles including their respective owner.
+/// * `drops` - The specification of elements to drop.
+/// * `owner` - The owner to match.
+/// # Returns
+/// * The deduped array.
+fn _owned_dedup(ref array: Span<u8>, tiles: Span<Tile>, drops: Span<u8>, owner: @u32) -> Span<u8> {
+    // [Check] Drops is not empty, otherwise return the input array
+    if drops.is_empty() {
+        return array;
+    };
+    let mut result: Array<u8> = array![];
+    loop {
+        match array.pop_front() {
+            Option::Some(value) => {
+                let element = *value;
+                let tile = tiles.at(element.into());
+                if !drops.contains(element) && tile.owner == owner {
+                    result.append(element);
+                };
+            },
+            Option::None => {
+                break;
+            },
+        };
+    };
+    result.span()
+}
+
 #[cfg(test)]
 mod tests {
     // Core imports
@@ -459,7 +553,7 @@ mod tests {
 
     // Local imports
 
-    use super::{Tile, TileTrait, _sort, _battle, _round, _duel};
+    use super::{Tile, TileTrait, _sort, _battle, _round, _duel, _connected, _owned_dedup};
 
     #[test]
     #[available_gas(1_000_000)]
@@ -696,5 +790,103 @@ mod tests {
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
         assert(defensive_survivors == 9, 'Tile: wrong defensive survivors');
         assert(offensive_survivors == 0, 'Tile: wrong offensive survivors');
+    }
+
+    #[test]
+    #[available_gas(500_000)]
+    fn test_tile_dedup() {
+        let mut tiles: Array<Tile> = array![];
+        tiles.append(TileTrait::new(1, 0, 'a'));
+        tiles.append(TileTrait::new(2, 0, 'a'));
+        tiles.append(TileTrait::new(3, 0, 'a'));
+        let mut array = array![0, 1, 2].span();
+        let mut drops = array![1, 2].span();
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        assert(deduped == array![0].span(), 'Tile: wrong dedup');
+    }
+
+    #[test]
+    #[available_gas(500_000)]
+    fn test_tile_dedup_not_owned() {
+        let mut tiles: Array<Tile> = array![];
+        tiles.append(TileTrait::new(0, 0, 'b'));
+        tiles.append(TileTrait::new(1, 0, 'a'));
+        tiles.append(TileTrait::new(2, 0, 'a'));
+        let mut array = array![0, 1, 2].span();
+        let mut drops = array![1, 2].span();
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        assert(deduped == array![].span(), 'Tile: wrong dedup');
+    }
+
+    #[test]
+    #[available_gas(500_000)]
+    fn test_tile_dedup_no_intersection() {
+        let mut tiles: Array<Tile> = array![];
+        tiles.append(TileTrait::new(0, 0, 'a'));
+        tiles.append(TileTrait::new(1, 0, 'a'));
+        tiles.append(TileTrait::new(2, 0, 'a'));
+        let mut array = array![0, 1, 2].span();
+        let mut drops = array![3, 4, 5].span();
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        assert(deduped == array![0, 1, 2].span(), 'Tile: wrong dedup');
+    }
+
+    #[test]
+    #[available_gas(500_000)]
+    fn test_tile_dedup_array_empty() {
+        let mut tiles: Array<Tile> = array![];
+        let mut array = array![].span();
+        let mut drops = array![3, 4, 5].span();
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        assert(deduped == array![].span(), 'Tile: wrong dedup');
+    }
+
+    #[test]
+    #[available_gas(500_000)]
+    fn test_tile_dedup_drops_empty() {
+        let mut tiles: Array<Tile> = array![];
+        tiles.append(TileTrait::new(0, 0, 'a'));
+        tiles.append(TileTrait::new(1, 0, 'a'));
+        tiles.append(TileTrait::new(2, 0, 'a'));
+        let mut array = array![0, 1, 2].span();
+        let mut drops = array![].span();
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        assert(deduped == array![0, 1, 2].span(), 'Tile: wrong dedup');
+    }
+
+    #[test]
+    #[available_gas(150_000_000)]
+    fn test_tile_connected() {
+        let mut tiles: Array<Tile> = array![];
+        let mut index = 0;
+        loop {
+            if index > 49 {
+                break;
+            };
+            tiles.append(TileTrait::new(index, 0, 'a'));
+            index += 1;
+        };
+        let mut visited = array![];
+        let connection = _connected(0, 49, @'a', tiles.span(), ref visited);
+        assert(connection, 'Tile: wrong connection status');
+    }
+
+    #[test]
+    #[available_gas(150_000_000)]
+    fn test_tile_not_connected() {
+        let mut tiles: Array<Tile> = array![];
+        tiles.append(TileTrait::new(0, 0, 'a'));
+        let mut index = 2;
+        loop {
+            if index > 49 {
+                break;
+            };
+            tiles.append(TileTrait::new(index, 0, 'b'));
+            index += 1;
+        };
+        tiles.append(TileTrait::new(1, 0, 'a'));
+        let mut visited = array![];
+        let connection = _connected(0, 49, @'a', tiles.span(), ref visited);
+        assert(!connection, 'Tile: wrong connection status');
     }
 }

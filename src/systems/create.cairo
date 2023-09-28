@@ -77,7 +77,7 @@ mod create {
             loop {
                 match tiles.pop_front() {
                     Option::Some(tile) => {
-                        let tile: TileComponent = tile.convert(game.id);
+                        let tile: TileComponent = tile.save(game.id);
                         set!(ctx.world, (tile));
                     },
                     Option::None => {
