@@ -11,6 +11,7 @@ use debug::PrintTrait;
 
 // Internal imports
 
+use zrisk::config;
 use zrisk::entities::deck::{Deck, DeckTrait};
 use zrisk::entities::tile::{Tile, TileTrait};
 
@@ -30,6 +31,7 @@ mod errors {
     const INVALID_ARMY_COUNT: felt252 = 'Map: Invalid army count';
     const TILES_EMPTY: felt252 = 'Map: Tiles empty';
     const INVALID_TILE_NUMBER: felt252 = 'Map: Invalid tile number';
+    const TILES_UNBOX_ISSUE: felt252 = 'Tiles: unbox issue';
 }
 
 /// Trait to initialize and manage tile from the Map.
@@ -44,9 +46,24 @@ trait MapTrait {
     /// # Returns
     /// * The initialized `Map`.
     fn new(id: u8, seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map;
+    /// Returns the `Map` struct according to the tiles.
+    /// # Arguments
+    /// * `id` - The territory id.
+    /// * `player_count` - The number of players.
+    /// * `tiles` - The tiles.
+    /// # Returns
+    /// * The initialized `Map`.
+    fn from_tiles(id: u8, player_count: u32, tiles: Span<Tile>) -> Map;
+    /// Computes the score of a player.
+    /// # Arguments
+    /// * `self` - The map.
+    /// * `player_index` - The player index for whom to calculate the score.
+    /// # Returns
+    /// * The score.
+    fn score(ref self: Map, player_index: u32) -> u32;
 }
 
-/// Implementation of the `TileTrait` for the `Tile` struct.
+/// Implementation of the `MapTrait` for the `Map` struct.
 impl MapImpl of MapTrait {
     fn new(id: u8, seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map {
         // [Check] There is enough army to supply at least 1 unit per tile
@@ -103,8 +120,101 @@ impl MapImpl of MapTrait {
         };
         Map { id, realms }
     }
+
+    fn from_tiles(id: u8, player_count: u32, tiles: Span<Tile>) -> Map {
+        let mut realms: Felt252Dict<Nullable<Span<Tile>>> = Default::default();
+        let mut player_index = 0;
+        loop {
+            if player_index == player_count {
+                break;
+            };
+            let mut player_tiles: Array<Tile> = array![];
+            let mut tile_index = 0;
+            loop {
+                if tile_index == tiles.len() {
+                    break;
+                };
+                let tile = tiles.at(tile_index);
+                if tile.owner == @player_index {
+                    player_tiles.append(*tile);
+                };
+                tile_index += 1;
+            };
+            realms
+                .insert(player_index.into(), nullable_from_box(BoxTrait::new(player_tiles.span())));
+            player_index += 1;
+        };
+        Map { id, realms }
+    }
+
+    fn score(ref self: Map, player_index: u32) -> u32 {
+        // [Compute] Player tiles count
+        let mut player_tiles = match match_nullable(self.realms.get(player_index.into())) {
+            FromNullableResult::Null => panic(array![errors::TILES_UNBOX_ISSUE]),
+            FromNullableResult::NotNull(status) => status.unbox(),
+        };
+        let mut score = player_tiles.len();
+
+        // [Compute] Convert player tiles from span into array for efficiency
+        let mut player_ids: Array<u8> = array![];
+        loop {
+            match player_tiles.pop_front() {
+                Option::Some(tile) => {
+                    player_ids.append(*tile.id);
+                },
+                Option::None => {
+                    break;
+                },
+            };
+        };
+
+        // [Compute] Increase score for each full owned factions
+        let mut factions: Span<felt252> = config::factions();
+        loop {
+            match factions.pop_front() {
+                Option::Some(faction) => {
+                    let mut tile_ids: Array<u8> = array![];
+                    loop {
+                        match player_tiles.pop_front() {
+                            Option::Some(tile) => {
+                                if tile.faction == faction {
+                                    tile_ids.append(*tile.id);
+                                } else {
+                                    player_ids.append(*tile.id);
+                                };
+                            },
+                            Option::None => {
+                                break;
+                            },
+                        };
+                    };
+                    // [Effect] Increase score
+                    let faction_ids = config::ids(*faction).unwrap();
+                    if faction_ids.len() == tile_ids.len() {
+                        score += config::score(*faction).unwrap();
+                    };
+                },
+                Option::None => {
+                    break;
+                },
+            };
+        };
+
+        // [Return] Max(3, score)
+        if score < 3 {
+            3
+        } else {
+            score
+        }
+    }
 }
 
+/// Generates a random number between 0 or 1.
+/// # Arguments
+/// * `seed` - The seed.
+/// * `nonce` - The nonce.
+/// # Returns
+/// * The random number.
 fn _random(seed: felt252, nonce: u32) -> (u8, u32) {
     let mut state = PoseidonTrait::new();
     state = state.update(seed);
@@ -122,6 +232,7 @@ mod tests {
     // Internal imports
 
     use zrisk::config;
+    use zrisk::entities::tile::{Tile, TileTrait};
 
     // Local imports
 
@@ -132,18 +243,44 @@ mod tests {
     const SEED: felt252 = 'seed';
     const PLAYER_NUMBER: u32 = 4;
     const NONCE: u32 = 0;
+    const PLAYER_1: u32 = 0;
+    const PLAYER_2: u32 = 1;
 
     #[test]
     #[available_gas(100_000)]
     fn test_map_random() {
         let (unit, nonce) = _random(SEED, NONCE);
-        assert(unit == 0 || unit == 1, 'Map: Invalid random unit');
-        assert(nonce == NONCE + 1, 'Map: Invalid nonce');
+        assert(unit == 0 || unit == 1, 'Map: wrong random unit');
+        assert(nonce == NONCE + 1, 'Map: wrong nonce');
     }
 
     #[test]
     #[available_gas(18_000_000)]
     fn test_map_new() {
         let map = MapTrait::new(1, SEED, PLAYER_NUMBER, config::TILE_NUMBER, config::ARMY_NUMBER);
+        assert(map.id == 1, 'Map: wrong id');
+    }
+
+    #[test]
+    #[available_gas(18_000_000)]
+    fn test_map_from_tiles() {
+        let mut tiles: Array<Tile> = array![];
+        tiles.append(TileTrait::new(0, 0, PLAYER_1));
+        tiles.append(TileTrait::new(1, 0, PLAYER_1));
+        let map = MapTrait::from_tiles(1, PLAYER_NUMBER, tiles.span());
+        assert(map.id == 1, 'Map: wrong id');
+    }
+
+    #[test]
+    #[available_gas(18_000_000)]
+    fn test_map_score_full() {
+        let mut tiles: Array<Tile> = array![];
+        tiles.append(TileTrait::new(0, 0, PLAYER_1));
+        tiles.append(TileTrait::new(1, 0, PLAYER_1));
+        tiles.append(TileTrait::new(2, 0, PLAYER_1));
+        tiles.append(TileTrait::new(3, 0, PLAYER_1));
+        tiles.append(TileTrait::new(4, 0, PLAYER_1));
+        let mut map = MapTrait::from_tiles(1, PLAYER_NUMBER, tiles.span());
+        assert(map.score(PLAYER_1) >= 5, 'Map: wrong score');
     }
 }

@@ -41,6 +41,69 @@ fn faction(id: u8) -> Option<felt252> {
     }
 }
 
+/// Return the factions as an iterable.
+/// # Returns
+/// * The factions.
+#[inline(always)]
+fn factions() -> Span<felt252> {
+    array![
+        FACTION_01,
+        FACTION_02,
+        FACTION_03,
+        FACTION_04,
+        FACTION_05,
+        FACTION_06,
+        FACTION_07,
+        FACTION_08
+    ]
+        .span()
+}
+
+/// Return ids per faction.
+/// # Arguments
+/// * `faction` - The faction id.
+/// # Returns
+/// * The corresponding ids.
+#[inline(always)]
+fn ids(faction: felt252) -> Option<Span<u8>> {
+    if faction == FACTION_01 {
+        return Option::Some(array![0, 1, 2, 3, 4, 5].span());
+    } else if faction == FACTION_02 {
+        return Option::Some(array![6, 7, 8, 9, 10, 11, 12, 13].span());
+    } else if faction == FACTION_03 {
+        return Option::Some(array![14, 15, 16, 17, 18].span());
+    } else if faction == FACTION_04 {
+        return Option::Some(array![19, 20, 21, 22, 23, 24, 25].span());
+    } else if faction == FACTION_05 {
+        return Option::Some(array![26, 27, 28, 29, 30, 31].span());
+    } else if faction == FACTION_06 {
+        return Option::Some(array![32, 33, 34, 35].span());
+    } else if faction == FACTION_07 {
+        return Option::Some(array![36, 37, 38, 39, 40].span());
+    } else if faction == FACTION_08 {
+        return Option::Some(array![41, 42, 43, 44, 45, 46, 47, 48, 49].span());
+    } else {
+        return Option::None;
+    }
+}
+
+/// Return score per faction.
+/// # Arguments
+/// * `faction` - The faction id.
+/// # Returns
+/// * The corresponding score.
+#[inline(always)]
+fn score(faction: felt252) -> Option<u32> {
+    match ids(faction) {
+        Option::Some(_ids) => {
+            Option::Some((_ids.len() - 1) / 2)
+        },
+        Option::None => {
+            Option::None
+        },
+    }
+}
+
 /// Return tile neighbors based on id.
 /// # Arguments
 /// * `id` - The tile id.
