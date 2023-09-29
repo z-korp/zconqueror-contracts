@@ -1,11 +1,15 @@
 mod constants;
 
+mod data {
+    mod v00;
+    mod v01;
+}
+
 mod entities {
     mod tile;
     mod dice;
     mod deck;
     mod map;
-    mod faction;
 }
 
 mod components {
@@ -23,3 +27,5 @@ mod tests {
     mod setup;
     mod create;
 }
+
+use zrisk::data::v01 as config;

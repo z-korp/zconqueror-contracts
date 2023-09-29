@@ -119,6 +119,10 @@ mod tests {
 
     use debug::PrintTrait;
 
+    // Internal imports
+
+    use zrisk::config;
+
     // Local imports
 
     use super::{Map, MapTrait, _random};
@@ -127,8 +131,6 @@ mod tests {
 
     const SEED: felt252 = 'seed';
     const PLAYER_NUMBER: u32 = 4;
-    const TILE_NUMBER: u32 = 10;
-    const ARMY_NUMBER: u32 = 4;
     const NONCE: u32 = 0;
 
     #[test]
@@ -140,8 +142,8 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(10_000_000)]
+    #[available_gas(18_000_000)]
     fn test_map_new() {
-        let map = MapTrait::new(1, SEED, PLAYER_NUMBER, TILE_NUMBER, ARMY_NUMBER);
+        let map = MapTrait::new(1, SEED, PLAYER_NUMBER, config::TILE_NUMBER, config::ARMY_NUMBER);
     }
 }

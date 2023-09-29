@@ -1,0 +1,9 @@
+{
+    "territories": [
+        { "id": 0, "faction": "Red", "neighbors": [2] },
+        { "id": 1, "faction": "Red", "neighbors": [2] },
+        { "id": 2, "faction": "Red", "neighbors": [0, 1, 3, 4] },
+        { "id": 3, "faction": "Blue", "neighbors": [2] },
+        { "id": 4, "faction": "Blue", "neighbors": [2] }
+    ]
+}

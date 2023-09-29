@@ -25,7 +25,7 @@ mod create {
 
     // Internal imports
 
-    use zrisk::constants::{TILE_NUMBER, ARMY_NUMBER};
+    use zrisk::config::{TILE_NUMBER, ARMY_NUMBER};
 
     // Errors
 
@@ -77,7 +77,7 @@ mod create {
             loop {
                 match tiles.pop_front() {
                     Option::Some(tile) => {
-                        let tile: TileComponent = tile.save(game.id);
+                        let tile: TileComponent = tile.dump(game.id);
                         set!(ctx.world, (tile));
                     },
                     Option::None => {

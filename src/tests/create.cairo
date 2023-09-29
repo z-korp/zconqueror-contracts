@@ -20,7 +20,7 @@ use dojo::test_utils::spawn_test_world;
 
 // Internal imports
 
-use zrisk::constants::TILE_NUMBER;
+use zrisk::config::TILE_NUMBER;
 use zrisk::components::game::Game;
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;

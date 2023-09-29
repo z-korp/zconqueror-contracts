@@ -10,7 +10,7 @@ use alexandria_data_structures::array_ext::SpanTraitExt;
 
 // Internal imports
 
-use zrisk::entities::faction;
+use zrisk::config;
 use zrisk::entities::dice::{Dice, DiceTrait};
 use zrisk::components::tile::{Tile as TileComponent};
 
@@ -58,11 +58,11 @@ trait TileTrait {
     /// * `self` - The tile.
     /// * `tile` - The tile component to load.
     fn load(tile: @TileComponent) -> Tile;
-    /// Save Tile into TileComponent.
+    /// Dump Tile into TileComponent.
     /// # Arguments
     /// * `self` - The tile.
     /// * `game_id` - The game id.
-    fn save(self: @Tile, game_id: u32) -> TileComponent;
+    fn dump(self: @Tile, game_id: u32) -> TileComponent;
     /// Dispatches an army from the tile.
     /// # Arguments
     /// * `self` - The tile.
@@ -91,14 +91,14 @@ trait TileTrait {
 /// Implementation of the `TileTrait` for the `Tile` struct.
 impl TileImpl of TileTrait {
     fn new(id: u8, army: u8, owner: u32) -> Tile {
-        let faction = _faction(id).expect(errors::INVLID_ID);
-        let neighbors = _neighbors(id).expect(errors::INVLID_ID);
+        let faction = config::faction(id).expect(errors::INVLID_ID);
+        let neighbors = config::neighbors(id).expect(errors::INVLID_ID);
         Tile { id, army, owner, dispatched: 0, faction, neighbors: neighbors }
     }
 
     fn try_new(id: u8, army: u8, owner: u32) -> Option<Tile> {
-        let wrapped_faction = _faction(id);
-        let wrapped_neighbors = _neighbors(id);
+        let wrapped_faction = config::faction(id);
+        let wrapped_neighbors = config::neighbors(id);
         match wrapped_faction {
             Option::Some(faction) => {
                 match wrapped_neighbors {
@@ -122,12 +122,12 @@ impl TileImpl of TileTrait {
             army: *tile.army,
             owner: *tile.owner,
             dispatched: *tile.dispatched,
-            faction: _faction(id).expect(errors::INVLID_ID),
-            neighbors: _neighbors(id).expect(errors::INVLID_ID),
+            faction: config::faction(id).expect(errors::INVLID_ID),
+            neighbors: config::neighbors(id).expect(errors::INVLID_ID),
         }
     }
 
-    fn save(self: @Tile, game_id: u32) -> TileComponent {
+    fn dump(self: @Tile, game_id: u32) -> TileComponent {
         TileComponent {
             game_id: game_id,
             id: *self.id,
@@ -177,146 +177,6 @@ impl TileImpl of TileTrait {
         // TODO: when neighbors are defined and implemented
         self.army -= army;
         to.army += army;
-    }
-}
-
-/// Return tile faction based on id.
-/// # Arguments
-/// * `id` - The tile id.
-/// # Returns
-/// * The corresponding faction.
-#[inline(always)]
-fn _faction(id: u8) -> Option<felt252> {
-    if id < 6 {
-        return Option::Some(faction::FACTION_01);
-    } else if id < 14 {
-        return Option::Some(faction::FACTION_02);
-    } else if id < 19 {
-        return Option::Some(faction::FACTION_03);
-    } else if id < 26 {
-        return Option::Some(faction::FACTION_04);
-    } else if id < 32 {
-        return Option::Some(faction::FACTION_05);
-    } else if id < 36 {
-        return Option::Some(faction::FACTION_06);
-    } else if id < 41 {
-        return Option::Some(faction::FACTION_07);
-    } else if id < 50 {
-        return Option::Some(faction::FACTION_08);
-    } else {
-        return Option::None;
-    }
-}
-
-/// Return tile neighbors based on id.
-/// # Arguments
-/// * `id` - The tile id.
-/// # Returns
-/// * The corresponding neighbors.
-#[inline(always)]
-fn _neighbors(id: u8) -> Option<Span<u8>> {
-    if id == 0 {
-        return Option::Some(array![1].span());
-    } else if id == 1 {
-        return Option::Some(array![0, 2].span());
-    } else if id == 2 {
-        return Option::Some(array![1, 3, 4, 5].span());
-    } else if id == 3 {
-        return Option::Some(array![2, 4, 6].span());
-    } else if id == 4 {
-        return Option::Some(array![3, 2, 5].span());
-    } else if id == 5 {
-        return Option::Some(array![4, 2, 27].span());
-    } else if id == 6 {
-        return Option::Some(array![3, 7, 8].span());
-    } else if id == 7 {
-        return Option::Some(array![6, 8, 11].span());
-    } else if id == 8 {
-        return Option::Some(array![6, 7, 11, 9].span());
-    } else if id == 9 {
-        return Option::Some(array![8, 10].span());
-    } else if id == 10 {
-        return Option::Some(array![9, 12, 14, 41].span());
-    } else if id == 11 {
-        return Option::Some(array![8, 7, 12].span());
-    } else if id == 12 {
-        return Option::Some(array![10, 11, 13, 15].span());
-    } else if id == 13 {
-        return Option::Some(array![12, 15, 16, 24].span());
-    } else if id == 14 {
-        return Option::Some(array![10, 15].span());
-    } else if id == 15 {
-        return Option::Some(array![14, 12, 13, 16, 17].span());
-    } else if id == 16 {
-        return Option::Some(array![15, 13].span());
-    } else if id == 17 {
-        return Option::Some(array![15, 18].span());
-    } else if id == 18 {
-        return Option::Some(array![17, 19, 22].span());
-    } else if id == 19 {
-        return Option::Some(array![18, 20, 21].span());
-    } else if id == 20 {
-        return Option::Some(array![19, 20].span());
-    } else if id == 21 {
-        return Option::Some(array![19, 22].span());
-    } else if id == 22 {
-        return Option::Some(array![18, 21, 23, 30].span());
-    } else if id == 23 {
-        return Option::Some(array![22, 24, 25].span());
-    } else if id == 24 {
-        return Option::Some(array![13, 23].span());
-    } else if id == 25 {
-        return Option::Some(array![4, 23, 26].span());
-    } else if id == 26 {
-        return Option::Some(array![25, 27].span());
-    } else if id == 27 {
-        return Option::Some(array![5, 26, 28].span());
-    } else if id == 28 {
-        return Option::Some(array![27, 29].span());
-    } else if id == 29 {
-        return Option::Some(array![30, 28].span());
-    } else if id == 30 {
-        return Option::Some(array![20, 22, 29, 31].span());
-    } else if id == 31 {
-        return Option::Some(array![49, 30, 32].span());
-    } else if id == 32 {
-        return Option::Some(array![31, 33, 34, 36].span());
-    } else if id == 33 {
-        return Option::Some(array![32].span());
-    } else if id == 34 {
-        return Option::Some(array![32, 35].span());
-    } else if id == 35 {
-        return Option::Some(array![34].span());
-    } else if id == 36 {
-        return Option::Some(array![32, 38, 37].span());
-    } else if id == 37 {
-        return Option::Some(array![36, 38].span());
-    } else if id == 38 {
-        return Option::Some(array![36, 37, 39, 40, 45].span());
-    } else if id == 39 {
-        return Option::Some(array![38].span());
-    } else if id == 40 {
-        return Option::Some(array![38, 42].span());
-    } else if id == 41 {
-        return Option::Some(array![10, 42].span());
-    } else if id == 42 {
-        return Option::Some(array![40, 41, 43].span());
-    } else if id == 43 {
-        return Option::Some(array![44, 42, 45].span());
-    } else if id == 44 {
-        return Option::Some(array![43].span());
-    } else if id == 45 {
-        return Option::Some(array![38, 43, 46].span());
-    } else if id == 46 {
-        return Option::Some(array![47, 45, 48].span());
-    } else if id == 47 {
-        return Option::Some(array![46].span());
-    } else if id == 48 {
-        return Option::Some(array![49, 46].span());
-    } else if id == 49 {
-        return Option::Some(array![31, 48].span());
-    } else {
-        return Option::None;
     }
 }
 
@@ -479,7 +339,7 @@ fn _connected(
     if source == target && tiles.at(source.into()).owner == owner {
         return true;
     };
-    let mut neighbors = _neighbors(source).expect(errors::INVLID_ID);
+    let mut neighbors = config::neighbors(source).expect(errors::INVLID_ID);
     let mut unvisiteds = _owned_dedup(ref neighbors, tiles, visiteds.span(), owner);
     visiteds.append(source);
     _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds)
@@ -549,23 +409,29 @@ mod tests {
 
     // Internal imports
 
+    use zrisk::config;
     use zrisk::entities::dice::{Dice, DiceTrait};
 
     // Local imports
 
     use super::{Tile, TileTrait, _sort, _battle, _round, _duel, _connected, _owned_dedup};
 
+    // Constants
+
+    const PLAYER_1: u32 = 0;
+    const PLAYER_2: u32 = 1;
+
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid id',))]
     fn test_tile_new_revert_invalid_id() {
-        TileTrait::new(100, 4, 'a');
+        TileTrait::new(100, 4, PLAYER_1);
     }
 
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_try_new() {
-        let wrapped_tile = TileTrait::try_new(0, 4, 'a');
+        let wrapped_tile = TileTrait::try_new(0, 4, PLAYER_1);
         let tile = wrapped_tile.unwrap();
         assert(tile.army == 4, 'Tile: wrong tile army');
     }
@@ -574,14 +440,14 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid id',))]
     fn test_tile_try_new_revert_invalid_id() {
-        let wrapped_tile = TileTrait::try_new(100, 4, 'a');
+        let wrapped_tile = TileTrait::try_new(100, 4, PLAYER_1);
         wrapped_tile.expect('Tile: invalid id');
     }
 
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_supply() {
-        let mut tile = TileTrait::new(0, 4, 'a');
+        let mut tile = TileTrait::new(0, 4, PLAYER_1);
         assert(tile.army == 4, 'Tile: wrong tile army');
         tile.supply(2);
         assert(tile.army == 6, 'Tile: wrong tile army');
@@ -590,8 +456,8 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_transfer() {
-        let mut from = TileTrait::new(0, 4, 'a');
-        let mut to = TileTrait::new(0, 2, 'a');
+        let mut from = TileTrait::new(0, 4, PLAYER_1);
+        let mut to = TileTrait::new(0, 2, PLAYER_1);
         from.transfer(ref to, 2);
         assert(from.army == 2, 'Tile: wrong from army');
         assert(to.army == 4, 'Tile: wrong to army');
@@ -601,8 +467,8 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid owner',))]
     fn test_tile_transfer_revert_invalid_owner() {
-        let mut from = TileTrait::new(0, 4, 'a');
-        let mut to = TileTrait::new(0, 2, 'b');
+        let mut from = TileTrait::new(0, 4, PLAYER_1);
+        let mut to = TileTrait::new(0, 2, PLAYER_2);
         from.transfer(ref to, 2);
     }
 
@@ -610,8 +476,8 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid army transfer',))]
     fn test_tile_transfer_revert_invalid_army_transfer() {
-        let mut from = TileTrait::new(0, 4, 'a');
-        let mut to = TileTrait::new(0, 2, 'a');
+        let mut from = TileTrait::new(0, 4, PLAYER_1);
+        let mut to = TileTrait::new(0, 2, PLAYER_1);
         from.transfer(ref to, 5);
     }
 
@@ -619,23 +485,25 @@ mod tests {
     #[available_gas(1_000_000)]
     fn test_tile_attack_and_defend() {
         let mut dice = DiceTrait::new('seed');
-        let mut attacker = TileTrait::new(0, 4, 'a');
-        let mut defender = TileTrait::new(1, 2, 'd');
+        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(0).expect('Tile: invalid id');
+        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
+        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
         assert(attacker.army == 4, 'Tile: wrong attacker army');
         assert(defender.army == 2, 'Tile: wrong defender army');
-        assert(defender.owner == 'd', 'Tile: wrong defender owner');
+        assert(defender.owner == PLAYER_2, 'Tile: wrong defender owner');
         attacker.attack(3, ref defender);
         defender.defend(ref attacker, ref dice);
         assert(attacker.army == 1, 'Tile: wrong attacker army');
         assert(defender.army == 2, 'Tile: wrong defender army');
-        assert(defender.owner == 'a', 'Tile: wrong defender owner');
+        assert(defender.owner == PLAYER_1, 'Tile: wrong defender owner');
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid dispatched',))]
     fn test_tile_battle_invalid_dispatched() {
-        let mut attacker = TileTrait::new(0, 3, 'a');
+        let mut attacker = TileTrait::new(0, 3, PLAYER_1);
         let mut defender = TileTrait::new(1, 2, 'd');
         attacker.attack(3, ref defender);
     }
@@ -796,12 +664,12 @@ mod tests {
     #[available_gas(500_000)]
     fn test_tile_dedup() {
         let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(1, 0, 'a'));
-        tiles.append(TileTrait::new(2, 0, 'a'));
-        tiles.append(TileTrait::new(3, 0, 'a'));
+        tiles.append(TileTrait::new(1, 0, PLAYER_1));
+        tiles.append(TileTrait::new(2, 0, PLAYER_1));
+        tiles.append(TileTrait::new(3, 0, PLAYER_1));
         let mut array = array![0, 1, 2].span();
         let mut drops = array![1, 2].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
         assert(deduped == array![0].span(), 'Tile: wrong dedup');
     }
 
@@ -809,12 +677,12 @@ mod tests {
     #[available_gas(500_000)]
     fn test_tile_dedup_not_owned() {
         let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, 'b'));
-        tiles.append(TileTrait::new(1, 0, 'a'));
-        tiles.append(TileTrait::new(2, 0, 'a'));
+        tiles.append(TileTrait::new(0, 0, PLAYER_2));
+        tiles.append(TileTrait::new(1, 0, PLAYER_1));
+        tiles.append(TileTrait::new(2, 0, PLAYER_1));
         let mut array = array![0, 1, 2].span();
         let mut drops = array![1, 2].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
         assert(deduped == array![].span(), 'Tile: wrong dedup');
     }
 
@@ -822,12 +690,12 @@ mod tests {
     #[available_gas(500_000)]
     fn test_tile_dedup_no_intersection() {
         let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, 'a'));
-        tiles.append(TileTrait::new(1, 0, 'a'));
-        tiles.append(TileTrait::new(2, 0, 'a'));
+        tiles.append(TileTrait::new(0, 0, PLAYER_1));
+        tiles.append(TileTrait::new(1, 0, PLAYER_1));
+        tiles.append(TileTrait::new(2, 0, PLAYER_1));
         let mut array = array![0, 1, 2].span();
         let mut drops = array![3, 4, 5].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
         assert(deduped == array![0, 1, 2].span(), 'Tile: wrong dedup');
     }
 
@@ -837,7 +705,7 @@ mod tests {
         let mut tiles: Array<Tile> = array![];
         let mut array = array![].span();
         let mut drops = array![3, 4, 5].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
         assert(deduped == array![].span(), 'Tile: wrong dedup');
     }
 
@@ -845,48 +713,50 @@ mod tests {
     #[available_gas(500_000)]
     fn test_tile_dedup_drops_empty() {
         let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, 'a'));
-        tiles.append(TileTrait::new(1, 0, 'a'));
-        tiles.append(TileTrait::new(2, 0, 'a'));
+        tiles.append(TileTrait::new(0, 0, PLAYER_1));
+        tiles.append(TileTrait::new(1, 0, PLAYER_1));
+        tiles.append(TileTrait::new(2, 0, PLAYER_1));
         let mut array = array![0, 1, 2].span();
         let mut drops = array![].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @'a');
+        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
         assert(deduped == array![0, 1, 2].span(), 'Tile: wrong dedup');
     }
 
     #[test]
     #[available_gas(150_000_000)]
     fn test_tile_connected() {
+        let tile_count: u8 = config::TILE_NUMBER.try_into().unwrap();
         let mut tiles: Array<Tile> = array![];
         let mut index = 0;
         loop {
-            if index > 49 {
+            if index >= tile_count {
                 break;
             };
-            tiles.append(TileTrait::new(index, 0, 'a'));
+            tiles.append(TileTrait::new(index, 0, PLAYER_1));
             index += 1;
         };
         let mut visiteds = array![];
-        let connection = _connected(0, 49, @'a', tiles.span(), ref visiteds);
+        let connection = _connected(0, tile_count - 1, @PLAYER_1, tiles.span(), ref visiteds);
         assert(connection, 'Tile: wrong connection status');
     }
 
     #[test]
     #[available_gas(150_000_000)]
     fn test_tile_not_connected() {
+        let tile_count: u8 = config::TILE_NUMBER.try_into().unwrap();
         let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, 'a'));
+        tiles.append(TileTrait::new(0, 0, PLAYER_1));
+        tiles.append(TileTrait::new(1, 0, PLAYER_1));
         let mut index = 2;
         loop {
-            if index > 49 {
+            if index >= tile_count {
                 break;
             };
-            tiles.append(TileTrait::new(index, 0, 'b'));
+            tiles.append(TileTrait::new(index, 0, PLAYER_2));
             index += 1;
         };
-        tiles.append(TileTrait::new(1, 0, 'a'));
         let mut visiteds = array![];
-        let connection = _connected(0, 49, @'a', tiles.span(), ref visiteds);
+        let connection = _connected(0, tile_count - 1, @PLAYER_1, tiles.span(), ref visiteds);
         assert(!connection, 'Tile: wrong connection status');
     }
 }
