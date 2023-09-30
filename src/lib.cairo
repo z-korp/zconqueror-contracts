@@ -20,12 +20,14 @@ mod components {
 
 mod systems {
     mod create;
+    mod supply;
 }
 
 #[cfg(test)]
 mod tests {
     mod setup;
     mod create;
+    mod supply;
 }
 
-use zrisk::data::v00 as config;
+use zrisk::data::v01 as config;

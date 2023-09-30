@@ -5,16 +5,18 @@ struct Player {
     #[key]
     game_id: u32,
     #[key]
-    order: u8,
+    index: u32,
+    address: ContractAddress,
     name: felt252,
+    supply: u32,
 }
 
 trait PlayerTrait {
-    fn new(game_id: u32, order: u8, name: felt252) -> Player;
+    fn new(game_id: u32, index: u32, address: ContractAddress, name: felt252) -> Player;
 }
 
 impl PlayerImpl of PlayerTrait {
-    fn new(game_id: u32, order: u8, name: felt252) -> Player {
-        Player { game_id, order, name }
+    fn new(game_id: u32, index: u32, address: ContractAddress, name: felt252) -> Player {
+        Player { game_id, index, address, name, supply: 0 }
     }
 }

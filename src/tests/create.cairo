@@ -21,7 +21,7 @@ use dojo::test_utils::spawn_test_world;
 // Internal imports
 
 use zrisk::config::TILE_NUMBER;
-use zrisk::components::game::Game;
+use zrisk::components::game::{Game, GameTrait};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
 use zrisk::tests::setup::setup;
@@ -48,6 +48,7 @@ fn test_create() {
     assert(game.seed == SEED, 'Game: wrong seed');
     assert(game.over == false, 'Game: wrong status');
     assert(game.player_count == PLAYER_COUNT, 'Game: wrong player count');
+    assert(game.get_player_index() == 0, 'Game: wrong player index');
 
     // [Assert] Players
     let mut player_index: u8 = 0;
@@ -55,10 +56,15 @@ fn test_create() {
         if player_index == PLAYER_COUNT {
             break;
         }
-        let player: Player = get!(world, (0, player_index).into(), (Player));
+        let player: Player = get!(world, (game.id, player_index).into(), (Player));
+        let player_name: u256 = player.name.into();
         assert(player.game_id == game.id, 'Player: wrong game id');
-        assert(player.order == player_index, 'Player: wrong order');
-        assert(player.name == player_index.into() || player.name == NAME, 'Player: wrong name');
+        assert(player.index == player_index.into(), 'Player: wrong order');
+        assert(player.address.is_zero(), 'Player: wrong address');
+        assert(player_name < PLAYER_COUNT.into() || player.name == NAME, 'Player: wrong name');
+        assert(
+            (player_index != 0 && player.supply == 0) || player.supply > 0, 'Player: wrong supply'
+        );
         player_index += 1;
     };
 
@@ -68,9 +74,9 @@ fn test_create() {
         if TILE_NUMBER == tile_index.into() {
             break;
         }
-        let tile: Tile = get!(world, (0, tile_index).into(), (Tile));
+        let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
         assert(tile.game_id == game.id, 'Tile: wrong game id');
-        assert(tile.id == tile_index, 'Tile: wrong tile id');
+        assert(tile.index == tile_index, 'Tile: wrong tile id');
         assert(tile.army > 0, 'Tile: wrong army');
         assert(tile.owner < PLAYER_COUNT.into(), 'Tile: wrong owner');
         assert(tile.dispatched == 0, 'Tile: wrong dispatched');

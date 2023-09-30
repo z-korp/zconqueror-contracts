@@ -18,9 +18,9 @@ use zrisk::components::tile::{Tile as TileComponent};
 #[derive(Drop, Copy, Serde)]
 struct Tile {
     id: u8,
-    army: u8,
+    army: u32,
     owner: u32,
-    dispatched: u8,
+    dispatched: u32,
     faction: felt252,
     neighbors: Span<u8>
 }
@@ -44,7 +44,7 @@ trait TileTrait {
     /// * `owner` - The owner id of the territory.
     /// # Returns
     /// * The initialized `Tile`.
-    fn new(id: u8, army: u8, owner: u32) -> Tile;
+    fn new(id: u8, army: u32, owner: u32) -> Tile;
     /// Returns a new `Option<Tile>` struct.
     /// # Arguments
     /// * `id` - The territory id.
@@ -52,7 +52,7 @@ trait TileTrait {
     /// * `owner` - The owner id of the territory.
     /// # Returns
     /// * The initialized `Option<Tile>`.
-    fn try_new(id: u8, army: u8, owner: u32) -> Option<Tile>;
+    fn try_new(id: u8, army: u32, owner: u32) -> Option<Tile>;
     /// Load Tile from TileComponent.
     /// # Arguments
     /// * `self` - The tile.
@@ -68,7 +68,7 @@ trait TileTrait {
     /// * `self` - The tile.
     /// * `dispatched` - The dispatched army.
     /// * `defender` - The defending tile.
-    fn attack(ref self: Tile, dispatched: u8, ref defender: Tile);
+    fn attack(ref self: Tile, dispatched: u32, ref defender: Tile);
     /// Defends the tile from an attack.
     /// # Arguments
     /// * `self` - The tile.
@@ -79,24 +79,24 @@ trait TileTrait {
     /// # Arguments
     /// * `self` - The tile.
     /// * `army` - The army to supply.
-    fn supply(ref self: Tile, army: u8);
+    fn supply(ref self: Tile, army: u32);
     /// Transfers an army from the tile to another tile.
     /// # Arguments
     /// * `self` - The tile.
     /// * `to` - The tile to transfer the army to.
     /// * `army` - The army to transfer.
-    fn transfer(ref self: Tile, ref to: Tile, army: u8);
+    fn transfer(ref self: Tile, ref to: Tile, army: u32);
 }
 
 /// Implementation of the `TileTrait` for the `Tile` struct.
 impl TileImpl of TileTrait {
-    fn new(id: u8, army: u8, owner: u32) -> Tile {
+    fn new(id: u8, army: u32, owner: u32) -> Tile {
         let faction = config::faction(id).expect(errors::INVLID_ID);
         let neighbors = config::neighbors(id).expect(errors::INVLID_ID);
         Tile { id, army, owner, dispatched: 0, faction, neighbors: neighbors }
     }
 
-    fn try_new(id: u8, army: u8, owner: u32) -> Option<Tile> {
+    fn try_new(id: u8, army: u32, owner: u32) -> Option<Tile> {
         let wrapped_faction = config::faction(id);
         let wrapped_neighbors = config::neighbors(id);
         match wrapped_faction {
@@ -116,7 +116,7 @@ impl TileImpl of TileTrait {
     }
 
     fn load(tile: @TileComponent) -> Tile {
-        let id = *tile.id;
+        let id = *tile.index;
         Tile {
             id: id,
             army: *tile.army,
@@ -130,14 +130,14 @@ impl TileImpl of TileTrait {
     fn dump(self: @Tile, game_id: u32) -> TileComponent {
         TileComponent {
             game_id: game_id,
-            id: *self.id,
+            index: *self.id,
             army: *self.army,
             owner: *self.owner,
             dispatched: *self.dispatched,
         }
     }
 
-    fn attack(ref self: Tile, dispatched: u8, ref defender: Tile) {
+    fn attack(ref self: Tile, dispatched: u32, ref defender: Tile) {
         // [Check] Dispatched < army
         assert(dispatched < self.army, errors::INVALID_DISPATCHED);
         // [Check] Attack a neighbor
@@ -164,11 +164,11 @@ impl TileImpl of TileTrait {
         };
     }
 
-    fn supply(ref self: Tile, army: u8) {
+    fn supply(ref self: Tile, army: u32) {
         self.army += army;
     }
 
-    fn transfer(ref self: Tile, ref to: Tile, army: u8) {
+    fn transfer(ref self: Tile, ref to: Tile, army: u32) {
         // [Check] Both tiles are owned by the same player
         assert(self.owner == to.owner, errors::INVALID_OWNER);
         // [Check] From tile army is greater than the transfered army
@@ -186,7 +186,7 @@ impl TileImpl of TileTrait {
 /// * `offensives` - The offensive army.
 /// # Returns
 /// * The defensive and offensive survivors.
-fn _battle(mut defensives: u8, mut offensives: u8, ref dice: Dice) -> (u8, u8) {
+fn _battle(mut defensives: u32, mut offensives: u32, ref dice: Dice) -> (u32, u32) {
     // [Compute] Losses
     let mut index = 0;
     loop {
@@ -218,7 +218,7 @@ fn _battle(mut defensives: u8, mut offensives: u8, ref dice: Dice) -> (u8, u8) {
 /// * `offensive` - The offensive values.
 /// # Returns
 /// * The defensive and offensive losses.
-fn _round(defensive: u8, offensive: u8, ref dice: Dice) -> (u8, u8) {
+fn _round(defensive: u32, offensive: u32, ref dice: Dice) -> (u32, u32) {
     // [Compute] Defensive dice roll values
     let mut defensive_values: Array<u8> = ArrayTrait::new();
     let mut index = 0;
@@ -253,7 +253,7 @@ fn _round(defensive: u8, offensive: u8, ref dice: Dice) -> (u8, u8) {
 /// * `offensive` - The offensive values.
 /// # Returns
 /// * The defensive and offensive losses.
-fn _duel(ref defensive: Span<u8>, ref offensive: Span<u8>) -> (u8, u8) {
+fn _duel(ref defensive: Span<u8>, ref offensive: Span<u8>) -> (u32, u32) {
     let mut defensive_losses = 0;
     let mut offensive_losses = 0;
 
@@ -418,6 +418,7 @@ mod tests {
 
     // Constants
 
+    const SEED: felt252 = 'seed';
     const PLAYER_1: u32 = 0;
     const PLAYER_2: u32 = 1;
 
@@ -484,7 +485,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_attack_and_defend() {
-        let mut dice = DiceTrait::new('seed');
+        let mut dice = DiceTrait::new(SEED);
         let mut attacker = TileTrait::new(0, 4, PLAYER_1);
         let mut neighbors = config::neighbors(0).expect('Tile: invalid id');
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
@@ -619,7 +620,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_round() {
-        let mut dice = DiceTrait::new('seed');
+        let mut dice = DiceTrait::new(SEED);
         let defensive = 2;
         let offensive = 3;
         let (defensive_losses, offensive_losses) = _round(defensive, offensive, ref dice);
@@ -630,7 +631,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_battle_small() {
-        let mut dice = DiceTrait::new('seed');
+        let mut dice = DiceTrait::new(SEED);
         let defensive = 2;
         let offensive = 3;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
@@ -641,7 +642,7 @@ mod tests {
     #[test]
     #[available_gas(10_000_000)]
     fn test_tile_battle_big_conquered() {
-        let mut dice = DiceTrait::new('seed');
+        let mut dice = DiceTrait::new(SEED);
         let defensive = 20;
         let offensive = 30;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
@@ -652,7 +653,7 @@ mod tests {
     #[test]
     #[available_gas(10_000_000)]
     fn test_tile_battle_big_repelled() {
-        let mut dice = DiceTrait::new('seed');
+        let mut dice = DiceTrait::new(SEED);
         let defensive = 30;
         let offensive = 20;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);

@@ -3,8 +3,8 @@ struct Tile {
     #[key]
     game_id: u32,
     #[key]
-    id: u8,
-    army: u8,
+    index: u8,
+    army: u32,
     owner: u32,
-    dispatched: u8,
+    dispatched: u32,
 }

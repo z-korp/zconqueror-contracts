@@ -22,7 +22,6 @@ const MULTIPLIER: u128 = 10_000;
 /// Map struct.
 #[derive(Destruct)]
 struct Map {
-    id: u8,
     realms: Felt252Dict<Nullable<Span<Tile>>>,
 }
 
@@ -38,22 +37,27 @@ mod errors {
 trait MapTrait {
     /// Returns a new `Map` struct.
     /// # Arguments
-    /// * `id` - The territory id.
     /// * `seed` - A seed to generate the map.
     /// * `player_count` - The number of players.
     /// * `tile_count` - The number of tiles.
     /// * `army_count` - The number of army of each player.
     /// # Returns
     /// * The initialized `Map`.
-    fn new(id: u8, seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map;
+    fn new(seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map;
     /// Returns the `Map` struct according to the tiles.
     /// # Arguments
-    /// * `id` - The territory id.
     /// * `player_count` - The number of players.
     /// * `tiles` - The tiles.
     /// # Returns
     /// * The initialized `Map`.
-    fn from_tiles(id: u8, player_count: u32, tiles: Span<Tile>) -> Map;
+    fn from_tiles(player_count: u32, tiles: Span<Tile>) -> Map;
+    /// Returns the player tiles.
+    /// # Arguments
+    /// * `self` - The map.
+    /// * `player_index` - The player index.
+    /// # Returns
+    /// * The player tiles.
+    fn player_tiles(ref self: Map, player_index: u32) -> Span<Tile>;
     /// Computes the score of a player.
     /// # Arguments
     /// * `self` - The map.
@@ -65,7 +69,7 @@ trait MapTrait {
 
 /// Implementation of the `MapTrait` for the `Map` struct.
 impl MapImpl of MapTrait {
-    fn new(id: u8, seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map {
+    fn new(seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map {
         // [Check] There is enough army to supply at least 1 unit per tile
         assert(player_count * army_count >= tile_count, errors::INVALID_ARMY_COUNT);
         // [Compute] Seed in u256 for futher operations
@@ -110,7 +114,7 @@ impl MapImpl of MapTrait {
                 // Increase army of the current tile with the unit
                 let mut tile: Tile = tiles.pop_front().expect(errors::TILES_EMPTY);
                 // TODO: Check if it is better to conditonate the following lines
-                tile.army += unit;
+                tile.army += unit.into();
                 remaining_army -= unit.into();
                 tiles.append(tile);
             };
@@ -118,10 +122,10 @@ impl MapImpl of MapTrait {
             realms.insert(player_index.into(), nullable_from_box(BoxTrait::new(tiles.span())));
             player_index += 1;
         };
-        Map { id, realms }
+        Map { realms }
     }
 
-    fn from_tiles(id: u8, player_count: u32, tiles: Span<Tile>) -> Map {
+    fn from_tiles(player_count: u32, tiles: Span<Tile>) -> Map {
         let mut realms: Felt252Dict<Nullable<Span<Tile>>> = Default::default();
         let mut player_index = 0;
         loop {
@@ -144,15 +148,19 @@ impl MapImpl of MapTrait {
                 .insert(player_index.into(), nullable_from_box(BoxTrait::new(player_tiles.span())));
             player_index += 1;
         };
-        Map { id, realms }
+        Map { realms }
+    }
+
+    fn player_tiles(ref self: Map, player_index: u32) -> Span<Tile> {
+        match match_nullable(self.realms.get(player_index.into())) {
+            FromNullableResult::Null => panic(array![errors::TILES_UNBOX_ISSUE]),
+            FromNullableResult::NotNull(status) => status.unbox(),
+        }
     }
 
     fn score(ref self: Map, player_index: u32) -> u32 {
         // [Compute] Player tiles count
-        let mut player_tiles = match match_nullable(self.realms.get(player_index.into())) {
-            FromNullableResult::Null => panic(array![errors::TILES_UNBOX_ISSUE]),
-            FromNullableResult::NotNull(status) => status.unbox(),
-        };
+        let mut player_tiles = self.player_tiles(player_index);
         let mut score = player_tiles.len();
 
         // [Compute] Convert player tiles from span into array for efficiency
@@ -200,12 +208,8 @@ impl MapImpl of MapTrait {
             };
         };
 
-        // [Return] Max(3, score)
-        if score < 3 {
-            3
-        } else {
-            score
-        }
+        // [Return] Score
+        score
     }
 }
 
@@ -257,8 +261,7 @@ mod tests {
     #[test]
     #[available_gas(18_000_000)]
     fn test_map_new() {
-        let map = MapTrait::new(1, SEED, PLAYER_NUMBER, config::TILE_NUMBER, config::ARMY_NUMBER);
-        assert(map.id == 1, 'Map: wrong id');
+        MapTrait::new(SEED, PLAYER_NUMBER, config::TILE_NUMBER, config::ARMY_NUMBER);
     }
 
     #[test]
@@ -267,8 +270,21 @@ mod tests {
         let mut tiles: Array<Tile> = array![];
         tiles.append(TileTrait::new(0, 0, PLAYER_1));
         tiles.append(TileTrait::new(1, 0, PLAYER_1));
-        let map = MapTrait::from_tiles(1, PLAYER_NUMBER, tiles.span());
-        assert(map.id == 1, 'Map: wrong id');
+        MapTrait::from_tiles(PLAYER_NUMBER, tiles.span());
+    }
+
+    #[test]
+    #[available_gas(18_000_000)]
+    fn test_map_player_tiles() {
+        let mut tiles: Array<Tile> = array![];
+        tiles.append(TileTrait::new(0, 0, PLAYER_1));
+        tiles.append(TileTrait::new(1, 0, PLAYER_1));
+        tiles.append(TileTrait::new(2, 0, PLAYER_1));
+        tiles.append(TileTrait::new(3, 0, PLAYER_2));
+        tiles.append(TileTrait::new(4, 0, PLAYER_2));
+        let mut map = MapTrait::from_tiles(PLAYER_NUMBER, tiles.span());
+        assert(map.player_tiles(PLAYER_1).len() == 3, 'Map: wrong player tiles');
+        assert(map.player_tiles(PLAYER_2).len() == 2, 'Map: wrong player tiles');
     }
 
     #[test]
@@ -280,7 +296,7 @@ mod tests {
         tiles.append(TileTrait::new(2, 0, PLAYER_1));
         tiles.append(TileTrait::new(3, 0, PLAYER_1));
         tiles.append(TileTrait::new(4, 0, PLAYER_1));
-        let mut map = MapTrait::from_tiles(1, PLAYER_NUMBER, tiles.span());
+        let mut map = MapTrait::from_tiles(PLAYER_NUMBER, tiles.span());
         assert(map.score(PLAYER_1) >= 5, 'Map: wrong score');
     }
 }

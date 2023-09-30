@@ -15,13 +15,13 @@ mod create {
 
     use zrisk::components::game::{Game, GameTrait};
     use zrisk::components::player::{Player, PlayerTrait};
-    use zrisk::components::tile::{Tile as TileComponent};
+    use zrisk::components::tile::{Tile};
 
     // Entities imports
 
     use zrisk::entities::map::{Map, MapTrait};
     use zrisk::entities::deck::{Deck, DeckTrait};
-    use zrisk::entities::tile::{Tile, TileTrait};
+    use zrisk::entities::tile::{Tile as TileEntity, TileTrait};
 
     // Internal imports
 
@@ -39,27 +39,8 @@ mod create {
         let mut game = GameTrait::new(account, game_id, seed, player_count);
         set!(ctx.world, (game));
 
-        // [Command] Player entities
-        // Use the deck mechanism to define the player order, human player is 1
-        let mut deck = DeckTrait::new(game.seed, game.player_count.into());
-        let mut player_index = 0;
-        loop {
-            if player_index == game.player_count {
-                break;
-            }
-            let card = deck.draw() - 1;
-            let player = if card == 1 {
-                PlayerTrait::new(game_id, card, name)
-            } else {
-                PlayerTrait::new(game_id, card, card.into())
-            };
-            set!(ctx.world, (player));
-            player_index += 1;
-        };
-
         // [Command] Tile entities
         let mut map = MapTrait::new(
-            id: 1,
             seed: game.seed,
             player_count: game.player_count.into(),
             tile_count: TILE_NUMBER,
@@ -70,14 +51,11 @@ mod create {
             if player_index == game.player_count {
                 break;
             }
-            let mut tiles = match match_nullable(map.realms.get(player_index.into())) {
-                FromNullableResult::Null => panic(array![errors::TILES_UNBOX_ISSUE]),
-                FromNullableResult::NotNull(status) => status.unbox(),
-            };
+            let mut player_tiles = map.player_tiles(player_index.into());
             loop {
-                match tiles.pop_front() {
+                match player_tiles.pop_front() {
                     Option::Some(tile) => {
-                        let tile: TileComponent = tile.dump(game.id);
+                        let tile: Tile = tile.dump(game.id);
                         set!(ctx.world, (tile));
                     },
                     Option::None => {
@@ -85,6 +63,35 @@ mod create {
                     },
                 };
             };
+            player_index += 1;
+        };
+
+        // [Command] Player entities
+        // Use the deck mechanism to define the player order, human player is 1
+        // First player got his supply set
+        let mut deck = DeckTrait::new(game.seed, game.player_count.into());
+        let mut player_index = 0;
+        loop {
+            if player_index == game.player_count {
+                break;
+            }
+            let card = deck.draw() - 1;
+            let mut player = if card == 1 {
+                PlayerTrait::new(game_id, player_index.into(), address: ctx.origin, name: name)
+            } else {
+                PlayerTrait::new(
+                    game_id, player_index.into(), address: ctx.origin, name: card.into()
+                )
+            };
+            if player_index == 0 {
+                let player_score = map.score(player_index.into());
+                player.supply = if player_score < 3 {
+                    3
+                } else {
+                    player_score
+                };
+            }
+            set!(ctx.world, (player));
             player_index += 1;
         };
     }
