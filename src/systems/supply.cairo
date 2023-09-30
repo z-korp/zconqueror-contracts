@@ -1,13 +1,5 @@
 #[system]
 mod supply {
-    // Core imports
-
-    use core::dict::Felt252DictTrait;
-    use array::{ArrayTrait, SpanTrait};
-    use traits::Into;
-    use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
-    use debug::PrintTrait;
-
     // Dojo imports
 
     use dojo::world::{Context, IWorld};
@@ -15,14 +7,8 @@ mod supply {
     // Components imports
 
     use zrisk::components::game::{Game, GameTrait};
-    use zrisk::components::player::{Player, PlayerTrait};
-    use zrisk::components::tile::{Tile};
-
-    // Entities imports
-
-    use zrisk::entities::map::{Map, MapTrait};
-    use zrisk::entities::deck::{Deck, DeckTrait};
-    use zrisk::entities::tile::{Tile as TileEntity, TileTrait};
+    use zrisk::components::player::Player;
+    use zrisk::components::tile::Tile;
 
     // Internal imports
 

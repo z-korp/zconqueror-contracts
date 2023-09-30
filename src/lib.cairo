@@ -30,4 +30,4 @@ mod tests {
     mod supply;
 }
 
-use zrisk::data::v01 as config;
+use zrisk::data::v00 as config;
