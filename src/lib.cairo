@@ -21,6 +21,7 @@ mod components {
 mod systems {
     mod create;
     mod supply;
+    mod transfer;
 }
 
 #[cfg(test)]
@@ -28,6 +29,7 @@ mod tests {
     mod setup;
     mod create;
     mod supply;
+    mod transfer;
 }
 
 use zrisk::data::v00 as config;

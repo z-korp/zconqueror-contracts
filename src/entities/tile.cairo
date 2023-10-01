@@ -63,6 +63,12 @@ trait TileTrait {
     /// * `self` - The tile.
     /// * `game_id` - The game id.
     fn dump(self: @Tile, game_id: u32) -> TileComponent;
+    /// Returns the connection status with a specified tile.
+    /// # Arguments
+    /// * `self` - The tile.
+    /// * `to` - The tile to test the connection with.
+    /// * `tiles` - The graph of tiles.
+    fn is_connected(self: @Tile, to: @Tile, tiles: Span<Tile>) -> bool;
     /// Dispatches an army from the tile.
     /// # Arguments
     /// * `self` - The tile.
@@ -135,6 +141,11 @@ impl TileImpl of TileTrait {
             owner: *self.owner,
             dispatched: *self.dispatched,
         }
+    }
+
+    fn is_connected(self: @Tile, to: @Tile, tiles: Span<Tile>) -> bool {
+        let mut visiteds: Array<u8> = ArrayTrait::new();
+        _connected(*self.id, *to.id, self.owner, tiles, ref visiteds)
     }
 
     fn attack(ref self: Tile, dispatched: u32, ref defender: Tile) {

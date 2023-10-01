@@ -20,6 +20,7 @@ mod setup {
     use zrisk::components::tile::{tile, Tile};
     use zrisk::systems::create::create;
     use zrisk::systems::supply::supply;
+    use zrisk::systems::transfer::transfer;
 
     fn spawn_game() -> IWorldDispatcher {
         // [Setup] Components
@@ -32,6 +33,7 @@ mod setup {
         let mut systems = array::ArrayTrait::new();
         systems.append(create::TEST_CLASS_HASH);
         systems.append(supply::TEST_CLASS_HASH);
+        systems.append(transfer::TEST_CLASS_HASH);
 
         // [Deploy]
         spawn_test_world(components, systems)
