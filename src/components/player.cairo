@@ -20,3 +20,10 @@ impl PlayerImpl of PlayerTrait {
         Player { game_id, index, address, name, supply: 0 }
     }
 }
+
+impl DefaultPlayer of Default<Player> {
+    fn default() -> Player {
+        let zero = starknet::contract_address_const::<0>();
+        Player { game_id: 0, index: 0, address: zero, name: 0, supply: 0 }
+    }
+}

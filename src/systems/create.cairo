@@ -27,12 +27,12 @@ mod create {
     }
 
     fn execute(ctx: Context, account: felt252, seed: felt252, name: felt252, player_count: u8) {
-        // [Command] Game entity
+        // [Command] Game component
         let game_id = ctx.world.uuid();
         let mut game = GameTrait::new(account, game_id, seed, player_count);
         set!(ctx.world, (game));
 
-        // [Command] Tile entities
+        // [Command] Tile components
         let mut map = MapTrait::new(
             seed: game.seed,
             player_count: game.player_count.into(),
@@ -59,7 +59,7 @@ mod create {
             player_index += 1;
         };
 
-        // [Command] Player entities
+        // [Command] Player components
         // Use the deck mechanism to define the player order, human player is 1
         // First player got his supply set
         let mut deck = DeckTrait::new(game.seed, game.player_count.into());

@@ -10,6 +10,10 @@ mod supply {
     use zrisk::components::player::Player;
     use zrisk::components::tile::Tile;
 
+    // Entities imports
+
+    use zrisk::entities::tile::{Tile as TileEntity, TileTrait as TileEntityTrait};
+
     // Internal imports
 
     use zrisk::config::TILE_NUMBER;
@@ -24,35 +28,32 @@ mod supply {
     }
 
     fn execute(ctx: Context, account: felt252, tile_index: u8, supply: u32) {
-        // [Check] Tile index is valid
-        assert(TILE_NUMBER > tile_index.into(), errors::INVALID_TILE_INDEX);
-
-        // [Command] Game entity
+        // [Command] Game component
         let mut game: Game = get!(ctx.world, account, (Game));
 
-        // [Command] Player entity
+        // [Command] Player component
         let player_key = (game.id, game.get_player_index());
         let mut player: Player = get!(ctx.world, player_key.into(), (Player));
 
         // [Check] Caller is player
         assert(player.address == ctx.origin, errors::INVALID_PLAYER);
 
-        // [Check] Player available supply
-        assert(player.supply >= supply, errors::INVALID_SUPPLY);
-
-        // [Command] Tile entity
+        // [Command] Tile component
         let tile_key = (game.id, tile_index);
         let mut tile: Tile = get!(ctx.world, tile_key.into(), (Tile));
 
         // [Check] Tile owner
         assert(tile.owner == player.index.into(), errors::INVALID_OWNER);
 
-        // [Command] Update player supply
-        player.supply -= supply;
+        // [Compute] Supply
+        let mut supplied = TileEntityTrait::load(@tile);
+        supplied.supply(ref player, supply);
+
+        // [Command] Update player
         set!(ctx.world, (player));
 
-        // [Compute] Update tile army
-        tile.army += supply;
+        // [Compute] Update tile
+        let tile = supplied.dump(game.id);
         set!(ctx.world, (tile));
     }
 }

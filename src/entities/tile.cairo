@@ -14,6 +14,7 @@ use alexandria_data_structures::array_ext::SpanTraitExt;
 use zrisk::config;
 use zrisk::entities::dice::{Dice, DiceTrait};
 use zrisk::components::tile::{Tile as TileComponent};
+use zrisk::components::player::Player;
 
 /// Tile struct.
 #[derive(Drop, Copy, Serde)]
@@ -31,7 +32,7 @@ struct Tile {
 
 /// Errors module
 mod errors {
-    const INVLID_ID: felt252 = 'Tile: invalid id';
+    const INVALID_ID: felt252 = 'Tile: invalid id';
     const INVALID_DISPATCHED: felt252 = 'Tile: invalid dispatched';
     const INVALID_ARRAY: felt252 = 'Tile: invalid array';
     const INVALID_OWNER: felt252 = 'Tile: invalid owner';
@@ -40,6 +41,8 @@ mod errors {
     const INVALID_DEFENDER: felt252 = 'Tile: invalid defender';
     const INVALID_ATTACKER: felt252 = 'Tile: invalid attacker';
     const INVALID_ORDER_STATUS: felt252 = 'Tile: invalid order status';
+    const INVALID_CONNECTION: felt252 = 'Tile: invalid connection';
+    const INVALID_SUPPLY: felt252 = 'Tile: invalid supply';
 }
 
 /// Trait to initialize and manage army from the Tile.
@@ -70,12 +73,14 @@ trait TileTrait {
     /// * `self` - The tile.
     /// * `game_id` - The game id.
     fn dump(self: @Tile, game_id: u32) -> TileComponent;
-    /// Returns the connection status with a specified tile.
+    /// Check validity.
     /// # Arguments
     /// * `self` - The tile.
-    /// * `to` - The tile to test the connection with.
-    /// * `tiles` - The graph of tiles.
-    fn is_connected(self: @Tile, to: @Tile, tiles: Span<Tile>) -> bool;
+    fn check(self: @Tile) -> bool;
+    /// Assert validity.
+    /// # Arguments
+    /// * `self` - The tile.
+    fn assert(self: @Tile);
     /// Dispatches an army from the tile.
     /// # Arguments
     /// * `self` - The tile.
@@ -94,20 +99,21 @@ trait TileTrait {
     /// # Arguments
     /// * `self` - The tile.
     /// * `army` - The army to supply.
-    fn supply(ref self: Tile, army: u32);
+    fn supply(ref self: Tile, ref player: Player, army: u32);
     /// Transfers an army from the tile to another tile.
     /// # Arguments
     /// * `self` - The tile.
     /// * `to` - The tile to transfer the army to.
     /// * `army` - The army to transfer.
-    fn transfer(ref self: Tile, ref to: Tile, army: u32);
+    /// * `tiles` - The graph of tiles.
+    fn transfer(ref self: Tile, ref to: Tile, army: u32, tiles: Span<Tile>);
 }
 
 /// Implementation of the `TileTrait` for the `Tile` struct.
 impl TileImpl of TileTrait {
     fn new(id: u8, army: u32, owner: u32) -> Tile {
-        let faction = config::faction(id).expect(errors::INVLID_ID);
-        let neighbors = config::neighbors(id).expect(errors::INVLID_ID);
+        let faction = config::faction(id).expect(errors::INVALID_ID);
+        let neighbors = config::neighbors(id).expect(errors::INVALID_ID);
         Tile {
             id, army, owner, dispatched: 0, faction, neighbors: neighbors, to: 0, from: 0, order: 0
         }
@@ -137,8 +143,8 @@ impl TileImpl of TileTrait {
             army: *tile.army,
             owner: *tile.owner,
             dispatched: *tile.dispatched,
-            faction: config::faction(id).expect(errors::INVLID_ID),
-            neighbors: config::neighbors(id).expect(errors::INVLID_ID),
+            faction: config::faction(id).expect(errors::INVALID_ID),
+            neighbors: config::neighbors(id).expect(errors::INVALID_ID),
             to: *tile.to,
             from: *tile.from,
             order: *tile.order,
@@ -158,19 +164,25 @@ impl TileImpl of TileTrait {
         }
     }
 
-    fn is_connected(self: @Tile, to: @Tile, tiles: Span<Tile>) -> bool {
-        let mut visiteds: Array<u8> = ArrayTrait::new();
-        _connected(*self.id, *to.id, self.owner, tiles, ref visiteds)
+    fn check(self: @Tile) -> bool {
+        config::TILE_NUMBER > (*self.id).into()
+    }
+
+    fn assert(self: @Tile) {
+        assert(self.check(), errors::INVALID_ID);
     }
 
     fn attack(ref self: Tile, dispatched: u32, ref defender: Tile, order: felt252) {
+        // [Check] Tile ids
+        self.assert();
+        defender.assert();
+        assert(self.id != defender.id, errors::INVALID_ID);
         // [Check] Order status is valid
         assert(self.order == 0, errors::INVALID_ORDER_STATUS);
         // [Check] Not attacking self
-        assert(self.id != defender.id, errors::INVALID_DEFENDER);
         assert(self.owner != defender.owner, errors::INVALID_OWNER);
         // [Check] Dispatched < army
-        assert(dispatched < self.army, errors::INVALID_DISPATCHED);
+        assert(dispatched > 0 && dispatched < self.army, errors::INVALID_DISPATCHED);
         // [Check] Attacker not already attacking
         assert(self.to == 0, errors::INVALID_ATTACKER);
         // [Check] Defender not already defending
@@ -187,15 +199,16 @@ impl TileImpl of TileTrait {
     }
 
     fn defend(ref self: Tile, ref attacker: Tile, ref dice: Dice, order: felt252) {
+        // [Check] Tile ids
+        self.assert();
+        attacker.assert();
+        assert(self.id != attacker.id, errors::INVALID_ID);
         // [Check] Order status is valid
         assert(attacker.order != order, errors::INVALID_ORDER_STATUS);
         // [Check] Not defending self
-        assert(self.id != attacker.id, errors::INVALID_DEFENDER);
         assert(self.owner != attacker.owner, errors::INVALID_OWNER);
         // [Check] Defended from
-        assert(self.from == attacker.id, errors::INVALID_ATTACKER);
-        // [Check] Attacking to
-        assert(attacker.to == self.id, errors::INVALID_ATTACKER);
+        assert(self.from == attacker.id && attacker.to == self.id, errors::INVALID_ATTACKER);
         // [Check] Attack from neighbor
         assert(self.neighbors.contains(attacker.id), errors::INVALID_NEIGHBOR);
         // [Compute] Battle and get survivors
@@ -217,17 +230,31 @@ impl TileImpl of TileTrait {
         self.from = 0;
     }
 
-    fn supply(ref self: Tile, army: u32) {
+    fn supply(ref self: Tile, ref player: Player, army: u32) {
+        // [Check] Tile ids
+        self.assert();
+        // [Check] Available supply
+        assert(player.supply >= army, errors::INVALID_SUPPLY);
+        // [Effect] Update army
         self.army += army;
+        // [Effect] Update supply
+        player.supply -= army;
     }
 
-    fn transfer(ref self: Tile, ref to: Tile, army: u32) {
+    fn transfer(ref self: Tile, ref to: Tile, army: u32, tiles: Span<Tile>) {
+        // [Check] Tile ids
+        self.assert();
+        to.assert();
+        assert(self.id != to.id, errors::INVALID_ID);
         // [Check] Both tiles are owned by the same player
         assert(self.owner == to.owner, errors::INVALID_OWNER);
         // [Check] From tile army is greater than the transfered army
         assert(self.army > army, errors::INVALID_ARMY_TRANSFER);
         // [Check] Both tiles are connected by a owned path
-        // TODO: when neighbors are defined and implemented
+        let mut visiteds: Array<u8> = ArrayTrait::new();
+        let connection = _connected(self.id, to.id, @self.owner, tiles, ref visiteds);
+        assert(connection, errors::INVALID_CONNECTION);
+        // [Effect] Update armies
         self.army -= army;
         to.army += army;
     }
@@ -392,7 +419,7 @@ fn _connected(
     if source == target && tiles.at(source.into()).owner == owner {
         return true;
     };
-    let mut neighbors = config::neighbors(source).expect(errors::INVLID_ID);
+    let mut neighbors = config::neighbors(source).expect(errors::INVALID_ID);
     let mut unvisiteds = _owned_dedup(ref neighbors, tiles, visiteds.span(), owner);
     visiteds.append(source);
     _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds)
@@ -467,6 +494,7 @@ mod tests {
     // Internal imports
 
     use zrisk::config;
+    use zrisk::components::player::Player;
     use zrisk::entities::dice::{Dice, DiceTrait};
 
     // Local imports
@@ -482,7 +510,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_new_revert_invalid_id() {
+    fn test_tile_new_invalid_id() {
         TileTrait::new(100, 4, PLAYER_1);
     }
 
@@ -497,7 +525,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_try_new_revert_invalid_id() {
+    fn test_tile_try_new_invalid_id() {
         let wrapped_tile = TileTrait::try_new(100, 4, PLAYER_1);
         wrapped_tile.expect('Tile: invalid id');
     }
@@ -505,18 +533,50 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_supply() {
+        let mut player: Player = Default::default();
+        player.supply = 5;
         let mut tile = TileTrait::new(0, 4, PLAYER_1);
         assert(tile.army == 4, 'Tile: wrong tile army');
-        tile.supply(2);
+        tile.supply(ref player, 2);
         assert(tile.army == 6, 'Tile: wrong tile army');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_supply_invalid_id() {
+        let invalid_id = config::TILE_NUMBER.try_into().unwrap();
+        let mut player: Player = Default::default();
+        player.supply = 4;
+        let mut tile = TileTrait::new(invalid_id, 4, PLAYER_1);
+        tile.supply(ref player, 2);
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid supply',))]
+    fn test_tile_supply_invalid_supply() {
+        let mut player: Player = Default::default();
+        player.supply = 1;
+        let mut tile = TileTrait::new(0, 4, PLAYER_1);
+        tile.supply(ref player, 2);
     }
 
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_transfer() {
         let mut from = TileTrait::new(0, 4, PLAYER_1);
-        let mut to = TileTrait::new(0, 2, PLAYER_1);
-        from.transfer(ref to, 2);
+        let mut to = TileTrait::new(1, 2, PLAYER_1);
+        let mut tiles: Array<Tile> = array![];
+        let mut tile_index: u8 = 0;
+        loop {
+            if config::TILE_NUMBER == tile_index.into() {
+                break;
+            };
+            tiles.append(TileTrait::new(tile_index, 0, PLAYER_1));
+            tile_index += 1;
+        };
+        from.transfer(ref to, 2, tiles.span());
         assert(from.army == 2, 'Tile: wrong from army');
         assert(to.army == 4, 'Tile: wrong to army');
     }
@@ -524,19 +584,84 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid owner',))]
-    fn test_tile_transfer_revert_invalid_owner() {
+    fn test_tile_transfer_invalid_owner() {
         let mut from = TileTrait::new(0, 4, PLAYER_1);
-        let mut to = TileTrait::new(0, 2, PLAYER_2);
-        from.transfer(ref to, 2);
+        let mut to = TileTrait::new(1, 2, PLAYER_2);
+        from.transfer(ref to, 2, array![].span());
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_transfer_invalid_from_id() {
+        let invalid_id: u8 = config::TILE_NUMBER.try_into().unwrap();
+        let mut from = TileTrait::new(invalid_id, 4, PLAYER_1);
+        let mut to = TileTrait::new(1, 2, PLAYER_1);
+        from.transfer(ref to, 2, array![].span());
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_transfer_invalid_to_id() {
+        let invalid_id: u8 = config::TILE_NUMBER.try_into().unwrap();
+        let mut from = TileTrait::new(0, 4, PLAYER_1);
+        let mut to = TileTrait::new(invalid_id, 2, PLAYER_1);
+        from.transfer(ref to, 2, array![].span());
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_transfer_invalid_id() {
+        let mut from = TileTrait::new(0, 4, PLAYER_1);
+        let mut to = TileTrait::new(0, 2, PLAYER_1);
+        from.transfer(ref to, 2, array![].span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid army transfer',))]
-    fn test_tile_transfer_revert_invalid_army_transfer() {
+    fn test_tile_transfer_invalid_army_transfer() {
         let mut from = TileTrait::new(0, 4, PLAYER_1);
-        let mut to = TileTrait::new(0, 2, PLAYER_1);
-        from.transfer(ref to, 5);
+        let mut to = TileTrait::new(1, 2, PLAYER_1);
+        from.transfer(ref to, 5, array![].span());
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid connection',))]
+    fn test_tile_transfer_invalid_connection() {
+        let mut from = TileTrait::new(0, 4, PLAYER_1);
+        // [Compute] Not connected tile
+        let mut neighbors = config::neighbors(from.id).expect('Tile: invalid id');
+        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
+        let mut connected = TileTrait::new(*neighbor, 2, PLAYER_2);
+        let mut foreigners = config::neighbors(connected.id).expect('Tile: invalid id');
+        let index = loop {
+            match foreigners.pop_front() {
+                Option::Some(index) => {
+                    if index != @from.id && !neighbors.contains(*index) {
+                        break index;
+                    };
+                },
+                Option::None => {
+                    panic(array!['Tile: foreigner not found']);
+                },
+            };
+        };
+        let mut to = TileTrait::new(*index, 2, PLAYER_1);
+        // [Compute] Graph of tiles
+        let mut tiles: Array<Tile> = array![];
+        let mut tile_index: u8 = 0;
+        loop {
+            if config::TILE_NUMBER == tile_index.into() {
+                break;
+            };
+            tiles.append(TileTrait::new(tile_index, 0, PLAYER_2));
+            tile_index += 1;
+        };
+        from.transfer(ref to, 2, tiles.span());
     }
 
     #[test]
@@ -563,6 +688,36 @@ mod tests {
 
     #[test]
     #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_attack_invalid_attacker_id() {
+        let invalid_id = config::TILE_NUMBER.try_into().unwrap();
+        let mut attacker = TileTrait::new(invalid_id, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
+        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
+        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        attacker.attack(3, ref defender, 'ATTACK');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_attack_invalid_defender_id() {
+        let invalid_id = config::TILE_NUMBER.try_into().unwrap();
+        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
+        let mut defender = TileTrait::new(invalid_id, 2, PLAYER_2);
+        attacker.attack(3, ref defender, 'ATTACK');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_attack_invalid_id() {
+        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
+        attacker.attack(3, ref attacker, 'ATTACK');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid order status',))]
     fn test_tile_attack_invalid_order() {
         let mut dice = DiceTrait::new(SEED);
@@ -570,9 +725,9 @@ mod tests {
         let mut neighbors = config::neighbors(defender.id).expect('Tile: invalid id');
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
         let mut attacker = TileTrait::new(*neighbor, 2, PLAYER_2);
-        let mut neighbors = config::neighbors(defender.id).expect('Tile: invalid id');
+        let mut allies = config::neighbors(attacker.id).expect('Tile: invalid id');
         let index = loop {
-            match neighbors.pop_front() {
+            match allies.pop_front() {
                 Option::Some(index) => {
                     if index != @defender.id {
                         break index;
@@ -586,16 +741,6 @@ mod tests {
         let mut ally = TileTrait::new(*index, 2, PLAYER_1);
         attacker.attack(1, ref defender, 'ATTACK');
         attacker.attack(1, ref ally, 'ATTACK');
-    }
-
-    #[test]
-    #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid defender',))]
-    fn test_tile_attack_invalid_defender_self_attack() {
-        let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut defender = TileTrait::new(0, 4, PLAYER_2);
-        attacker.attack(3, ref defender, 'ATTACK');
     }
 
     #[test]
@@ -620,6 +765,18 @@ mod tests {
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
         let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(10, ref defender, 'ATTACK');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid dispatched',))]
+    fn test_tile_attack_invalid_no_dispatched() {
+        let mut dice = DiceTrait::new(SEED);
+        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
+        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
+        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        attacker.attack(0, ref defender, 'ATTACK');
     }
 
     #[test]
@@ -692,8 +849,30 @@ mod tests {
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid defender',))]
-    fn test_tile_attack_and_defend_invalid_defender() {
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_attack_and_defend_invalid_attacker_id() {
+        let invalid_id = config::TILE_NUMBER.try_into().unwrap();
+        let mut dice = DiceTrait::new(SEED);
+        let mut attacker = TileTrait::new(invalid_id, 4, PLAYER_1);
+        let mut defender = TileTrait::new(0, 2, PLAYER_1);
+        defender.defend(ref attacker, ref dice, 'ATTACK');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_attack_and_defend_invalid_defender_id() {
+        let invalid_id = config::TILE_NUMBER.try_into().unwrap();
+        let mut dice = DiceTrait::new(SEED);
+        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
+        let mut defender = TileTrait::new(invalid_id, 2, PLAYER_1);
+        defender.defend(ref attacker, ref dice, 'ATTACK');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Tile: invalid id',))]
+    fn test_tile_attack_and_defend_invalid_id() {
         let mut dice = DiceTrait::new(SEED);
         let mut attacker = TileTrait::new(1, 4, PLAYER_1);
         attacker.defend(ref attacker, ref dice, 'DEFEND');

@@ -10,8 +10,6 @@ use debug::PrintTrait;
 
 // Starknet imports
 
-use starknet::{ContractAddress, syscalls::deploy_syscall};
-use starknet::class_hash::{ClassHash, Felt252TryIntoClassHash};
 use starknet::testing::set_contract_address;
 
 // Dojo imports
@@ -97,37 +95,19 @@ fn test_transfer() {
 #[available_gas(1_000_000_000)]
 #[should_panic(
     expected: (
-        'Transfer: invalid tile index',
-        'ENTRYPOINT_FAILED',
-        'ENTRYPOINT_FAILED',
-        'ENTRYPOINT_FAILED',
+        'Transfer: invalid player', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
     )
 )]
-fn test_transfer_invalid_source_index() {
+fn test_transfer_source_invalid_player() {
     // [Setup]
     let world = setup::spawn_game();
 
-    // [Transfer]
-    world.execute('transfer', array![ACCOUNT, TILE_NUMBER.into(), 0, 0]);
-}
-
-
-#[test]
-#[available_gas(1_000_000_000)]
-#[should_panic(
-    expected: (
-        'Transfer: invalid tile index',
-        'ENTRYPOINT_FAILED',
-        'ENTRYPOINT_FAILED',
-        'ENTRYPOINT_FAILED',
-    )
-)]
-fn test_transfer_invalid_target_index() {
-    // [Setup]
-    let world = setup::spawn_game();
+    // [Create]
+    world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
 
     // [Transfer]
-    world.execute('transfer', array![ACCOUNT, 0, TILE_NUMBER.into(), 0]);
+    set_contract_address(starknet::contract_address_const::<1>());
+    world.execute('transfer', array![ACCOUNT, 0, 0, 0]);
 }
 
 
@@ -145,7 +125,17 @@ fn test_transfer_source_invalid_owner() {
     // [Create]
     world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
 
+    // [Compute] Invalid owned tile
+    let game: Game = get!(world, ACCOUNT, (Game));
+    let mut index = 0;
+    loop {
+        let tile: Tile = get!(world, (game.id, index).into(), (Tile));
+        if tile.owner != PLAYER_INDEX {
+            break;
+        }
+        index += 1;
+    };
+
     // [Transfer]
-    starknet::testing::set_caller_address(starknet::contract_address_const::<1>());
-    world.execute('transfer', array![ACCOUNT, 0, 0, 0]);
+    world.execute('transfer', array![ACCOUNT, index.into(), 0, 0]);
 }

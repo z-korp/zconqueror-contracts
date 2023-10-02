@@ -21,7 +21,6 @@ use dojo::test_utils::spawn_test_world;
 
 // Internal imports
 
-use zrisk::config::TILE_NUMBER;
 use zrisk::components::game::{Game, GameTrait};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
@@ -67,4 +66,54 @@ fn test_supply() {
     // [Assert] Tile supplied
     let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
     assert(tile.army == army + supply, 'Tile: wrong army');
+}
+
+
+#[test]
+#[available_gas(1_000_000_000)]
+#[should_panic(
+    expected: (
+        'Supply: invalid player', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
+    )
+)]
+fn test_supply_invalid_player() {
+    // [Setup]
+    let world = setup::spawn_game();
+
+    // [Create]
+    world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
+
+    // [Supply]
+    set_contract_address(starknet::contract_address_const::<1>());
+    world.execute('supply', array![ACCOUNT, 0, 0]);
+}
+
+
+#[test]
+#[available_gas(1_000_000_000)]
+#[should_panic(
+    expected: (
+        'Supply: invalid owner', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
+    )
+)]
+fn test_supply_invalid_owner() {
+    // [Setup]
+    let world = setup::spawn_game();
+
+    // [Create]
+    world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
+
+    // [Compute] Invalid owned tile
+    let game: Game = get!(world, ACCOUNT, (Game));
+    let mut index = 0;
+    loop {
+        let tile: Tile = get!(world, (game.id, index).into(), (Tile));
+        if tile.owner != PLAYER_INDEX {
+            break;
+        }
+        index += 1;
+    };
+
+    // [Transfer]
+    world.execute('supply', array![ACCOUNT, 0, 0]);
 }

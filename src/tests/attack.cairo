@@ -89,48 +89,21 @@ fn test_attack() {
 #[available_gas(1_000_000_000)]
 #[should_panic(
     expected: (
-        'Attack: invalid tile index', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
+        'Attack: invalid player', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
     )
 )]
-fn test_attack_invalid_source_index() {
+fn test_attack_invalid_player() {
     // [Setup]
     let world = setup::spawn_game();
 
-    // [Attack]
-    world.execute('attack', array![ACCOUNT, config::TILE_NUMBER.into(), 0, 0]);
-}
-
-
-#[test]
-#[available_gas(1_000_000_000)]
-#[should_panic(
-    expected: (
-        'Attack: invalid tile index', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
-    )
-)]
-fn test_attack_invalid_target_index() {
-    // [Setup]
-    let world = setup::spawn_game();
+    // [Create]
+    world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
 
     // [Attack]
-    world.execute('attack', array![ACCOUNT, 0, config::TILE_NUMBER.into(), 0]);
+    starknet::testing::set_contract_address(starknet::contract_address_const::<1>());
+    world.execute('attack', array![ACCOUNT, 0, 0, 0]);
 }
 
-
-#[test]
-#[available_gas(1_000_000_000)]
-#[should_panic(
-    expected: (
-        'Attack: invalid dispatched', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
-    )
-)]
-fn test_attack_invalid_dispatched() {
-    // [Setup]
-    let world = setup::spawn_game();
-
-    // [Attack]
-    world.execute('attack', array![ACCOUNT, 0, 1, 0]);
-}
 
 #[test]
 #[available_gas(1_000_000_000)]
@@ -146,42 +119,17 @@ fn test_attack_invalid_owner() {
     // [Create]
     world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
 
-    // [Compute] Attacker tile
+    // [Compute] Invalid owned tile
     let game: Game = get!(world, ACCOUNT, (Game));
-    let initial_player: Player = get!(world, (game.id, PLAYER_INDEX).into(), (Player));
-    let supply = initial_player.supply.into();
-    let mut attacker_index = 0;
-    let army = loop {
-        let tile: Tile = get!(world, (game.id, attacker_index).into(), (Tile));
-        if tile.owner == PLAYER_INDEX {
-            break tile.army;
+    let mut index = 0;
+    loop {
+        let tile: Tile = get!(world, (game.id, index).into(), (Tile));
+        if tile.owner != PLAYER_INDEX {
+            break;
         }
-        attacker_index += 1;
-    };
-
-    // [Supply]
-    world.execute('supply', array![ACCOUNT, attacker_index.into(), supply.into()]);
-
-    // [Compute] Defender tile
-    let mut neighbors = config::neighbors(attacker_index).expect('Attack: invalid tile id');
-    let mut defender_index = loop {
-        match neighbors.pop_front() {
-            Option::Some(index) => {
-                let tile: Tile = get!(world, (game.id, *index).into(), (Tile));
-                if tile.owner != PLAYER_INDEX {
-                    break tile.index;
-                }
-            },
-            Option::None => {
-                panic(array!['Attack: defender not found']);
-            },
-        };
+        index += 1;
     };
 
     // [Attack]
-    let distpached: felt252 = (army + supply - 1).into();
-    world
-        .execute(
-            'attack', array![ACCOUNT, defender_index.into(), defender_index.into(), distpached]
-        );
+    world.execute('attack', array![ACCOUNT, index.into(), 0, 0]);
 }
