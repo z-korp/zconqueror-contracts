@@ -10,7 +10,7 @@ mod defend {
 
     // Components imports
 
-    use zrisk::components::game::{Game, GameTrait};
+    use zrisk::components::game::{Game, GameTrait, Turn};
     use zrisk::components::player::Player;
     use zrisk::components::tile::Tile;
 
@@ -25,6 +25,7 @@ mod defend {
     // Errors
 
     mod errors {
+        const INVALID_TURN: felt252 = 'Defend: invalid turn';
         const INVALID_PLAYER: felt252 = 'Defend: invalid player';
         const INVALID_OWNER: felt252 = 'Defend: invalid owner';
     }
@@ -33,8 +34,11 @@ mod defend {
         // [Command] Game component
         let mut game: Game = get!(ctx.world, account, (Game));
 
+        // [Check] Turn
+        assert(game.turn() == Turn::Attack, errors::INVALID_TURN);
+
         // [Command] Player component
-        let player_key = (game.id, game.get_player_index());
+        let player_key = (game.id, game.player());
         let mut player: Player = get!(ctx.world, player_key.into(), (Player));
 
         // [Check] Caller is player

@@ -51,6 +51,9 @@ fn test_defend() {
     // [Supply]
     world.execute('supply', array![ACCOUNT, attacker.into(), supply.into()]);
 
+    // [Finish]
+    world.execute('finish', array![ACCOUNT]);
+
     // [Compute] Defender tile
     let mut neighbors = config::neighbors(attacker).expect('Attack: invalid tile id');
     let mut defender = loop {
@@ -108,6 +111,9 @@ fn test_defend_revert_invalid_order() {
     // [Supply]
     world.execute('supply', array![ACCOUNT, attacker.into(), supply.into()]);
 
+    // [Finish]
+    world.execute('finish', array![ACCOUNT]);
+
     // [Compute] Defender tile
     let mut neighbors = config::neighbors(attacker).expect('Attack: invalid tile id');
     let mut defender = loop {
@@ -149,6 +155,25 @@ fn test_defend_revert_invalid_player() {
     // [Create]
     world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
 
+    // [Compute] Tile army and player available supply
+    let game: Game = get!(world, ACCOUNT, (Game));
+    let initial_player: Player = get!(world, (game.id, PLAYER_INDEX).into(), (Player));
+    let supply: felt252 = initial_player.supply.into();
+    let mut tile_index: felt252 = 1;
+    loop {
+        let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
+        if tile.owner == PLAYER_INDEX {
+            break;
+        }
+        tile_index += 1;
+    };
+
+    // [Supply]
+    world.execute('supply', array![ACCOUNT, tile_index, supply]);
+
+    // [Finish]
+    world.execute('finish', array![ACCOUNT]);
+
     // [Defend]
     set_contract_address(starknet::contract_address_const::<1>());
     world.execute('defend', array![ACCOUNT, 0, 0]);
@@ -168,6 +193,25 @@ fn test_defend_revert_invalid_owner() {
 
     // [Create]
     world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
+
+    // [Compute] Tile army and player available supply
+    let game: Game = get!(world, ACCOUNT, (Game));
+    let initial_player: Player = get!(world, (game.id, PLAYER_INDEX).into(), (Player));
+    let supply: felt252 = initial_player.supply.into();
+    let mut tile_index: felt252 = 1;
+    loop {
+        let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
+        if tile.owner == PLAYER_INDEX {
+            break;
+        }
+        tile_index += 1;
+    };
+
+    // [Supply]
+    world.execute('supply', array![ACCOUNT, tile_index, supply]);
+
+    // [Finish]
+    world.execute('finish', array![ACCOUNT]);
 
     // [Compute] Invalid owned tile
     let game: Game = get!(world, ACCOUNT, (Game));

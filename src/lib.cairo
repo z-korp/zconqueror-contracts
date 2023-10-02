@@ -24,6 +24,7 @@ mod systems {
     mod attack;
     mod defend;
     mod transfer;
+    mod finish;
 }
 
 #[cfg(test)]
@@ -34,6 +35,7 @@ mod tests {
     mod attack;
     mod defend;
     mod transfer;
+    mod finish;
 }
 
 use zrisk::data::v00 as config;

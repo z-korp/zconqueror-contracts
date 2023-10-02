@@ -18,6 +18,7 @@ mod setup {
     use zrisk::systems::attack::attack;
     use zrisk::systems::defend::defend;
     use zrisk::systems::transfer::transfer;
+    use zrisk::systems::finish::finish;
 
     fn spawn_game() -> IWorldDispatcher {
         // [Setup] Components
@@ -33,6 +34,7 @@ mod setup {
         systems.append(attack::TEST_CLASS_HASH);
         systems.append(defend::TEST_CLASS_HASH);
         systems.append(transfer::TEST_CLASS_HASH);
+        systems.append(finish::TEST_CLASS_HASH);
 
         // [Deploy]
         spawn_test_world(components, systems)

@@ -36,7 +36,8 @@ fn test_create() {
     assert(game.seed == SEED, 'Game: wrong seed');
     assert(game.over == false, 'Game: wrong status');
     assert(game.player_count == PLAYER_COUNT, 'Game: wrong player count');
-    assert(game.get_player_index() == 0, 'Game: wrong player index');
+    assert(game.player() == 0, 'Game: wrong player index');
+    assert(game.turn().into() == 0_u8, 'Game: wrong player index');
 
     // [Assert] Players
     let mut player_index: u8 = 0;
