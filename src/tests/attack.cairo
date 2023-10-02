@@ -33,7 +33,7 @@ const ACCOUNT: felt252 = 'ACCOUNT';
 const SEED: felt252 = 'SEED';
 const NAME: felt252 = 'NAME';
 const PLAYER_COUNT: u8 = 2;
-const PLAYER_INDEX: u32 = 1;
+const PLAYER_INDEX: u32 = 0;
 
 #[test]
 #[available_gas(1_000_000_000)]
