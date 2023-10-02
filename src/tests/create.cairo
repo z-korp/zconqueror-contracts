@@ -69,7 +69,7 @@ fn test_create() {
     };
 
     // [Assert] Tiles
-    let mut tile_index: u8 = 0;
+    let mut tile_index: u8 = 1;
     loop {
         if TILE_NUMBER == tile_index.into() {
             break;

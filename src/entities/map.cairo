@@ -94,7 +94,7 @@ impl MapImpl of MapTrait {
                 if turn_index == turns_count {
                     break;
                 }
-                let land_id = deck.draw() - 1;
+                let land_id = deck.draw();
                 let land = LandTrait::new(land_id, 1, player_index);
                 lands.append(land);
                 remaining_army -= 1;
@@ -102,7 +102,6 @@ impl MapImpl of MapTrait {
             };
             // Spread army on the lands
             let mut remaining_army = army_count - turns_count;
-            let mut land_index = 0;
             let mut nonce = 0;
             loop {
                 if remaining_army == 0 {
@@ -268,8 +267,8 @@ mod tests {
     #[available_gas(18_000_000)]
     fn test_map_from_lands() {
         let mut lands: Array<Land> = array![];
-        lands.append(LandTrait::new(0, 0, PLAYER_1));
         lands.append(LandTrait::new(1, 0, PLAYER_1));
+        lands.append(LandTrait::new(2, 0, PLAYER_1));
         MapTrait::from_lands(PLAYER_NUMBER, lands.span());
     }
 
@@ -277,11 +276,11 @@ mod tests {
     #[available_gas(18_000_000)]
     fn test_map_player_lands() {
         let mut lands: Array<Land> = array![];
-        lands.append(LandTrait::new(0, 0, PLAYER_1));
         lands.append(LandTrait::new(1, 0, PLAYER_1));
         lands.append(LandTrait::new(2, 0, PLAYER_1));
-        lands.append(LandTrait::new(3, 0, PLAYER_2));
+        lands.append(LandTrait::new(3, 0, PLAYER_1));
         lands.append(LandTrait::new(4, 0, PLAYER_2));
+        lands.append(LandTrait::new(5, 0, PLAYER_2));
         let mut map = MapTrait::from_lands(PLAYER_NUMBER, lands.span());
         assert(map.player_lands(PLAYER_1).len() == 3, 'Map: wrong player lands');
         assert(map.player_lands(PLAYER_2).len() == 2, 'Map: wrong player lands');
@@ -291,11 +290,11 @@ mod tests {
     #[available_gas(18_000_000)]
     fn test_map_score_full() {
         let mut lands: Array<Land> = array![];
-        lands.append(LandTrait::new(0, 0, PLAYER_1));
         lands.append(LandTrait::new(1, 0, PLAYER_1));
         lands.append(LandTrait::new(2, 0, PLAYER_1));
         lands.append(LandTrait::new(3, 0, PLAYER_1));
         lands.append(LandTrait::new(4, 0, PLAYER_1));
+        lands.append(LandTrait::new(5, 0, PLAYER_1));
         let mut map = MapTrait::from_lands(PLAYER_NUMBER, lands.span());
         assert(map.score(PLAYER_1) >= 5, 'Map: wrong score');
     }

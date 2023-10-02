@@ -47,9 +47,9 @@ mod transfer {
 
         // [Effect] Transfer
         let mut lands: Array<Land> = array![];
-        let mut tile_index = 0;
+        let mut tile_index = 1;
         loop {
-            if tile_index == TILE_NUMBER {
+            if tile_index > TILE_NUMBER {
                 break;
             }
             let tile_key = (game.id, tile_index);

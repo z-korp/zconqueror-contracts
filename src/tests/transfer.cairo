@@ -35,7 +35,7 @@ const PLAYER_INDEX: u32 = 0;
 
 #[test]
 #[available_gas(1_000_000_000)]
-fn test_transfer() {
+fn test_transferr() {
     // [Setup]
     let world = setup::spawn_game();
 
@@ -46,7 +46,7 @@ fn test_transfer() {
     let game: Game = get!(world, ACCOUNT, (Game));
     let initial_player: Player = get!(world, (game.id, PLAYER_INDEX).into(), (Player));
     let supply: felt252 = initial_player.supply.into();
-    let mut tile_index = 0;
+    let mut tile_index = 1;
     loop {
         let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
         if tile.owner == PLAYER_INDEX {
@@ -60,9 +60,9 @@ fn test_transfer() {
 
     // [Compute] First 2 owned tiles
     let mut tiles: Array<Tile> = array![];
-    let mut tile_index = 0;
+    let mut tile_index = 1;
     loop {
-        if tile_index == TILE_NUMBER || tiles.len() == 2 {
+        if tile_index > TILE_NUMBER || tiles.len() == 2 {
             break;
         };
         let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
@@ -127,7 +127,7 @@ fn test_transfer_source_invalid_owner() {
 
     // [Compute] Invalid owned tile
     let game: Game = get!(world, ACCOUNT, (Game));
-    let mut index = 0;
+    let mut index = 1;
     loop {
         let tile: Tile = get!(world, (game.id, index).into(), (Tile));
         if tile.owner != PLAYER_INDEX {

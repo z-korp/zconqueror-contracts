@@ -44,7 +44,7 @@ fn test_supply() {
     let game: Game = get!(world, ACCOUNT, (Game));
     let initial_player: Player = get!(world, (game.id, PLAYER_INDEX).into(), (Player));
     let supply = initial_player.supply.into();
-    let mut tile_index = 0;
+    let mut tile_index = 1;
     let army = loop {
         let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
         if tile.owner == PLAYER_INDEX {
@@ -102,7 +102,7 @@ fn test_supply_invalid_owner() {
 
     // [Compute] Invalid owned tile
     let game: Game = get!(world, ACCOUNT, (Game));
-    let mut index = 0;
+    let mut index = 1;
     loop {
         let tile: Tile = get!(world, (game.id, index).into(), (Tile));
         if tile.owner != PLAYER_INDEX {
@@ -112,5 +112,5 @@ fn test_supply_invalid_owner() {
     };
 
     // [Transfer]
-    world.execute('supply', array![ACCOUNT, 0, 0]);
+    world.execute('supply', array![ACCOUNT, index.into(), 0]);
 }
