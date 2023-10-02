@@ -1,11 +1,8 @@
 #[system]
 mod defend {
-    // Core imports
+    // Starknet imports
 
-    use core::dict::Felt252DictTrait;
-    use array::{ArrayTrait, SpanTrait};
-    use traits::Into;
-    use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
+    use starknet::get_tx_info;
 
     // Dojo imports
 
@@ -14,78 +11,56 @@ mod defend {
     // Components imports
 
     use zrisk::components::game::{Game, GameTrait};
-    use zrisk::components::player::{Player, PlayerTrait};
-    use zrisk::components::tile::{Tile as TileComponent};
+    use zrisk::components::player::Player;
+    use zrisk::components::tile::Tile;
 
     // Entities imports
 
-    use zrisk::entities::map::{Map, MapTrait};
-    use zrisk::entities::deck::{Deck, DeckTrait};
-    use zrisk::entities::tile::{Tile, TileTrait};
+    use zrisk::entities::land::LandTrait;
 
     // Internal imports
 
-    use zrisk::constants::{TILE_NUMBER, ARMY_NUMBER};
+    use zrisk::config::TILE_NUMBER;
 
     // Errors
 
     mod errors {
-        const TILES_UNBOX_ISSUE: felt252 = 'Tiles: unbox issue';
+        const INVALID_PLAYER: felt252 = 'Defend: invalid player';
+        const INVALID_OWNER: felt252 = 'Defend: invalid owner';
     }
 
-    fn execute(ctx: Context, account: felt252, seed: felt252, name: felt252, player_count: u8) {
-        // [Command] Game entity
-        let game_id = ctx.world.uuid();
-        let mut game = GameTrait::new(account, game_id, seed, player_count);
-        set!(ctx.world, (game));
+    fn execute(ctx: Context, account: felt252, attacker_index: u8, defender_index: u8) {
+        // [Command] Game component
+        let mut game: Game = get!(ctx.world, account, (Game));
 
-        // [Command] Player entities
-        // Use the deck mechanism to define the player order, human player is 1
-        let mut deck = DeckTrait::new(game.seed, game.player_count.into());
-        let mut player_index = 0;
-        loop {
-            if player_index == game.player_count {
-                break;
-            }
-            let card = deck.draw() - 1;
-            let player = if card == 1 {
-                PlayerTrait::new(game_id, card, name)
-            } else {
-                PlayerTrait::new(game_id, card, card.into())
-            };
-            set!(ctx.world, (player));
-            player_index += 1;
-        };
+        // [Command] Player component
+        let player_key = (game.id, game.get_player_index());
+        let mut player: Player = get!(ctx.world, player_key.into(), (Player));
 
-        // [Command] Tile entities
-        let mut map = MapTrait::new(
-            id: 1,
-            seed: game.seed,
-            player_count: game.player_count.into(),
-            tile_count: TILE_NUMBER,
-            army_count: ARMY_NUMBER
-        );
-        let mut player_index = 0;
-        loop {
-            if player_index == game.player_count {
-                break;
-            }
-            let mut tiles = match match_nullable(map.realms.get(player_index.into())) {
-                FromNullableResult::Null => panic(array![errors::TILES_UNBOX_ISSUE]),
-                FromNullableResult::NotNull(status) => status.unbox(),
-            };
-            loop {
-                match tiles.pop_front() {
-                    Option::Some(tile) => {
-                        let tile: TileComponent = tile.convert(game.id);
-                        set!(ctx.world, (tile));
-                    },
-                    Option::None => {
-                        break;
-                    },
-                };
-            };
-            player_index += 1;
-        };
+        // [Check] Caller is player
+        assert(player.address == ctx.origin, errors::INVALID_PLAYER);
+
+        // [Command] Tile components
+        let attacker_key = (game.id, attacker_index);
+        let mut attacker_tile: Tile = get!(ctx.world, attacker_key.into(), (Tile));
+        let defender_key = (game.id, defender_index);
+        let mut defender_tile: Tile = get!(ctx.world, defender_key.into(), (Tile));
+
+        // [Check] Tiles owner
+        assert(attacker_tile.owner == player.index.into(), errors::INVALID_OWNER);
+
+        // [Compute] Defend
+        let mut attacker_land = LandTrait::load(@attacker_tile);
+        let mut defender_land = LandTrait::load(@defender_tile);
+        let order = get_tx_info().unbox().transaction_hash;
+        defender_land.defend(ref attacker_land, game.seed, order);
+
+        // [Command] Update source army
+        let attacker_tile = attacker_land.dump(game.id);
+        set!(ctx.world, (attacker_tile));
+
+        // [Command] Update target army
+        let defender_tile = defender_land.dump(game.id);
+        set!(ctx.world, (defender_tile));
     }
 }

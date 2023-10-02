@@ -3,6 +3,8 @@
 // Core imports
 
 use array::{ArrayTrait, SpanTrait};
+use poseidon::PoseidonTrait;
+use hash::HashStateTrait;
 
 // External imports
 
@@ -92,7 +94,7 @@ trait LandTrait {
     /// * `attacker` - The attacking land.
     /// * `dice` - The dice to use for the battle.
     /// * `order` - The defend order (tx hash).
-    fn defend(ref self: Land, ref attacker: Land, ref dice: Dice, order: felt252);
+    fn defend(ref self: Land, ref attacker: Land, seed: felt252, order: felt252);
     /// Supplies the land with an army.
     /// # Arguments
     /// * `self` - The land.
@@ -197,7 +199,7 @@ impl LandImpl of LandTrait {
         defender.from = self.id;
     }
 
-    fn defend(ref self: Land, ref attacker: Land, ref dice: Dice, order: felt252) {
+    fn defend(ref self: Land, ref attacker: Land, seed: felt252, order: felt252) {
         // [Check] Land ids
         self.assert();
         attacker.assert();
@@ -211,6 +213,10 @@ impl LandImpl of LandTrait {
         // [Check] Attack from neighbor
         assert(self.neighbors.contains(attacker.id), errors::INVALID_NEIGHBOR);
         // [Compute] Battle and get survivors
+        let mut state = PoseidonTrait::new();
+        state = state.update(seed);
+        state = state.update(attacker.order);
+        let mut dice = DiceTrait::new(state.finalize());
         let (defensive_survivors, offensive_survivors) = _battle(
             self.army, attacker.dispatched, ref dice
         );
@@ -668,7 +674,6 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_land_attack_and_defend() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
@@ -679,12 +684,12 @@ mod tests {
         attacker.attack(3, ref defender, 'ATTACK');
         assert(attacker.to == defender.id, 'Land: wrong attacker to');
         assert(defender.from == attacker.id, 'Land: wrong defender from');
-        defender.defend(ref attacker, ref dice, 'DEFEND');
+        defender.defend(ref attacker, SEED, 'DEFEND');
         assert(attacker.to == 0, 'Land: wrong attacker to');
         assert(attacker.army == 1, 'Land: wrong attacker army');
         assert(defender.from == 0, 'Land: wrong defender from');
         assert(defender.army == 2, 'Land: wrong defender army');
-        assert(defender.owner == PLAYER_1, 'Land: wrong defender owner');
+        assert(defender.owner == PLAYER_2, 'Land: wrong defender owner');
     }
 
     #[test]
@@ -721,7 +726,6 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid order status',))]
     fn test_land_attack_invalid_order() {
-        let mut dice = DiceTrait::new(SEED);
         let mut defender = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(defender.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
@@ -748,7 +752,6 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid owner',))]
     fn test_land_attack_invalid_owner_self_attack() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
@@ -760,19 +763,17 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid dispatched',))]
     fn test_land_attack_invalid_dispatched() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
         let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
-        attacker.attack(10, ref defender, 'ATTACK');
+        attacker.attack(4, ref defender, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid dispatched',))]
     fn test_land_attack_invalid_no_dispatched() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
@@ -784,7 +785,6 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid attacker',))]
     fn test_land_attack_invalid_attacker() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
@@ -797,7 +797,6 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid defender',))]
     fn test_land_attack_invalid_defender() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(2, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
@@ -813,7 +812,6 @@ mod tests {
     #[available_gas(5_000_000)]
     #[should_panic(expected: ('Land: invalid neighbor',))]
     fn test_land_attack_invalid_neighbor() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(2, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
@@ -839,13 +837,12 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid order status',))]
     fn test_land_attack_and_defend_invalid_order() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
         let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(3, ref defender, 'ATTACK');
-        defender.defend(ref attacker, ref dice, 'ATTACK');
+        defender.defend(ref attacker, SEED, 'ATTACK');
     }
 
     #[test]
@@ -853,10 +850,9 @@ mod tests {
     #[should_panic(expected: ('Land: invalid id',))]
     fn test_land_attack_and_defend_invalid_attacker_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap() + 1;
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(invalid_id, 4, PLAYER_1);
         let mut defender = LandTrait::new(1, 2, PLAYER_1);
-        defender.defend(ref attacker, ref dice, 'ATTACK');
+        defender.defend(ref attacker, SEED, 'DEFEND');
     }
 
     #[test]
@@ -864,52 +860,47 @@ mod tests {
     #[should_panic(expected: ('Land: invalid id',))]
     fn test_land_attack_and_defend_invalid_defender_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap() + 1;
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut defender = LandTrait::new(invalid_id, 2, PLAYER_1);
-        defender.defend(ref attacker, ref dice, 'ATTACK');
+        defender.defend(ref attacker, SEED, 'DEFEND');
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid id',))]
     fn test_land_attack_and_defend_invalid_id() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(2, 4, PLAYER_1);
-        attacker.defend(ref attacker, ref dice, 'DEFEND');
+        attacker.defend(ref attacker, SEED, 'DEFEND');
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid attacker',))]
     fn test_land_attack_and_defend_invalid_attacker_self_attack() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
         let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
-        defender.defend(ref attacker, ref dice, 'DEFEND');
+        defender.defend(ref attacker, SEED, 'DEFEND');
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Land: invalid owner',))]
     fn test_land_attack_and_defend_invalid_owner_self_attack() {
-        let mut dice = DiceTrait::new(SEED);
         let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
         let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(3, ref defender, 'ATTACK');
         defender.owner = PLAYER_1;
-        defender.defend(ref attacker, ref dice, 'DEFEND');
+        defender.defend(ref attacker, SEED, 'DEFEND');
     }
 
     #[test]
     #[available_gas(5_000_000)]
     #[should_panic(expected: ('Land: invalid neighbor',))]
     fn test_land_attack_and_defend_invalid_neighbor() {
-        let mut dice = DiceTrait::new(SEED);
         let mut defender = LandTrait::new(2, 4, PLAYER_1);
         let mut neighbors = config::neighbors(defender.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
@@ -930,16 +921,7 @@ mod tests {
         attacker.attack(1, ref defender, 'ATTACK');
         attacker.id = *index; // Attacker is now at the foreigner location
         defender.from = attacker.id;
-        defender.defend(ref attacker, ref dice, 'DEFEND');
-    }
-
-    #[test]
-    #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Land: invalid dispatched',))]
-    fn test_land_battle_invalid_dispatched() {
-        let mut attacker = LandTrait::new(1, 3, PLAYER_1);
-        let mut defender = LandTrait::new(2, 2, 'd');
-        attacker.attack(3, ref defender, 'ATTACK');
+        defender.defend(ref attacker, SEED, 'DEFEND');
     }
 
     #[test]

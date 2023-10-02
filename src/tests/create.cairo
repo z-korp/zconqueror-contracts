@@ -1,22 +1,10 @@
 // Core imports
 
-use traits::{Into, TryInto};
-use core::result::ResultTrait;
-use array::{ArrayTrait, SpanTrait};
-use option::OptionTrait;
-use box::BoxTrait;
-use clone::Clone;
 use debug::PrintTrait;
-
-// Starknet imports
-
-use starknet::{ContractAddress, syscalls::deploy_syscall};
-use starknet::class_hash::{ClassHash, Felt252TryIntoClassHash};
 
 // Dojo imports
 
 use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
-use dojo::test_utils::spawn_test_world;
 
 // Internal imports
 

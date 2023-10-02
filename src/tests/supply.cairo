@@ -1,11 +1,5 @@
 // Core imports
 
-use traits::{Into, TryInto};
-use core::result::ResultTrait;
-use array::{ArrayTrait, SpanTrait};
-use option::OptionTrait;
-use box::BoxTrait;
-use clone::Clone;
 use debug::PrintTrait;
 
 // Starknet imports
@@ -73,7 +67,7 @@ fn test_supply() {
         'Supply: invalid player', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
     )
 )]
-fn test_supply_invalid_player() {
+fn test_supply_revert_invalid_player() {
     // [Setup]
     let world = setup::spawn_game();
 
@@ -93,7 +87,7 @@ fn test_supply_invalid_player() {
         'Supply: invalid owner', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
     )
 )]
-fn test_supply_invalid_owner() {
+fn test_supply_revert_invalid_owner() {
     // [Setup]
     let world = setup::spawn_game();
 

@@ -22,6 +22,7 @@ mod systems {
     mod create;
     mod supply;
     mod attack;
+    mod defend;
     mod transfer;
 }
 
@@ -31,6 +32,7 @@ mod tests {
     mod create;
     mod supply;
     mod attack;
+    mod defend;
     mod transfer;
 }
 

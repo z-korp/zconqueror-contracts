@@ -30,7 +30,7 @@ mod attack {
     }
 
     fn execute(
-        ctx: Context, account: felt252, source_index: u8, target_index: u8, dispatched: u32
+        ctx: Context, account: felt252, attacker_index: u8, defender_index: u8, dispatched: u32
     ) {
         // [Command] Game component
         let mut game: Game = get!(ctx.world, account, (Game));
@@ -43,26 +43,26 @@ mod attack {
         assert(player.address == ctx.origin, errors::INVALID_PLAYER);
 
         // [Command] Tile components
-        let source_key = (game.id, source_index);
-        let mut source: Tile = get!(ctx.world, source_key.into(), (Tile));
-        let target_key = (game.id, target_index);
-        let mut target: Tile = get!(ctx.world, target_key.into(), (Tile));
+        let attacker_key = (game.id, attacker_index);
+        let mut attacker_tile: Tile = get!(ctx.world, attacker_key.into(), (Tile));
+        let defender_key = (game.id, defender_index);
+        let mut defender_tile: Tile = get!(ctx.world, defender_key.into(), (Tile));
 
         // [Check] Tiles owner
-        assert(source.owner == player.index.into(), errors::INVALID_OWNER);
+        assert(attacker_tile.owner == player.index.into(), errors::INVALID_OWNER);
 
         // [Compute] Attack
-        let mut attacker = LandTrait::load(@source);
-        let mut defender = LandTrait::load(@target);
+        let mut attacker_land = LandTrait::load(@attacker_tile);
+        let mut defender_land = LandTrait::load(@defender_tile);
         let order = get_tx_info().unbox().transaction_hash;
-        attacker.attack(dispatched, ref defender, order);
+        attacker_land.attack(dispatched, ref defender_land, order);
 
-        // [Command] Update source army
-        let source = attacker.dump(game.id);
-        set!(ctx.world, (source));
+        // [Command] Update attacker army
+        let attacker_tile = attacker_land.dump(game.id);
+        set!(ctx.world, (attacker_tile));
 
-        // [Command] Update target army
-        let target = defender.dump(game.id);
-        set!(ctx.world, (target));
+        // [Command] Update defender army
+        let defender_tile = defender_land.dump(game.id);
+        set!(ctx.world, (defender_tile));
     }
 }

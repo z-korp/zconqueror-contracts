@@ -1,11 +1,5 @@
 // Core imports
 
-use traits::{Into, TryInto};
-use core::result::ResultTrait;
-use array::{ArrayTrait, SpanTrait};
-use option::OptionTrait;
-use box::BoxTrait;
-use clone::Clone;
 use debug::PrintTrait;
 
 // Starknet imports
@@ -15,7 +9,6 @@ use starknet::testing::set_contract_address;
 // Dojo imports
 
 use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
-use dojo::test_utils::spawn_test_world;
 
 // Internal imports
 
@@ -35,7 +28,7 @@ const PLAYER_INDEX: u32 = 0;
 
 #[test]
 #[available_gas(1_000_000_000)]
-fn test_transferr() {
+fn test_transfer() {
     // [Setup]
     let world = setup::spawn_game();
 
@@ -98,7 +91,7 @@ fn test_transferr() {
         'Transfer: invalid player', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
     )
 )]
-fn test_transfer_source_invalid_player() {
+fn test_transfer_revert_invalid_player() {
     // [Setup]
     let world = setup::spawn_game();
 
@@ -118,7 +111,7 @@ fn test_transfer_source_invalid_player() {
         'Transfer: invalid owner', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
     )
 )]
-fn test_transfer_source_invalid_owner() {
+fn test_transfer_revert_invalid_owner() {
     // [Setup]
     let world = setup::spawn_game();
 

@@ -4,7 +4,7 @@ use debug::PrintTrait;
 
 // Starknet imports
 
-use starknet::testing::set_contract_address;
+use starknet::testing::{set_contract_address, set_transaction_hash};
 
 // Dojo imports
 
@@ -28,7 +28,7 @@ const PLAYER_INDEX: u32 = 0;
 
 #[test]
 #[available_gas(1_000_000_000)]
-fn test_attack() {
+fn test_defend() {
     // [Setup]
     let world = setup::spawn_game();
 
@@ -68,8 +68,13 @@ fn test_attack() {
     };
 
     // [Attack]
+    set_transaction_hash('ATTACK');
     let distpached: felt252 = (army + supply - 1).into();
     world.execute('attack', array![ACCOUNT, attacker.into(), defender.into(), distpached]);
+
+    // [Defend]
+    set_transaction_hash('DEFEND');
+    world.execute('defend', array![ACCOUNT, attacker.into(), defender.into()]);
 }
 
 
@@ -77,19 +82,56 @@ fn test_attack() {
 #[available_gas(1_000_000_000)]
 #[should_panic(
     expected: (
-        'Attack: invalid player', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
+        'Land: invalid order status', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
     )
 )]
-fn test_attack_revert_invalid_player() {
+fn test_defend_revert_invalid_order() {
     // [Setup]
     let world = setup::spawn_game();
 
     // [Create]
     world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
 
+    // [Compute] Attacker tile
+    let game: Game = get!(world, ACCOUNT, (Game));
+    let initial_player: Player = get!(world, (game.id, PLAYER_INDEX).into(), (Player));
+    let supply = initial_player.supply.into();
+    let mut attacker = 1;
+    let army = loop {
+        let tile: Tile = get!(world, (game.id, attacker).into(), (Tile));
+        if tile.owner == PLAYER_INDEX {
+            break tile.army;
+        }
+        attacker += 1;
+    };
+
+    // [Supply]
+    world.execute('supply', array![ACCOUNT, attacker.into(), supply.into()]);
+
+    // [Compute] Defender tile
+    let mut neighbors = config::neighbors(attacker).expect('Attack: invalid tile id');
+    let mut defender = loop {
+        match neighbors.pop_front() {
+            Option::Some(index) => {
+                let tile: Tile = get!(world, (game.id, *index).into(), (Tile));
+                if tile.owner != PLAYER_INDEX {
+                    break tile.index;
+                }
+            },
+            Option::None => {
+                panic(array!['Attack: defender not found']);
+            },
+        };
+    };
+
     // [Attack]
-    set_contract_address(starknet::contract_address_const::<1>());
-    world.execute('attack', array![ACCOUNT, 0, 0, 0]);
+    set_transaction_hash('ORDER');
+    let distpached: felt252 = (army + supply - 1).into();
+    world.execute('attack', array![ACCOUNT, attacker.into(), defender.into(), distpached]);
+
+    // [Defend]
+    set_transaction_hash('ORDER');
+    world.execute('defend', array![ACCOUNT, attacker.into(), defender.into()]);
 }
 
 
@@ -97,10 +139,30 @@ fn test_attack_revert_invalid_player() {
 #[available_gas(1_000_000_000)]
 #[should_panic(
     expected: (
-        'Attack: invalid owner', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
+        'Defend: invalid player', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
     )
 )]
-fn test_attack_revert_invalid_owner() {
+fn test_defend_revert_invalid_player() {
+    // [Setup]
+    let world = setup::spawn_game();
+
+    // [Create]
+    world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
+
+    // [Defend]
+    set_contract_address(starknet::contract_address_const::<1>());
+    world.execute('defend', array![ACCOUNT, 0, 0]);
+}
+
+
+#[test]
+#[available_gas(1_000_000_000)]
+#[should_panic(
+    expected: (
+        'Defend: invalid owner', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED', 'ENTRYPOINT_FAILED',
+    )
+)]
+fn test_defend_revert_invalid_owner() {
     // [Setup]
     let world = setup::spawn_game();
 
@@ -118,6 +180,7 @@ fn test_attack_revert_invalid_owner() {
         index += 1;
     };
 
-    // [Attack]
-    world.execute('attack', array![ACCOUNT, index.into(), 0, 0]);
+    // [Defend]
+    world.execute('defend', array![ACCOUNT, index.into(), 0]);
 }
+

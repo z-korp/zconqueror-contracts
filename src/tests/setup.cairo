@@ -1,9 +1,4 @@
 mod setup {
-    // Core imports
-
-    use core::traits::Into;
-    use array::ArrayTrait;
-
     // Starknet imports
 
     use starknet::ContractAddress;
@@ -21,6 +16,7 @@ mod setup {
     use zrisk::systems::create::create;
     use zrisk::systems::supply::supply;
     use zrisk::systems::attack::attack;
+    use zrisk::systems::defend::defend;
     use zrisk::systems::transfer::transfer;
 
     fn spawn_game() -> IWorldDispatcher {
@@ -35,6 +31,7 @@ mod setup {
         systems.append(create::TEST_CLASS_HASH);
         systems.append(supply::TEST_CLASS_HASH);
         systems.append(attack::TEST_CLASS_HASH);
+        systems.append(defend::TEST_CLASS_HASH);
         systems.append(transfer::TEST_CLASS_HASH);
 
         // [Deploy]
