@@ -7,4 +7,7 @@ struct Tile {
     army: u32,
     owner: u32,
     dispatched: u32,
+    to: u8,
+    from: u8,
+    order: felt252,
 }

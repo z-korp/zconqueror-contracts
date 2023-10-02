@@ -49,7 +49,7 @@ fn test_transfer() {
     let initial_player: Player = get!(world, (game.id, PLAYER_INDEX).into(), (Player));
     let supply: felt252 = initial_player.supply.into();
     let mut tile_index = 0;
-    let army = loop {
+    loop {
         let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
         if tile.owner == PLAYER_INDEX {
             break tile.army;
@@ -57,7 +57,7 @@ fn test_transfer() {
         tile_index += 1;
     };
 
-    // // [Supply]
+    // [Supply]
     world.execute('supply', array![ACCOUNT, tile_index.into(), supply.into()]);
 
     // [Compute] First 2 owned tiles

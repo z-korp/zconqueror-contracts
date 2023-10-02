@@ -21,6 +21,7 @@ mod components {
 mod systems {
     mod create;
     mod supply;
+    mod attack;
     mod transfer;
 }
 
@@ -29,6 +30,7 @@ mod tests {
     mod setup;
     mod create;
     mod supply;
+    mod attack;
     mod transfer;
 }
 

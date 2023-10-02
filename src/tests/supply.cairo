@@ -57,7 +57,7 @@ fn test_supply() {
         tile_index += 1;
     };
 
-    // // [Supply]
+    // [Supply]
     world.execute('supply', array![ACCOUNT, tile_index.into(), supply.into()]);
 
     // [Assert] Player supply
