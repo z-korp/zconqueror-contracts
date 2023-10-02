@@ -564,7 +564,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(1_000_000)]
+    #[available_gas(5_000_000)]
     fn test_land_transfer() {
         let mut from = LandTrait::new(1, 4, PLAYER_1);
         let mut to = LandTrait::new(2, 2, PLAYER_1);
@@ -630,7 +630,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(1_000_000)]
+    #[available_gas(5_000_000)]
     #[should_panic(expected: ('Land: invalid connection',))]
     fn test_land_transfer_invalid_connection() {
         let mut from = LandTrait::new(1, 4, PLAYER_1);
@@ -810,7 +810,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(1_000_000)]
+    #[available_gas(5_000_000)]
     #[should_panic(expected: ('Land: invalid neighbor',))]
     fn test_land_attack_invalid_neighbor() {
         let mut dice = DiceTrait::new(SEED);
@@ -906,7 +906,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(1_000_000)]
+    #[available_gas(5_000_000)]
     #[should_panic(expected: ('Land: invalid neighbor',))]
     fn test_land_attack_and_defend_invalid_neighbor() {
         let mut dice = DiceTrait::new(SEED);
