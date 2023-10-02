@@ -6,7 +6,7 @@ mod data {
 }
 
 mod entities {
-    mod tile;
+    mod land;
     mod dice;
     mod deck;
     mod map;

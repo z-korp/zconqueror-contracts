@@ -1,4 +1,10 @@
+// Starknet imports
+
 use starknet::ContractAddress;
+
+// Internal imports
+
+use zrisk::constants;
 
 #[derive(Component, Copy, Drop, Serde, SerdeLen)]
 struct Player {
@@ -23,7 +29,6 @@ impl PlayerImpl of PlayerTrait {
 
 impl DefaultPlayer of Default<Player> {
     fn default() -> Player {
-        let zero = starknet::contract_address_const::<0>();
-        Player { game_id: 0, index: 0, address: zero, name: 0, supply: 0 }
+        Player { game_id: 0, index: 0, address: constants::ZERO(), name: 0, supply: 0 }
     }
 }

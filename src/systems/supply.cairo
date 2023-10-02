@@ -12,7 +12,7 @@ mod supply {
 
     // Entities imports
 
-    use zrisk::entities::tile::{Tile as TileEntity, TileTrait as TileEntityTrait};
+    use zrisk::entities::land::LandTrait;
 
     // Internal imports
 
@@ -21,9 +21,7 @@ mod supply {
     // Errors
 
     mod errors {
-        const INVALID_TILE_INDEX: felt252 = 'Supply: invalid tile index';
         const INVALID_PLAYER: felt252 = 'Supply: invalid player';
-        const INVALID_SUPPLY: felt252 = 'Supply: invalid supply';
         const INVALID_OWNER: felt252 = 'Supply: invalid owner';
     }
 
@@ -46,14 +44,14 @@ mod supply {
         assert(tile.owner == player.index.into(), errors::INVALID_OWNER);
 
         // [Compute] Supply
-        let mut supplied = TileEntityTrait::load(@tile);
-        supplied.supply(ref player, supply);
+        let mut land = LandTrait::load(@tile);
+        land.supply(ref player, supply);
 
         // [Command] Update player
         set!(ctx.world, (player));
 
         // [Compute] Update tile
-        let tile = supplied.dump(game.id);
+        let tile = land.dump(game.id);
         set!(ctx.world, (tile));
     }
 }

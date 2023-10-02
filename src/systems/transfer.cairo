@@ -12,7 +12,7 @@ mod transfer {
 
     // Entities imports
 
-    use zrisk::entities::tile::{Tile as TileEntity, TileTrait as TileEntityTrait};
+    use zrisk::entities::land::{Land, LandTrait};
 
     // Internal imports
 
@@ -46,7 +46,7 @@ mod transfer {
         assert(source.owner == player.index.into(), errors::INVALID_OWNER);
 
         // [Effect] Transfer
-        let mut tiles: Array<TileEntity> = array![];
+        let mut lands: Array<Land> = array![];
         let mut tile_index = 0;
         loop {
             if tile_index == TILE_NUMBER {
@@ -54,19 +54,19 @@ mod transfer {
             }
             let tile_key = (game.id, tile_index);
             let tile = get!(ctx.world, tile_key.into(), (Tile));
-            tiles.append(TileEntityTrait::load(@tile));
+            lands.append(LandTrait::load(@tile));
             tile_index += 1;
         };
-        let mut source_tile = TileEntityTrait::load(@source);
-        let mut target_tile = TileEntityTrait::load(@target);
-        source_tile.transfer(ref target_tile, army, tiles.span());
+        let mut from = LandTrait::load(@source);
+        let mut to = LandTrait::load(@target);
+        from.transfer(ref to, army, lands.span());
 
         // [Command] Update source army
-        let source = source_tile.dump(game.id);
+        let source = from.dump(game.id);
         set!(ctx.world, (source));
 
         // [Compute] Update target army
-        let target = target_tile.dump(game.id);
+        let target = to.dump(game.id);
         set!(ctx.world, (target));
     }
 }

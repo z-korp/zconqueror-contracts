@@ -14,17 +14,11 @@ mod create {
 
     use zrisk::entities::map::MapTrait;
     use zrisk::entities::deck::DeckTrait;
-    use zrisk::entities::tile::TileTrait;
+    use zrisk::entities::land::{Land, LandTrait};
 
     // Internal imports
 
     use zrisk::config::{TILE_NUMBER, ARMY_NUMBER};
-
-    // Errors
-
-    mod errors {
-        const TILES_UNBOX_ISSUE: felt252 = 'Tiles: unbox issue';
-    }
 
     fn execute(ctx: Context, account: felt252, seed: felt252, name: felt252, player_count: u8) {
         // [Command] Game component
@@ -36,7 +30,7 @@ mod create {
         let mut map = MapTrait::new(
             seed: game.seed,
             player_count: game.player_count.into(),
-            tile_count: TILE_NUMBER,
+            land_count: TILE_NUMBER,
             army_count: ARMY_NUMBER
         );
         let mut player_index = 0;
@@ -44,11 +38,11 @@ mod create {
             if player_index == game.player_count {
                 break;
             }
-            let mut player_tiles = map.player_tiles(player_index.into());
+            let mut player_lands = map.player_lands(player_index.into());
             loop {
-                match player_tiles.pop_front() {
-                    Option::Some(tile) => {
-                        let tile: Tile = tile.dump(game.id);
+                match player_lands.pop_front() {
+                    Option::Some(land) => {
+                        let tile: Tile = land.dump(game.id);
                         set!(ctx.world, (tile));
                     },
                     Option::None => {

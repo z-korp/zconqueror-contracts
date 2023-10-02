@@ -1,4 +1,4 @@
-//! Map struct and methods for managing tiles.
+//! Map struct and methods for managing lands.
 
 // Core imports
 
@@ -13,7 +13,7 @@ use debug::PrintTrait;
 
 use zrisk::config;
 use zrisk::entities::deck::{Deck, DeckTrait};
-use zrisk::entities::tile::{Tile, TileTrait};
+use zrisk::entities::land::{Land, LandTrait};
 
 // Constants
 
@@ -22,42 +22,42 @@ const MULTIPLIER: u128 = 10_000;
 /// Map struct.
 #[derive(Destruct)]
 struct Map {
-    realms: Felt252Dict<Nullable<Span<Tile>>>,
+    realms: Felt252Dict<Nullable<Span<Land>>>,
 }
 
 /// Errors module
 mod errors {
     const INVALID_ARMY_COUNT: felt252 = 'Map: Invalid army count';
-    const TILES_EMPTY: felt252 = 'Map: Tiles empty';
-    const INVALID_TILE_NUMBER: felt252 = 'Map: Invalid tile number';
-    const TILES_UNBOX_ISSUE: felt252 = 'Tiles: unbox issue';
+    const LANDS_EMPTY: felt252 = 'Map: Lands empty';
+    const INVALID_LAND_NUMBER: felt252 = 'Map: Invalid land number';
+    const LANDS_UNBOX_ISSUE: felt252 = 'Lands: unbox issue';
 }
 
-/// Trait to initialize and manage tile from the Map.
+/// Trait to initialize and manage land from the Map.
 trait MapTrait {
     /// Returns a new `Map` struct.
     /// # Arguments
     /// * `seed` - A seed to generate the map.
     /// * `player_count` - The number of players.
-    /// * `tile_count` - The number of tiles.
+    /// * `land_count` - The number of lands.
     /// * `army_count` - The number of army of each player.
     /// # Returns
     /// * The initialized `Map`.
-    fn new(seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map;
-    /// Returns the `Map` struct according to the tiles.
+    fn new(seed: felt252, player_count: u32, land_count: u32, army_count: u32) -> Map;
+    /// Returns the `Map` struct according to the lands.
     /// # Arguments
     /// * `player_count` - The number of players.
-    /// * `tiles` - The tiles.
+    /// * `lands` - The lands.
     /// # Returns
     /// * The initialized `Map`.
-    fn from_tiles(player_count: u32, tiles: Span<Tile>) -> Map;
-    /// Returns the player tiles.
+    fn from_lands(player_count: u32, lands: Span<Land>) -> Map;
+    /// Returns the player lands.
     /// # Arguments
     /// * `self` - The map.
     /// * `player_index` - The player index.
     /// # Returns
-    /// * The player tiles.
-    fn player_tiles(ref self: Map, player_index: u32) -> Span<Tile>;
+    /// * The player lands.
+    fn player_lands(ref self: Map, player_index: u32) -> Span<Land>;
     /// Computes the score of a player.
     /// # Arguments
     /// * `self` - The map.
@@ -69,40 +69,40 @@ trait MapTrait {
 
 /// Implementation of the `MapTrait` for the `Map` struct.
 impl MapImpl of MapTrait {
-    fn new(seed: felt252, player_count: u32, tile_count: u32, army_count: u32) -> Map {
-        // [Check] There is enough army to supply at least 1 unit per tile
-        assert(player_count * army_count >= tile_count, errors::INVALID_ARMY_COUNT);
+    fn new(seed: felt252, player_count: u32, land_count: u32, army_count: u32) -> Map {
+        // [Check] There is enough army to supply at least 1 unit per land
+        assert(player_count * army_count >= land_count, errors::INVALID_ARMY_COUNT);
         // [Compute] Seed in u256 for futher operations
         let base_seed: u256 = seed.into();
-        // Use the deck mechanism to shuffle the tiles
-        let mut deck = DeckTrait::new(seed, tile_count);
+        // Use the deck mechanism to shuffle the lands
+        let mut deck = DeckTrait::new(seed, land_count);
         // Each player draw R/N where R is the remaining cards and N the number of players left
-        let mut realms: Felt252Dict<Nullable<Span<Tile>>> = Default::default();
+        let mut realms: Felt252Dict<Nullable<Span<Land>>> = Default::default();
         let mut player_index: u32 = 0;
         loop {
             if player_index == player_count {
                 break;
             }
             let turns_count = deck.remaining / (player_count - player_index);
-            // [Check] At least 1 tile per player
-            assert(turns_count > 0, errors::INVALID_TILE_NUMBER);
+            // [Check] At least 1 land per player
+            assert(turns_count > 0, errors::INVALID_LAND_NUMBER);
             let mut turn_index = 0;
-            // Draw the tiles for the current player with a single unit army
+            // Draw the lands for the current player with a single unit army
             let mut remaining_army = army_count;
-            let mut tiles: Array<Tile> = array![];
+            let mut lands: Array<Land> = array![];
             loop {
                 if turn_index == turns_count {
                     break;
                 }
-                let tile_id = deck.draw() - 1;
-                let tile = TileTrait::new(tile_id, 1, player_index);
-                tiles.append(tile);
+                let land_id = deck.draw() - 1;
+                let land = LandTrait::new(land_id, 1, player_index);
+                lands.append(land);
                 remaining_army -= 1;
                 turn_index += 1;
             };
-            // Spread army on the tiles
+            // Spread army on the lands
             let mut remaining_army = army_count - turns_count;
-            let mut tile_index = 0;
+            let mut land_index = 0;
             let mut nonce = 0;
             loop {
                 if remaining_army == 0 {
@@ -111,64 +111,64 @@ impl MapImpl of MapTrait {
                 // Random number between 0 or 1
                 let (unit, new_nonce) = _random(seed, nonce);
                 nonce = new_nonce;
-                // Increase army of the current tile with the unit
-                let mut tile: Tile = tiles.pop_front().expect(errors::TILES_EMPTY);
+                // Increase army of the current land with the unit
+                let mut land: Land = lands.pop_front().expect(errors::LANDS_EMPTY);
                 // TODO: Check if it is better to conditonate the following lines
-                tile.army += unit.into();
+                land.army += unit.into();
                 remaining_army -= unit.into();
-                tiles.append(tile);
+                lands.append(land);
             };
-            // Store the player tiles
-            realms.insert(player_index.into(), nullable_from_box(BoxTrait::new(tiles.span())));
+            // Store the player lands
+            realms.insert(player_index.into(), nullable_from_box(BoxTrait::new(lands.span())));
             player_index += 1;
         };
         Map { realms }
     }
 
-    fn from_tiles(player_count: u32, tiles: Span<Tile>) -> Map {
-        let mut realms: Felt252Dict<Nullable<Span<Tile>>> = Default::default();
+    fn from_lands(player_count: u32, lands: Span<Land>) -> Map {
+        let mut realms: Felt252Dict<Nullable<Span<Land>>> = Default::default();
         let mut player_index = 0;
         loop {
             if player_index == player_count {
                 break;
             };
-            let mut player_tiles: Array<Tile> = array![];
-            let mut tile_index = 0;
+            let mut player_lands: Array<Land> = array![];
+            let mut land_index = 0;
             loop {
-                if tile_index == tiles.len() {
+                if land_index == lands.len() {
                     break;
                 };
-                let tile = tiles.at(tile_index);
-                if tile.owner == @player_index {
-                    player_tiles.append(*tile);
+                let land = lands.at(land_index);
+                if land.owner == @player_index {
+                    player_lands.append(*land);
                 };
-                tile_index += 1;
+                land_index += 1;
             };
             realms
-                .insert(player_index.into(), nullable_from_box(BoxTrait::new(player_tiles.span())));
+                .insert(player_index.into(), nullable_from_box(BoxTrait::new(player_lands.span())));
             player_index += 1;
         };
         Map { realms }
     }
 
-    fn player_tiles(ref self: Map, player_index: u32) -> Span<Tile> {
+    fn player_lands(ref self: Map, player_index: u32) -> Span<Land> {
         match match_nullable(self.realms.get(player_index.into())) {
-            FromNullableResult::Null => panic(array![errors::TILES_UNBOX_ISSUE]),
+            FromNullableResult::Null => panic(array![errors::LANDS_UNBOX_ISSUE]),
             FromNullableResult::NotNull(status) => status.unbox(),
         }
     }
 
     fn score(ref self: Map, player_index: u32) -> u32 {
-        // [Compute] Player tiles count
-        let mut player_tiles = self.player_tiles(player_index);
-        let mut score = player_tiles.len();
+        // [Compute] Player lands count
+        let mut player_lands = self.player_lands(player_index);
+        let mut score = player_lands.len();
 
-        // [Compute] Convert player tiles from span into array for efficiency
+        // [Compute] Convert player lands from span into array for efficiency
         let mut player_ids: Array<u8> = array![];
         loop {
-            match player_tiles.pop_front() {
-                Option::Some(tile) => {
-                    player_ids.append(*tile.id);
+            match player_lands.pop_front() {
+                Option::Some(land) => {
+                    player_ids.append(*land.id);
                 },
                 Option::None => {
                     break;
@@ -181,14 +181,14 @@ impl MapImpl of MapTrait {
         loop {
             match factions.pop_front() {
                 Option::Some(faction) => {
-                    let mut tile_ids: Array<u8> = array![];
+                    let mut land_ids: Array<u8> = array![];
                     loop {
-                        match player_tiles.pop_front() {
-                            Option::Some(tile) => {
-                                if tile.faction == faction {
-                                    tile_ids.append(*tile.id);
+                        match player_lands.pop_front() {
+                            Option::Some(land) => {
+                                if land.faction == faction {
+                                    land_ids.append(*land.id);
                                 } else {
-                                    player_ids.append(*tile.id);
+                                    player_ids.append(*land.id);
                                 };
                             },
                             Option::None => {
@@ -198,7 +198,7 @@ impl MapImpl of MapTrait {
                     };
                     // [Effect] Increase score
                     let faction_ids = config::ids(*faction).unwrap();
-                    if faction_ids.len() == tile_ids.len() {
+                    if faction_ids.len() == land_ids.len() {
                         score += config::score(*faction).unwrap();
                     };
                 },
@@ -236,7 +236,7 @@ mod tests {
     // Internal imports
 
     use zrisk::config;
-    use zrisk::entities::tile::{Tile, TileTrait};
+    use zrisk::entities::land::{Land, LandTrait};
 
     // Local imports
 
@@ -266,37 +266,37 @@ mod tests {
 
     #[test]
     #[available_gas(18_000_000)]
-    fn test_map_from_tiles() {
-        let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, PLAYER_1));
-        tiles.append(TileTrait::new(1, 0, PLAYER_1));
-        MapTrait::from_tiles(PLAYER_NUMBER, tiles.span());
+    fn test_map_from_lands() {
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(0, 0, PLAYER_1));
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
+        MapTrait::from_lands(PLAYER_NUMBER, lands.span());
     }
 
     #[test]
     #[available_gas(18_000_000)]
-    fn test_map_player_tiles() {
-        let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, PLAYER_1));
-        tiles.append(TileTrait::new(1, 0, PLAYER_1));
-        tiles.append(TileTrait::new(2, 0, PLAYER_1));
-        tiles.append(TileTrait::new(3, 0, PLAYER_2));
-        tiles.append(TileTrait::new(4, 0, PLAYER_2));
-        let mut map = MapTrait::from_tiles(PLAYER_NUMBER, tiles.span());
-        assert(map.player_tiles(PLAYER_1).len() == 3, 'Map: wrong player tiles');
-        assert(map.player_tiles(PLAYER_2).len() == 2, 'Map: wrong player tiles');
+    fn test_map_player_lands() {
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(0, 0, PLAYER_1));
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
+        lands.append(LandTrait::new(2, 0, PLAYER_1));
+        lands.append(LandTrait::new(3, 0, PLAYER_2));
+        lands.append(LandTrait::new(4, 0, PLAYER_2));
+        let mut map = MapTrait::from_lands(PLAYER_NUMBER, lands.span());
+        assert(map.player_lands(PLAYER_1).len() == 3, 'Map: wrong player lands');
+        assert(map.player_lands(PLAYER_2).len() == 2, 'Map: wrong player lands');
     }
 
     #[test]
     #[available_gas(18_000_000)]
     fn test_map_score_full() {
-        let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, PLAYER_1));
-        tiles.append(TileTrait::new(1, 0, PLAYER_1));
-        tiles.append(TileTrait::new(2, 0, PLAYER_1));
-        tiles.append(TileTrait::new(3, 0, PLAYER_1));
-        tiles.append(TileTrait::new(4, 0, PLAYER_1));
-        let mut map = MapTrait::from_tiles(PLAYER_NUMBER, tiles.span());
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(0, 0, PLAYER_1));
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
+        lands.append(LandTrait::new(2, 0, PLAYER_1));
+        lands.append(LandTrait::new(3, 0, PLAYER_1));
+        lands.append(LandTrait::new(4, 0, PLAYER_1));
+        let mut map = MapTrait::from_lands(PLAYER_NUMBER, lands.span());
         assert(map.score(PLAYER_1) >= 5, 'Map: wrong score');
     }
 }

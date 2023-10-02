@@ -16,7 +16,7 @@ mod attack {
 
     // Entities imports
 
-    use zrisk::entities::tile::{Tile as TileEntity, TileTrait as TileEntityTrait};
+    use zrisk::entities::land::LandTrait;
 
     // Internal imports
 
@@ -52,8 +52,8 @@ mod attack {
         assert(source.owner == player.index.into(), errors::INVALID_OWNER);
 
         // [Compute] Attack
-        let mut attacker = TileEntityTrait::load(@source);
-        let mut defender = TileEntityTrait::load(@target);
+        let mut attacker = LandTrait::load(@source);
+        let mut defender = LandTrait::load(@target);
         let order = get_tx_info().unbox().transaction_hash;
         attacker.attack(dispatched, ref defender, order);
 

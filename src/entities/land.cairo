@@ -1,4 +1,4 @@
-//! Tile struct and methods for managing battles, supply and ownerships.
+//! Land struct and methods for managing battles, supply and ownerships.
 
 // Core imports
 
@@ -13,12 +13,12 @@ use alexandria_data_structures::array_ext::SpanTraitExt;
 
 use zrisk::config;
 use zrisk::entities::dice::{Dice, DiceTrait};
-use zrisk::components::tile::{Tile as TileComponent};
+use zrisk::components::tile::Tile;
 use zrisk::components::player::Player;
 
-/// Tile struct.
+/// Land struct.
 #[derive(Drop, Copy, Serde)]
-struct Tile {
+struct Land {
     id: u8,
     army: u32,
     owner: u32,
@@ -32,102 +32,101 @@ struct Tile {
 
 /// Errors module
 mod errors {
-    const INVALID_ID: felt252 = 'Tile: invalid id';
-    const INVALID_DISPATCHED: felt252 = 'Tile: invalid dispatched';
-    const INVALID_ARRAY: felt252 = 'Tile: invalid array';
-    const INVALID_OWNER: felt252 = 'Tile: invalid owner';
-    const INVALID_ARMY_TRANSFER: felt252 = 'Tile: invalid army transfer';
-    const INVALID_NEIGHBOR: felt252 = 'Tile: invalid neighbor';
-    const INVALID_DEFENDER: felt252 = 'Tile: invalid defender';
-    const INVALID_ATTACKER: felt252 = 'Tile: invalid attacker';
-    const INVALID_ORDER_STATUS: felt252 = 'Tile: invalid order status';
-    const INVALID_CONNECTION: felt252 = 'Tile: invalid connection';
-    const INVALID_SUPPLY: felt252 = 'Tile: invalid supply';
+    const INVALID_ID: felt252 = 'Land: invalid id';
+    const INVALID_DISPATCHED: felt252 = 'Land: invalid dispatched';
+    const INVALID_ARRAY: felt252 = 'Land: invalid array';
+    const INVALID_OWNER: felt252 = 'Land: invalid owner';
+    const INVALID_ARMY_TRANSFER: felt252 = 'Land: invalid army transfer';
+    const INVALID_NEIGHBOR: felt252 = 'Land: invalid neighbor';
+    const INVALID_DEFENDER: felt252 = 'Land: invalid defender';
+    const INVALID_ATTACKER: felt252 = 'Land: invalid attacker';
+    const INVALID_ORDER_STATUS: felt252 = 'Land: invalid order status';
+    const INVALID_CONNECTION: felt252 = 'Land: invalid connection';
+    const INVALID_SUPPLY: felt252 = 'Land: invalid supply';
 }
 
-/// Trait to initialize and manage army from the Tile.
-trait TileTrait {
-    /// Returns a new `Tile` struct.
+/// Trait to initialize and manage army from the Land.
+trait LandTrait {
+    /// Returns a new `Land` struct.
     /// # Arguments
     /// * `id` - The territory id.
     /// * `army` - The initial army supply.
     /// * `owner` - The owner id of the territory.
     /// # Returns
-    /// * The initialized `Tile`.
-    fn new(id: u8, army: u32, owner: u32) -> Tile;
-    /// Returns a new `Option<Tile>` struct.
+    /// * The initialized `Land`.
+    fn new(id: u8, army: u32, owner: u32) -> Land;
+    /// Returns a new `Option<Land>` struct.
     /// # Arguments
     /// * `id` - The territory id.
     /// * `army` - The initial army supply.
     /// * `owner` - The owner id of the territory.
     /// # Returns
-    /// * The initialized `Option<Tile>`.
-    fn try_new(id: u8, army: u32, owner: u32) -> Option<Tile>;
-    /// Load Tile from TileComponent.
+    /// * The initialized `Option<Land>`.
+    fn try_new(id: u8, army: u32, owner: u32) -> Option<Land>;
+    /// Load Land from LandComponent.
     /// # Arguments
-    /// * `self` - The tile.
-    /// * `tile` - The tile component to load.
-    fn load(tile: @TileComponent) -> Tile;
-    /// Dump Tile into TileComponent.
+    /// * `self` - The land.
+    fn load(tile: @Tile) -> Land;
+    /// Dump Land into LandComponent.
     /// # Arguments
-    /// * `self` - The tile.
+    /// * `self` - The land.
     /// * `game_id` - The game id.
-    fn dump(self: @Tile, game_id: u32) -> TileComponent;
+    fn dump(self: @Land, game_id: u32) -> Tile;
     /// Check validity.
     /// # Arguments
-    /// * `self` - The tile.
-    fn check(self: @Tile) -> bool;
+    /// * `self` - The land.
+    fn check(self: @Land) -> bool;
     /// Assert validity.
     /// # Arguments
-    /// * `self` - The tile.
-    fn assert(self: @Tile);
-    /// Dispatches an army from the tile.
+    /// * `self` - The land.
+    fn assert(self: @Land);
+    /// Dispatches an army from the land.
     /// # Arguments
-    /// * `self` - The tile.
+    /// * `self` - The land.
     /// * `dispatched` - The dispatched army.
-    /// * `defender` - The defending tile.
+    /// * `defender` - The defending land.
     /// * `order` - The attack order (tx hash).
-    fn attack(ref self: Tile, dispatched: u32, ref defender: Tile, order: felt252);
-    /// Defends the tile from an attack.
+    fn attack(ref self: Land, dispatched: u32, ref defender: Land, order: felt252);
+    /// Defends the land from an attack.
     /// # Arguments
-    /// * `self` - The tile.
-    /// * `attacker` - The attacking tile.
+    /// * `self` - The land.
+    /// * `attacker` - The attacking land.
     /// * `dice` - The dice to use for the battle.
     /// * `order` - The defend order (tx hash).
-    fn defend(ref self: Tile, ref attacker: Tile, ref dice: Dice, order: felt252);
-    /// Supplies the tile with an army.
+    fn defend(ref self: Land, ref attacker: Land, ref dice: Dice, order: felt252);
+    /// Supplies the land with an army.
     /// # Arguments
-    /// * `self` - The tile.
+    /// * `self` - The land.
     /// * `army` - The army to supply.
-    fn supply(ref self: Tile, ref player: Player, army: u32);
-    /// Transfers an army from the tile to another tile.
+    fn supply(ref self: Land, ref player: Player, army: u32);
+    /// Transfers an army from the land to another land.
     /// # Arguments
-    /// * `self` - The tile.
-    /// * `to` - The tile to transfer the army to.
+    /// * `self` - The land.
+    /// * `to` - The land to transfer the army to.
     /// * `army` - The army to transfer.
-    /// * `tiles` - The graph of tiles.
-    fn transfer(ref self: Tile, ref to: Tile, army: u32, tiles: Span<Tile>);
+    /// * `lands` - The graph of lands.
+    fn transfer(ref self: Land, ref to: Land, army: u32, lands: Span<Land>);
 }
 
-/// Implementation of the `TileTrait` for the `Tile` struct.
-impl TileImpl of TileTrait {
-    fn new(id: u8, army: u32, owner: u32) -> Tile {
+/// Implementation of the `LandTrait` for the `Land` struct.
+impl LandImpl of LandTrait {
+    fn new(id: u8, army: u32, owner: u32) -> Land {
         let faction = config::faction(id).expect(errors::INVALID_ID);
         let neighbors = config::neighbors(id).expect(errors::INVALID_ID);
-        Tile {
+        Land {
             id, army, owner, dispatched: 0, faction, neighbors: neighbors, to: 0, from: 0, order: 0
         }
     }
 
-    fn try_new(id: u8, army: u32, owner: u32) -> Option<Tile> {
+    fn try_new(id: u8, army: u32, owner: u32) -> Option<Land> {
         let wrapped_faction = config::faction(id);
         let wrapped_neighbors = config::neighbors(id);
         match wrapped_faction {
             Option::Some(faction) => {
                 match wrapped_neighbors {
                     Option::Some(neighbors) => {
-                        let tile = TileTrait::new(id, army, owner);
-                        Option::Some(tile)
+                        let land = LandTrait::new(id, army, owner);
+                        Option::Some(land)
                     },
                     Option::None => Option::None,
                 }
@@ -136,9 +135,9 @@ impl TileImpl of TileTrait {
         }
     }
 
-    fn load(tile: @TileComponent) -> Tile {
+    fn load(tile: @Tile) -> Land {
         let id = *tile.index;
-        Tile {
+        Land {
             id: id,
             army: *tile.army,
             owner: *tile.owner,
@@ -151,8 +150,8 @@ impl TileImpl of TileTrait {
         }
     }
 
-    fn dump(self: @Tile, game_id: u32) -> TileComponent {
-        TileComponent {
+    fn dump(self: @Land, game_id: u32) -> Tile {
+        Tile {
             game_id: game_id,
             index: *self.id,
             army: *self.army,
@@ -164,16 +163,16 @@ impl TileImpl of TileTrait {
         }
     }
 
-    fn check(self: @Tile) -> bool {
+    fn check(self: @Land) -> bool {
         config::TILE_NUMBER > (*self.id).into()
     }
 
-    fn assert(self: @Tile) {
+    fn assert(self: @Land) {
         assert(self.check(), errors::INVALID_ID);
     }
 
-    fn attack(ref self: Tile, dispatched: u32, ref defender: Tile, order: felt252) {
-        // [Check] Tile ids
+    fn attack(ref self: Land, dispatched: u32, ref defender: Land, order: felt252) {
+        // [Check] Land ids
         self.assert();
         defender.assert();
         assert(self.id != defender.id, errors::INVALID_ID);
@@ -198,8 +197,8 @@ impl TileImpl of TileTrait {
         defender.from = self.id;
     }
 
-    fn defend(ref self: Tile, ref attacker: Tile, ref dice: Dice, order: felt252) {
-        // [Check] Tile ids
+    fn defend(ref self: Land, ref attacker: Land, ref dice: Dice, order: felt252) {
+        // [Check] Land ids
         self.assert();
         attacker.assert();
         assert(self.id != attacker.id, errors::INVALID_ID);
@@ -230,8 +229,8 @@ impl TileImpl of TileTrait {
         self.from = 0;
     }
 
-    fn supply(ref self: Tile, ref player: Player, army: u32) {
-        // [Check] Tile ids
+    fn supply(ref self: Land, ref player: Player, army: u32) {
+        // [Check] Land ids
         self.assert();
         // [Check] Available supply
         assert(player.supply >= army, errors::INVALID_SUPPLY);
@@ -241,18 +240,18 @@ impl TileImpl of TileTrait {
         player.supply -= army;
     }
 
-    fn transfer(ref self: Tile, ref to: Tile, army: u32, tiles: Span<Tile>) {
-        // [Check] Tile ids
+    fn transfer(ref self: Land, ref to: Land, army: u32, lands: Span<Land>) {
+        // [Check] Land ids
         self.assert();
         to.assert();
         assert(self.id != to.id, errors::INVALID_ID);
-        // [Check] Both tiles are owned by the same player
+        // [Check] Both lands are owned by the same player
         assert(self.owner == to.owner, errors::INVALID_OWNER);
-        // [Check] From tile army is greater than the transfered army
+        // [Check] From land army is greater than the transfered army
         assert(self.army > army, errors::INVALID_ARMY_TRANSFER);
-        // [Check] Both tiles are connected by a owned path
+        // [Check] Both lands are connected by a owned path
         let mut visiteds: Array<u8> = ArrayTrait::new();
-        let connection = _connected(self.id, to.id, @self.owner, tiles, ref visiteds);
+        let connection = _connected(self.id, to.id, @self.owner, lands, ref visiteds);
         assert(connection, errors::INVALID_CONNECTION);
         // [Effect] Update armies
         self.army -= army;
@@ -404,45 +403,45 @@ fn _sort(values: Span<u8>) -> Span<u8> {
     array.span()
 }
 
-/// Returns true if 2 tiles are connected by an owned path of tiles.
+/// Returns true if 2 lands are connected by an owned path of lands.
 /// # Arguments
-/// * `source` - The tile id to start with.
-/// * `target` - The tile id to find out.
+/// * `source` - The land id to start with.
+/// * `target` - The land id to find out.
 /// * `owner` - The owner id of the path.
-/// * `tiles` - The tiles including their respective owner.
-/// * `visiteds` - The visited tiles.
+/// * `lands` - The lands including their respective owner.
+/// * `visiteds` - The visited lands.
 /// # Returns
 /// * The connection status.
 fn _connected(
-    source: u8, target: u8, owner: @u32, tiles: Span<Tile>, ref visiteds: Array<u8>
+    source: u8, target: u8, owner: @u32, lands: Span<Land>, ref visiteds: Array<u8>
 ) -> bool {
-    if source == target && tiles.at(source.into()).owner == owner {
+    if source == target && lands.at(source.into()).owner == owner {
         return true;
     };
     let mut neighbors = config::neighbors(source).expect(errors::INVALID_ID);
-    let mut unvisiteds = _owned_dedup(ref neighbors, tiles, visiteds.span(), owner);
+    let mut unvisiteds = _owned_dedup(ref neighbors, lands, visiteds.span(), owner);
     visiteds.append(source);
-    _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds)
+    _connected_iter(target, owner, lands, ref visiteds, ref unvisiteds)
 }
 
 /// The connected sub function used for recursion.
 /// # Arguments
-/// * `target` - The tile id to find out.
+/// * `target` - The land id to find out.
 /// * `owner` - The owner id of the path.
-/// * `tiles` - The tiles including their respective owner.
-/// * `visiteds` - The visited tiles.
-/// * `unvisiteds` - The unvisited tiles.
+/// * `lands` - The lands including their respective owner.
+/// * `visiteds` - The visited lands.
+/// * `unvisiteds` - The unvisited lands.
 /// # Returns
 /// * The connection status.
 fn _connected_iter(
-    target: u8, owner: @u32, tiles: Span<Tile>, ref visiteds: Array<u8>, ref unvisiteds: Span<u8>
+    target: u8, owner: @u32, lands: Span<Land>, ref visiteds: Array<u8>, ref unvisiteds: Span<u8>
 ) -> bool {
     match unvisiteds.pop_front() {
         Option::Some(neighbour) => {
-            if _connected(*neighbour, target, owner, tiles, ref visiteds) {
+            if _connected(*neighbour, target, owner, lands, ref visiteds) {
                 return true;
             }
-            return _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds);
+            return _connected_iter(target, owner, lands, ref visiteds, ref unvisiteds);
         },
         Option::None => {
             return false;
@@ -453,12 +452,12 @@ fn _connected_iter(
 /// Returns the input array without the drop and not owned elements.
 /// # Arguments
 /// * `array` - The array to dedup.
-/// * `tiles` - The tiles including their respective owner.
+/// * `lands` - The lands including their respective owner.
 /// * `drops` - The specification of elements to drop.
 /// * `owner` - The owner to match.
 /// # Returns
 /// * The deduped array.
-fn _owned_dedup(ref array: Span<u8>, tiles: Span<Tile>, drops: Span<u8>, owner: @u32) -> Span<u8> {
+fn _owned_dedup(ref array: Span<u8>, lands: Span<Land>, drops: Span<u8>, owner: @u32) -> Span<u8> {
     // [Check] Drops is not empty, otherwise return the input array
     if drops.is_empty() {
         return array;
@@ -468,8 +467,8 @@ fn _owned_dedup(ref array: Span<u8>, tiles: Span<Tile>, drops: Span<u8>, owner: 
         match array.pop_front() {
             Option::Some(value) => {
                 let element = *value;
-                let tile = tiles.at(element.into());
-                if !drops.contains(element) && tile.owner == owner {
+                let land = lands.at(element.into());
+                if !drops.contains(element) && land.owner == owner {
                     result.append(element);
                 };
             },
@@ -499,7 +498,7 @@ mod tests {
 
     // Local imports
 
-    use super::{Tile, TileTrait, _sort, _battle, _round, _duel, _connected, _owned_dedup};
+    use super::{Land, LandTrait, _sort, _battle, _round, _duel, _connected, _owned_dedup};
 
     // Constants
 
@@ -509,135 +508,135 @@ mod tests {
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_new_invalid_id() {
-        TileTrait::new(100, 4, PLAYER_1);
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_new_invalid_id() {
+        LandTrait::new(100, 4, PLAYER_1);
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_try_new() {
-        let wrapped_tile = TileTrait::try_new(0, 4, PLAYER_1);
-        let tile = wrapped_tile.unwrap();
-        assert(tile.army == 4, 'Tile: wrong tile army');
+    fn test_land_try_new() {
+        let wrapped_land = LandTrait::try_new(0, 4, PLAYER_1);
+        let land = wrapped_land.unwrap();
+        assert(land.army == 4, 'Land: wrong land army');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_try_new_invalid_id() {
-        let wrapped_tile = TileTrait::try_new(100, 4, PLAYER_1);
-        wrapped_tile.expect('Tile: invalid id');
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_try_new_invalid_id() {
+        let wrapped_land = LandTrait::try_new(100, 4, PLAYER_1);
+        wrapped_land.expect('Land: invalid id');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_supply() {
+    fn test_land_supply() {
         let mut player: Player = Default::default();
         player.supply = 5;
-        let mut tile = TileTrait::new(0, 4, PLAYER_1);
-        assert(tile.army == 4, 'Tile: wrong tile army');
-        tile.supply(ref player, 2);
-        assert(tile.army == 6, 'Tile: wrong tile army');
+        let mut land = LandTrait::new(0, 4, PLAYER_1);
+        assert(land.army == 4, 'Land: wrong land army');
+        land.supply(ref player, 2);
+        assert(land.army == 6, 'Land: wrong land army');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_supply_invalid_id() {
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_supply_invalid_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap();
         let mut player: Player = Default::default();
         player.supply = 4;
-        let mut tile = TileTrait::new(invalid_id, 4, PLAYER_1);
-        tile.supply(ref player, 2);
+        let mut land = LandTrait::new(invalid_id, 4, PLAYER_1);
+        land.supply(ref player, 2);
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid supply',))]
-    fn test_tile_supply_invalid_supply() {
+    #[should_panic(expected: ('Land: invalid supply',))]
+    fn test_land_supply_invalid_supply() {
         let mut player: Player = Default::default();
         player.supply = 1;
-        let mut tile = TileTrait::new(0, 4, PLAYER_1);
-        tile.supply(ref player, 2);
+        let mut land = LandTrait::new(0, 4, PLAYER_1);
+        land.supply(ref player, 2);
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_transfer() {
-        let mut from = TileTrait::new(0, 4, PLAYER_1);
-        let mut to = TileTrait::new(1, 2, PLAYER_1);
-        let mut tiles: Array<Tile> = array![];
-        let mut tile_index: u8 = 0;
+    fn test_land_transfer() {
+        let mut from = LandTrait::new(0, 4, PLAYER_1);
+        let mut to = LandTrait::new(1, 2, PLAYER_1);
+        let mut lands: Array<Land> = array![];
+        let mut land_index: u8 = 0;
         loop {
-            if config::TILE_NUMBER == tile_index.into() {
+            if config::TILE_NUMBER == land_index.into() {
                 break;
             };
-            tiles.append(TileTrait::new(tile_index, 0, PLAYER_1));
-            tile_index += 1;
+            lands.append(LandTrait::new(land_index, 0, PLAYER_1));
+            land_index += 1;
         };
-        from.transfer(ref to, 2, tiles.span());
-        assert(from.army == 2, 'Tile: wrong from army');
-        assert(to.army == 4, 'Tile: wrong to army');
+        from.transfer(ref to, 2, lands.span());
+        assert(from.army == 2, 'Land: wrong from army');
+        assert(to.army == 4, 'Land: wrong to army');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid owner',))]
-    fn test_tile_transfer_invalid_owner() {
-        let mut from = TileTrait::new(0, 4, PLAYER_1);
-        let mut to = TileTrait::new(1, 2, PLAYER_2);
+    #[should_panic(expected: ('Land: invalid owner',))]
+    fn test_land_transfer_invalid_owner() {
+        let mut from = LandTrait::new(0, 4, PLAYER_1);
+        let mut to = LandTrait::new(1, 2, PLAYER_2);
         from.transfer(ref to, 2, array![].span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_transfer_invalid_from_id() {
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_transfer_invalid_from_id() {
         let invalid_id: u8 = config::TILE_NUMBER.try_into().unwrap();
-        let mut from = TileTrait::new(invalid_id, 4, PLAYER_1);
-        let mut to = TileTrait::new(1, 2, PLAYER_1);
+        let mut from = LandTrait::new(invalid_id, 4, PLAYER_1);
+        let mut to = LandTrait::new(1, 2, PLAYER_1);
         from.transfer(ref to, 2, array![].span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_transfer_invalid_to_id() {
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_transfer_invalid_to_id() {
         let invalid_id: u8 = config::TILE_NUMBER.try_into().unwrap();
-        let mut from = TileTrait::new(0, 4, PLAYER_1);
-        let mut to = TileTrait::new(invalid_id, 2, PLAYER_1);
+        let mut from = LandTrait::new(0, 4, PLAYER_1);
+        let mut to = LandTrait::new(invalid_id, 2, PLAYER_1);
         from.transfer(ref to, 2, array![].span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_transfer_invalid_id() {
-        let mut from = TileTrait::new(0, 4, PLAYER_1);
-        let mut to = TileTrait::new(0, 2, PLAYER_1);
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_transfer_invalid_id() {
+        let mut from = LandTrait::new(0, 4, PLAYER_1);
+        let mut to = LandTrait::new(0, 2, PLAYER_1);
         from.transfer(ref to, 2, array![].span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid army transfer',))]
-    fn test_tile_transfer_invalid_army_transfer() {
-        let mut from = TileTrait::new(0, 4, PLAYER_1);
-        let mut to = TileTrait::new(1, 2, PLAYER_1);
+    #[should_panic(expected: ('Land: invalid army transfer',))]
+    fn test_land_transfer_invalid_army_transfer() {
+        let mut from = LandTrait::new(0, 4, PLAYER_1);
+        let mut to = LandTrait::new(1, 2, PLAYER_1);
         from.transfer(ref to, 5, array![].span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid connection',))]
-    fn test_tile_transfer_invalid_connection() {
-        let mut from = TileTrait::new(0, 4, PLAYER_1);
-        // [Compute] Not connected tile
-        let mut neighbors = config::neighbors(from.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut connected = TileTrait::new(*neighbor, 2, PLAYER_2);
-        let mut foreigners = config::neighbors(connected.id).expect('Tile: invalid id');
+    #[should_panic(expected: ('Land: invalid connection',))]
+    fn test_land_transfer_invalid_connection() {
+        let mut from = LandTrait::new(0, 4, PLAYER_1);
+        // [Compute] Not connected land
+        let mut neighbors = config::neighbors(from.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut connected = LandTrait::new(*neighbor, 2, PLAYER_2);
+        let mut foreigners = config::neighbors(connected.id).expect('Land: invalid id');
         let index = loop {
             match foreigners.pop_front() {
                 Option::Some(index) => {
@@ -646,86 +645,86 @@ mod tests {
                     };
                 },
                 Option::None => {
-                    panic(array!['Tile: foreigner not found']);
+                    panic(array!['Land: foreigner not found']);
                 },
             };
         };
-        let mut to = TileTrait::new(*index, 2, PLAYER_1);
-        // [Compute] Graph of tiles
-        let mut tiles: Array<Tile> = array![];
-        let mut tile_index: u8 = 0;
+        let mut to = LandTrait::new(*index, 2, PLAYER_1);
+        // [Compute] Graph of lands
+        let mut lands: Array<Land> = array![];
+        let mut land_index: u8 = 0;
         loop {
-            if config::TILE_NUMBER == tile_index.into() {
+            if config::TILE_NUMBER == land_index.into() {
                 break;
             };
-            tiles.append(TileTrait::new(tile_index, 0, PLAYER_2));
-            tile_index += 1;
+            lands.append(LandTrait::new(land_index, 0, PLAYER_2));
+            land_index += 1;
         };
-        from.transfer(ref to, 2, tiles.span());
+        from.transfer(ref to, 2, lands.span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_attack_and_defend() {
+    fn test_land_attack_and_defend() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
-        assert(attacker.army == 4, 'Tile: wrong attacker army');
-        assert(defender.army == 2, 'Tile: wrong defender army');
-        assert(defender.owner == PLAYER_2, 'Tile: wrong defender owner');
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
+        assert(attacker.army == 4, 'Land: wrong attacker army');
+        assert(defender.army == 2, 'Land: wrong defender army');
+        assert(defender.owner == PLAYER_2, 'Land: wrong defender owner');
         attacker.attack(3, ref defender, 'ATTACK');
-        assert(attacker.to == defender.id, 'Tile: wrong attacker to');
-        assert(defender.from == attacker.id, 'Tile: wrong defender from');
+        assert(attacker.to == defender.id, 'Land: wrong attacker to');
+        assert(defender.from == attacker.id, 'Land: wrong defender from');
         defender.defend(ref attacker, ref dice, 'DEFEND');
-        assert(attacker.to == 0, 'Tile: wrong attacker to');
-        assert(attacker.army == 1, 'Tile: wrong attacker army');
-        assert(defender.from == 0, 'Tile: wrong defender from');
-        assert(defender.army == 2, 'Tile: wrong defender army');
-        assert(defender.owner == PLAYER_1, 'Tile: wrong defender owner');
+        assert(attacker.to == 0, 'Land: wrong attacker to');
+        assert(attacker.army == 1, 'Land: wrong attacker army');
+        assert(defender.from == 0, 'Land: wrong defender from');
+        assert(defender.army == 2, 'Land: wrong defender army');
+        assert(defender.owner == PLAYER_1, 'Land: wrong defender owner');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_attack_invalid_attacker_id() {
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_attack_invalid_attacker_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap();
-        let mut attacker = TileTrait::new(invalid_id, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        let mut attacker = LandTrait::new(invalid_id, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(3, ref defender, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_attack_invalid_defender_id() {
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_attack_invalid_defender_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap();
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut defender = TileTrait::new(invalid_id, 2, PLAYER_2);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut defender = LandTrait::new(invalid_id, 2, PLAYER_2);
         attacker.attack(3, ref defender, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_attack_invalid_id() {
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_attack_invalid_id() {
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
         attacker.attack(3, ref attacker, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid order status',))]
-    fn test_tile_attack_invalid_order() {
+    #[should_panic(expected: ('Land: invalid order status',))]
+    fn test_land_attack_invalid_order() {
         let mut dice = DiceTrait::new(SEED);
-        let mut defender = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(defender.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut attacker = TileTrait::new(*neighbor, 2, PLAYER_2);
-        let mut allies = config::neighbors(attacker.id).expect('Tile: invalid id');
+        let mut defender = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(defender.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut attacker = LandTrait::new(*neighbor, 2, PLAYER_2);
+        let mut allies = config::neighbors(attacker.id).expect('Land: invalid id');
         let index = loop {
             match allies.pop_front() {
                 Option::Some(index) => {
@@ -734,90 +733,90 @@ mod tests {
                     };
                 },
                 Option::None => {
-                    panic(array!['Tile: ally not found']);
+                    panic(array!['Land: ally not found']);
                 },
             };
         };
-        let mut ally = TileTrait::new(*index, 2, PLAYER_1);
+        let mut ally = LandTrait::new(*index, 2, PLAYER_1);
         attacker.attack(1, ref defender, 'ATTACK');
         attacker.attack(1, ref ally, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid owner',))]
-    fn test_tile_attack_invalid_owner_self_attack() {
+    #[should_panic(expected: ('Land: invalid owner',))]
+    fn test_land_attack_invalid_owner_self_attack() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_1);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_1);
         attacker.attack(3, ref defender, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid dispatched',))]
-    fn test_tile_attack_invalid_dispatched() {
+    #[should_panic(expected: ('Land: invalid dispatched',))]
+    fn test_land_attack_invalid_dispatched() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(10, ref defender, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid dispatched',))]
-    fn test_tile_attack_invalid_no_dispatched() {
+    #[should_panic(expected: ('Land: invalid dispatched',))]
+    fn test_land_attack_invalid_no_dispatched() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(0, ref defender, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid attacker',))]
-    fn test_tile_attack_invalid_attacker() {
+    #[should_panic(expected: ('Land: invalid attacker',))]
+    fn test_land_attack_invalid_attacker() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(2, ref defender, 0);
         attacker.attack(1, ref defender, 0);
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid defender',))]
-    fn test_tile_attack_invalid_defender() {
+    #[should_panic(expected: ('Land: invalid defender',))]
+    fn test_land_attack_invalid_defender() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(1, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
-        let mut neighbors = config::neighbors(defender.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut mercenary = TileTrait::new(*neighbor, 2, PLAYER_1);
+        let mut attacker = LandTrait::new(1, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
+        let mut neighbors = config::neighbors(defender.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut mercenary = LandTrait::new(*neighbor, 2, PLAYER_1);
         attacker.attack(3, ref defender, 'ATTACK');
         mercenary.attack(1, ref defender, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid neighbor',))]
-    fn test_tile_attack_invalid_neighbor() {
+    #[should_panic(expected: ('Land: invalid neighbor',))]
+    fn test_land_attack_invalid_neighbor() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(1, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
-        let mut allies = config::neighbors(defender.id).expect('Tile: invalid id');
+        let mut attacker = LandTrait::new(1, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
+        let mut allies = config::neighbors(defender.id).expect('Land: invalid id');
         let index = loop {
             match allies.pop_front() {
                 Option::Some(index) => {
@@ -826,79 +825,79 @@ mod tests {
                     };
                 },
                 Option::None => {
-                    panic(array!['Tile: foreigner not found']);
+                    panic(array!['Land: foreigner not found']);
                 },
             };
         };
-        let mut foreigner = TileTrait::new(*index, 2, PLAYER_2);
+        let mut foreigner = LandTrait::new(*index, 2, PLAYER_2);
         attacker.attack(3, ref foreigner, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid order status',))]
-    fn test_tile_attack_and_defend_invalid_order() {
+    #[should_panic(expected: ('Land: invalid order status',))]
+    fn test_land_attack_and_defend_invalid_order() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(3, ref defender, 'ATTACK');
         defender.defend(ref attacker, ref dice, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_attack_and_defend_invalid_attacker_id() {
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_attack_and_defend_invalid_attacker_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap();
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(invalid_id, 4, PLAYER_1);
-        let mut defender = TileTrait::new(0, 2, PLAYER_1);
+        let mut attacker = LandTrait::new(invalid_id, 4, PLAYER_1);
+        let mut defender = LandTrait::new(0, 2, PLAYER_1);
         defender.defend(ref attacker, ref dice, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_attack_and_defend_invalid_defender_id() {
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_attack_and_defend_invalid_defender_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap();
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut defender = TileTrait::new(invalid_id, 2, PLAYER_1);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut defender = LandTrait::new(invalid_id, 2, PLAYER_1);
         defender.defend(ref attacker, ref dice, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_attack_and_defend_invalid_id() {
+    #[should_panic(expected: ('Land: invalid id',))]
+    fn test_land_attack_and_defend_invalid_id() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(1, 4, PLAYER_1);
+        let mut attacker = LandTrait::new(1, 4, PLAYER_1);
         attacker.defend(ref attacker, ref dice, 'DEFEND');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid attacker',))]
-    fn test_tile_attack_and_defend_invalid_attacker_self_attack() {
+    #[should_panic(expected: ('Land: invalid attacker',))]
+    fn test_land_attack_and_defend_invalid_attacker_self_attack() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         defender.defend(ref attacker, ref dice, 'DEFEND');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid owner',))]
-    fn test_tile_attack_and_defend_invalid_owner_self_attack() {
+    #[should_panic(expected: ('Land: invalid owner',))]
+    fn test_land_attack_and_defend_invalid_owner_self_attack() {
         let mut dice = DiceTrait::new(SEED);
-        let mut attacker = TileTrait::new(0, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut defender = TileTrait::new(*neighbor, 2, PLAYER_2);
+        let mut attacker = LandTrait::new(0, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
         attacker.attack(3, ref defender, 'ATTACK');
         defender.owner = PLAYER_1;
         defender.defend(ref attacker, ref dice, 'DEFEND');
@@ -906,14 +905,14 @@ mod tests {
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid neighbor',))]
-    fn test_tile_attack_and_defend_invalid_neighbor() {
+    #[should_panic(expected: ('Land: invalid neighbor',))]
+    fn test_land_attack_and_defend_invalid_neighbor() {
         let mut dice = DiceTrait::new(SEED);
-        let mut defender = TileTrait::new(1, 4, PLAYER_1);
-        let mut neighbors = config::neighbors(defender.id).expect('Tile: invalid id');
-        let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
-        let mut attacker = TileTrait::new(*neighbor, 2, PLAYER_2);
-        let mut allies = config::neighbors(attacker.id).expect('Tile: invalid id');
+        let mut defender = LandTrait::new(1, 4, PLAYER_1);
+        let mut neighbors = config::neighbors(defender.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut attacker = LandTrait::new(*neighbor, 2, PLAYER_2);
+        let mut allies = config::neighbors(attacker.id).expect('Land: invalid id');
         let mut index = loop {
             match allies.pop_front() {
                 Option::Some(index) => {
@@ -922,7 +921,7 @@ mod tests {
                     };
                 },
                 Option::None => {
-                    panic(array!['Tile: ally not found']);
+                    panic(array!['Land: ally not found']);
                 },
             };
         };
@@ -934,262 +933,262 @@ mod tests {
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid dispatched',))]
-    fn test_tile_battle_invalid_dispatched() {
-        let mut attacker = TileTrait::new(0, 3, PLAYER_1);
-        let mut defender = TileTrait::new(1, 2, 'd');
+    #[should_panic(expected: ('Land: invalid dispatched',))]
+    fn test_land_battle_invalid_dispatched() {
+        let mut attacker = LandTrait::new(0, 3, PLAYER_1);
+        let mut defender = LandTrait::new(1, 2, 'd');
         attacker.attack(3, ref defender, 'ATTACK');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_sort_len_1() {
+    fn test_land_sort_len_1() {
         let array = array![1];
         let sorted = _sort(array.span());
-        assert(sorted == array.span(), 'Tile: wrong sort');
+        assert(sorted == array.span(), 'Land: wrong sort');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_sort_len_2() {
+    fn test_land_sort_len_2() {
         let expected = array![2, 1].span();
         // Case 01
         let array = array![1, 2];
         let sorted = _sort(array.span());
-        assert(sorted == expected, 'Tile: wrong sort 01');
+        assert(sorted == expected, 'Land: wrong sort 01');
         // Case 02
         let array = array![2, 1];
         let sorted = _sort(array.span());
-        assert(sorted == expected, 'Tile: wrong sort 02');
+        assert(sorted == expected, 'Land: wrong sort 02');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_sort_len_3() {
+    fn test_land_sort_len_3() {
         let expected = array![3, 2, 1].span();
         // Case 01
         let array = array![1, 2, 3];
         let sorted = _sort(array.span());
-        assert(sorted == expected, 'Tile: wrong sort 01');
+        assert(sorted == expected, 'Land: wrong sort 01');
         // Case 02
         let array = array![1, 3, 2];
         let sorted = _sort(array.span());
-        assert(sorted == expected, 'Tile: wrong sort 02');
+        assert(sorted == expected, 'Land: wrong sort 02');
         // Case 03
         let array = array![2, 1, 3];
         let sorted = _sort(array.span());
-        assert(sorted == expected, 'Tile: wrong sort 03');
+        assert(sorted == expected, 'Land: wrong sort 03');
         // Case 04
         let array = array![2, 3, 1];
         let sorted = _sort(array.span());
-        assert(sorted == expected, 'Tile: wrong sort 04');
+        assert(sorted == expected, 'Land: wrong sort 04');
         // Case 05
         let array = array![3, 1, 2];
         let sorted = _sort(array.span());
-        assert(sorted == expected, 'Tile: wrong sort 05');
+        assert(sorted == expected, 'Land: wrong sort 05');
         // Case 06
         let array = array![3, 2, 1];
         let sorted = _sort(array.span());
-        assert(sorted == expected, 'Tile: wrong sort 06');
+        assert(sorted == expected, 'Land: wrong sort 06');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid array',))]
-    fn test_tile_sort_revert_len_0() {
+    #[should_panic(expected: ('Land: invalid array',))]
+    fn test_land_sort_revert_len_0() {
         let array = array![];
         let sorted = _sort(array.span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid array',))]
-    fn test_tile_sort_revert_len_4() {
+    #[should_panic(expected: ('Land: invalid array',))]
+    fn test_land_sort_revert_len_4() {
         let array = array![1, 2, 3, 4];
         let sorted = _sort(array.span());
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_duel_draw() {
+    fn test_land_duel_draw() {
         let mut defensives = array![2, 1].span();
         let mut offsensives = array![2, 1].span();
         let (defensive_losses, offensive_losses) = _duel(ref defensives, ref offsensives);
-        assert(defensive_losses == 0, 'Tile: wrong defensive losses');
-        assert(offensive_losses == 2, 'Tile: wrong offensive losses');
+        assert(defensive_losses == 0, 'Land: wrong defensive losses');
+        assert(offensive_losses == 2, 'Land: wrong offensive losses');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_duel_conquered() {
+    fn test_land_duel_conquered() {
         let mut defensives = array![2, 1].span();
         let mut offsensives = array![3, 2].span();
         let (defensive_losses, offensive_losses) = _duel(ref defensives, ref offsensives);
-        assert(defensive_losses == 2, 'Tile: wrong defensive losses');
-        assert(offensive_losses == 0, 'Tile: wrong offensive losses');
+        assert(defensive_losses == 2, 'Land: wrong defensive losses');
+        assert(offensive_losses == 0, 'Land: wrong offensive losses');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_duel_repelled() {
+    fn test_land_duel_repelled() {
         let mut defensives = array![3, 2].span();
         let mut offsensives = array![2, 1].span();
         let (defensive_losses, offensive_losses) = _duel(ref defensives, ref offsensives);
-        assert(defensive_losses == 0, 'Tile: wrong defensive losses');
-        assert(offensive_losses == 2, 'Tile: wrong offensive losses');
+        assert(defensive_losses == 0, 'Land: wrong defensive losses');
+        assert(offensive_losses == 2, 'Land: wrong offensive losses');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_duel_tight() {
+    fn test_land_duel_tight() {
         let mut defensives = array![3, 1].span();
         let mut offsensives = array![2, 2].span();
         let (defensive_losses, offensive_losses) = _duel(ref defensives, ref offsensives);
-        assert(defensive_losses == 1, 'Tile: wrong defensive losses');
-        assert(offensive_losses == 1, 'Tile: wrong offensive losses');
+        assert(defensive_losses == 1, 'Land: wrong defensive losses');
+        assert(offensive_losses == 1, 'Land: wrong offensive losses');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_round() {
+    fn test_land_round() {
         let mut dice = DiceTrait::new(SEED);
         let defensive = 2;
         let offensive = 3;
         let (defensive_losses, offensive_losses) = _round(defensive, offensive, ref dice);
-        assert(defensive_losses == 1, 'Tile: wrong defensive losses');
-        assert(offensive_losses == 1, 'Tile: wrong offensive losses');
+        assert(defensive_losses == 1, 'Land: wrong defensive losses');
+        assert(offensive_losses == 1, 'Land: wrong offensive losses');
     }
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_battle_small() {
+    fn test_land_battle_small() {
         let mut dice = DiceTrait::new(SEED);
         let defensive = 2;
         let offensive = 3;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
-        assert(defensive_survivors == 0, 'Tile: wrong defensive survivors');
-        assert(offensive_survivors == 2, 'Tile: wrong offensive survivors');
+        assert(defensive_survivors == 0, 'Land: wrong defensive survivors');
+        assert(offensive_survivors == 2, 'Land: wrong offensive survivors');
     }
 
     #[test]
     #[available_gas(10_000_000)]
-    fn test_tile_battle_big_conquered() {
+    fn test_land_battle_big_conquered() {
         let mut dice = DiceTrait::new(SEED);
         let defensive = 20;
         let offensive = 30;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
-        assert(defensive_survivors == 0, 'Tile: wrong defensive survivors');
-        assert(offensive_survivors == 13, 'Tile: wrong offensive survivors');
+        assert(defensive_survivors == 0, 'Land: wrong defensive survivors');
+        assert(offensive_survivors == 13, 'Land: wrong offensive survivors');
     }
 
     #[test]
     #[available_gas(10_000_000)]
-    fn test_tile_battle_big_repelled() {
+    fn test_land_battle_big_repelled() {
         let mut dice = DiceTrait::new(SEED);
         let defensive = 30;
         let offensive = 20;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
-        assert(defensive_survivors == 9, 'Tile: wrong defensive survivors');
-        assert(offensive_survivors == 0, 'Tile: wrong offensive survivors');
+        assert(defensive_survivors == 9, 'Land: wrong defensive survivors');
+        assert(offensive_survivors == 0, 'Land: wrong offensive survivors');
     }
 
     #[test]
     #[available_gas(500_000)]
-    fn test_tile_dedup() {
-        let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(1, 0, PLAYER_1));
-        tiles.append(TileTrait::new(2, 0, PLAYER_1));
-        tiles.append(TileTrait::new(3, 0, PLAYER_1));
+    fn test_land_dedup() {
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
+        lands.append(LandTrait::new(2, 0, PLAYER_1));
+        lands.append(LandTrait::new(3, 0, PLAYER_1));
         let mut array = array![0, 1, 2].span();
         let mut drops = array![1, 2].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![0].span(), 'Tile: wrong dedup');
+        let deduped = _owned_dedup(ref array, lands.span(), drops, @PLAYER_1);
+        assert(deduped == array![0].span(), 'Land: wrong dedup');
     }
 
     #[test]
     #[available_gas(500_000)]
-    fn test_tile_dedup_not_owned() {
-        let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, PLAYER_2));
-        tiles.append(TileTrait::new(1, 0, PLAYER_1));
-        tiles.append(TileTrait::new(2, 0, PLAYER_1));
+    fn test_land_dedup_not_owned() {
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(0, 0, PLAYER_2));
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
+        lands.append(LandTrait::new(2, 0, PLAYER_1));
         let mut array = array![0, 1, 2].span();
         let mut drops = array![1, 2].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![].span(), 'Tile: wrong dedup');
+        let deduped = _owned_dedup(ref array, lands.span(), drops, @PLAYER_1);
+        assert(deduped == array![].span(), 'Land: wrong dedup');
     }
 
     #[test]
     #[available_gas(500_000)]
-    fn test_tile_dedup_no_intersection() {
-        let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, PLAYER_1));
-        tiles.append(TileTrait::new(1, 0, PLAYER_1));
-        tiles.append(TileTrait::new(2, 0, PLAYER_1));
+    fn test_land_dedup_no_intersection() {
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(0, 0, PLAYER_1));
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
+        lands.append(LandTrait::new(2, 0, PLAYER_1));
         let mut array = array![0, 1, 2].span();
         let mut drops = array![3, 4, 5].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![0, 1, 2].span(), 'Tile: wrong dedup');
+        let deduped = _owned_dedup(ref array, lands.span(), drops, @PLAYER_1);
+        assert(deduped == array![0, 1, 2].span(), 'Land: wrong dedup');
     }
 
     #[test]
     #[available_gas(500_000)]
-    fn test_tile_dedup_array_empty() {
-        let mut tiles: Array<Tile> = array![];
+    fn test_land_dedup_array_empty() {
+        let mut lands: Array<Land> = array![];
         let mut array = array![].span();
         let mut drops = array![3, 4, 5].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![].span(), 'Tile: wrong dedup');
+        let deduped = _owned_dedup(ref array, lands.span(), drops, @PLAYER_1);
+        assert(deduped == array![].span(), 'Land: wrong dedup');
     }
 
     #[test]
     #[available_gas(500_000)]
-    fn test_tile_dedup_drops_empty() {
-        let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, PLAYER_1));
-        tiles.append(TileTrait::new(1, 0, PLAYER_1));
-        tiles.append(TileTrait::new(2, 0, PLAYER_1));
+    fn test_land_dedup_drops_empty() {
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(0, 0, PLAYER_1));
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
+        lands.append(LandTrait::new(2, 0, PLAYER_1));
         let mut array = array![0, 1, 2].span();
         let mut drops = array![].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![0, 1, 2].span(), 'Tile: wrong dedup');
+        let deduped = _owned_dedup(ref array, lands.span(), drops, @PLAYER_1);
+        assert(deduped == array![0, 1, 2].span(), 'Land: wrong dedup');
     }
 
     #[test]
     #[available_gas(150_000_000)]
-    fn test_tile_connected() {
-        let tile_count: u8 = config::TILE_NUMBER.try_into().unwrap();
-        let mut tiles: Array<Tile> = array![];
+    fn test_land_connected() {
+        let land_count: u8 = config::TILE_NUMBER.try_into().unwrap();
+        let mut lands: Array<Land> = array![];
         let mut index = 0;
         loop {
-            if index >= tile_count {
+            if index >= land_count {
                 break;
             };
-            tiles.append(TileTrait::new(index, 0, PLAYER_1));
+            lands.append(LandTrait::new(index, 0, PLAYER_1));
             index += 1;
         };
         let mut visiteds = array![];
-        let connection = _connected(0, tile_count - 1, @PLAYER_1, tiles.span(), ref visiteds);
-        assert(connection, 'Tile: wrong connection status');
+        let connection = _connected(0, land_count - 1, @PLAYER_1, lands.span(), ref visiteds);
+        assert(connection, 'Land: wrong connection status');
     }
 
     #[test]
     #[available_gas(150_000_000)]
-    fn test_tile_not_connected() {
-        let tile_count: u8 = config::TILE_NUMBER.try_into().unwrap();
-        let mut tiles: Array<Tile> = array![];
-        tiles.append(TileTrait::new(0, 0, PLAYER_1));
-        tiles.append(TileTrait::new(1, 0, PLAYER_1));
+    fn test_land_not_connected() {
+        let land_count: u8 = config::TILE_NUMBER.try_into().unwrap();
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(0, 0, PLAYER_1));
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
         let mut index = 2;
         loop {
-            if index >= tile_count {
+            if index >= land_count {
                 break;
             };
-            tiles.append(TileTrait::new(index, 0, PLAYER_2));
+            lands.append(LandTrait::new(index, 0, PLAYER_2));
             index += 1;
         };
         let mut visiteds = array![];
-        let connection = _connected(0, tile_count - 1, @PLAYER_1, tiles.span(), ref visiteds);
-        assert(!connection, 'Tile: wrong connection status');
+        let connection = _connected(0, land_count - 1, @PLAYER_1, lands.span(), ref visiteds);
+        assert(!connection, 'Land: wrong connection status');
     }
 }
