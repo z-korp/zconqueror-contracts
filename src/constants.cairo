@@ -7,3 +7,7 @@ fn ZERO() -> starknet::ContractAddress {
 // Dice constants
 
 const DICE_FACES_NUMBER: u8 = 6;
+
+// Hand constants
+
+const HAND_MAX_SIZE: u8 = 5;

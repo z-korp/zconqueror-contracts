@@ -2,10 +2,50 @@
 
 // Constants
 
+const CARD_NUMBER: u32 = 6;
 const TILE_NUMBER: u32 = 5;
 const ARMY_NUMBER: u32 = 5;
+
 const FACTION_01: felt252 = 'RED';
 const FACTION_02: felt252 = 'BLUE';
+
+const INFANTRY: u16 = 1;
+const CAVALRY: u16 = 10;
+const ARTILLERY: u16 = 100;
+const JOCKER: u16 = 1000;
+
+/// Return the tile id and unit type based on the card id.
+/// # Arguments
+/// * `id` - The card id.
+/// # Returns
+/// * The corresponding tile id and unit type.
+#[inline(always)]
+fn card(id: u8) -> Option<(u8, u16)> {
+    // Tile number + 5% if > 20, otherwise add 1
+    let count = if TILE_NUMBER > 20 {
+        TILE_NUMBER + 5 * TILE_NUMBER / 100
+    } else {
+        TILE_NUMBER + 1
+    };
+
+    // ID cannot be 0
+    if id == 0 {
+        return Option::None;
+    // If extra cards, set special unit type
+    } else if TILE_NUMBER < id.into() {
+        return Option::Some((id, JOCKER));
+    // Otherwise, set unit type based on id
+    } else {
+        let unit: u16 = if id % 3 == 0 {
+            INFANTRY
+        } else if id % 3 == 1 {
+            CAVALRY
+        } else {
+            ARTILLERY
+        };
+        return Option::Some((id, unit));
+    }
+}
 
 /// Return tile faction based on id.
 /// # Arguments

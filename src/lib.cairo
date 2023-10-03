@@ -6,10 +6,12 @@ mod data {
 }
 
 mod entities {
-    mod land;
     mod dice;
     mod deck;
+    mod hand;
+    mod land;
     mod map;
+    mod set;
 }
 
 mod components {
