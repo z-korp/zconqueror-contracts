@@ -12,8 +12,11 @@ mod finish {
 
     // Entities imports
 
+    use zrisk::config;
+    use zrisk::entities::deck::DeckTrait;
     use zrisk::entities::map::{Map, MapTrait};
-    use zrisk::entities::map::{Land, LandTrait};
+    use zrisk::entities::land::{Land, LandTrait};
+    use zrisk::entities::hand::{Hand, HandTrait};
 
     // Internal imports
 
@@ -58,8 +61,30 @@ mod finish {
                 tile_index += 1;
             };
 
+            // [Compute] Draw card if conqueror
+            if player.conqueror {
+                // Setup deck
+                let mut deck = DeckTrait::new(game.seed, config::card_number(), game.nonce);
+                let mut player_index = 0;
+                loop {
+                    if player_index >= game.player_count {
+                        break;
+                    }
+                    let player_key = (game.id, player_index);
+                    let mut player: Player = get!(ctx.world, player_key.into(), (Player));
+                    let hand = HandTrait::load(@player);
+                    deck.remove(hand.cards.span());
+                    player_index += 1;
+                };
+                // Draw
+                let mut hand = HandTrait::load(@player);
+                hand.add(deck.draw());
+                player.cards = hand.dump();
+            }
+
             // [Compute] New supply
             let mut map = MapTrait::from_lands(game.player_count.into(), lands.span());
+            player.conqueror = false;
             player.supply = map.score(player.index);
             set!(ctx.world, (player));
         }

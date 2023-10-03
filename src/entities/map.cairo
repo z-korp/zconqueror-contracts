@@ -9,11 +9,16 @@ use poseidon::PoseidonTrait;
 use hash::HashStateTrait;
 use debug::PrintTrait;
 
+// External imports
+
+use alexandria_data_structures::array_ext::ArrayTraitExt;
+
 // Internal imports
 
 use zrisk::config;
 use zrisk::entities::deck::{Deck, DeckTrait};
 use zrisk::entities::land::{Land, LandTrait};
+use zrisk::entities::set::{Set, SetTrait};
 
 // Constants
 
@@ -31,6 +36,7 @@ mod errors {
     const LANDS_EMPTY: felt252 = 'Map: Lands empty';
     const INVALID_LAND_NUMBER: felt252 = 'Map: Invalid land number';
     const LANDS_UNBOX_ISSUE: felt252 = 'Lands: unbox issue';
+    const INVALID_CARD_ID: felt252 = 'Map: Invalid card id';
 }
 
 /// Trait to initialize and manage land from the Map.
@@ -65,6 +71,14 @@ trait MapTrait {
     /// # Returns
     /// * The score.
     fn score(ref self: Map, player_index: u32) -> u32;
+    /// Add supply for each owned lands in the set.
+    /// # Arguments
+    /// * `self` - The map.
+    /// * `player_index` - The player index for whom to calculate the score.
+    /// * `set` - The set of cards.
+    /// # Returns
+    /// * The supplied lands.
+    fn deploy(ref self: Map, player_index: u32, set: @Set) -> Span<Land>;
 }
 
 /// Implementation of the `MapTrait` for the `Map` struct.
@@ -75,7 +89,7 @@ impl MapImpl of MapTrait {
         // [Compute] Seed in u256 for futher operations
         let base_seed: u256 = seed.into();
         // Use the deck mechanism to shuffle the lands
-        let mut deck = DeckTrait::new(seed, land_count);
+        let mut deck = DeckTrait::new(seed, land_count, 0);
         // Each player draw R/N where R is the remaining cards and N the number of players left
         let mut realms: Felt252Dict<Nullable<Span<Land>>> = Default::default();
         let mut player_index: u32 = 0;
@@ -210,6 +224,45 @@ impl MapImpl of MapTrait {
         // [Return] Score
         score
     }
+
+    fn deploy(ref self: Map, player_index: u32, set: @Set) -> Span<Land> {
+        // [Compute] Set tile ids
+        let mut tile_ids: Array<u8> = array![];
+        let mut cards = set.cards();
+        loop {
+            match cards.pop_front() {
+                Option::Some(card) => {
+                    let (tile_id, _) = config::card(*card).expect(errors::INVALID_CARD_ID);
+                    tile_ids.append(tile_id);
+                },
+                Option::None => {
+                    break;
+                },
+            };
+        };
+        // [Compute] Update player lands if tile ids match
+        let mut player_lands = self.player_lands(player_index);
+        let mut updated_lands = array![];
+        loop {
+            match player_lands.pop_front() {
+                Option::Some(land) => {
+                    let mut updated_land = *land;
+                    if tile_ids.contains(*land.id) {
+                        updated_land.army += 2;
+                    };
+                    updated_lands.append(updated_land);
+                },
+                Option::None => {
+                    break;
+                },
+            };
+        };
+        // [Compute] Update player lands
+        let lands = updated_lands.span();
+        self.realms.insert(player_index.into(), nullable_from_box(BoxTrait::new(lands)));
+        // [Return] Updated player lands
+        lands
+    }
 }
 
 /// Generates a random number between 0 or 1.
@@ -236,6 +289,7 @@ mod tests {
 
     use zrisk::config;
     use zrisk::entities::land::{Land, LandTrait};
+    use zrisk::entities::set::{Set, SetTrait};
 
     // Local imports
 
@@ -297,5 +351,23 @@ mod tests {
         lands.append(LandTrait::new(5, 0, PLAYER_1));
         let mut map = MapTrait::from_lands(PLAYER_NUMBER, lands.span());
         assert(map.score(PLAYER_1) >= 5, 'Map: wrong score');
+    }
+
+    #[test]
+    #[available_gas(18_000_000)]
+    fn test_map_deploy() {
+        let mut lands: Array<Land> = array![];
+        lands.append(LandTrait::new(1, 0, PLAYER_1));
+        lands.append(LandTrait::new(2, 0, PLAYER_1));
+        lands.append(LandTrait::new(3, 0, PLAYER_2));
+        lands.append(LandTrait::new(4, 0, PLAYER_1));
+        lands.append(LandTrait::new(5, 0, PLAYER_1));
+        let mut map = MapTrait::from_lands(PLAYER_NUMBER, lands.span());
+        let set = SetTrait::new(1, 2, 3);
+        let player_lands = map.deploy(PLAYER_1, @set);
+        assert(player_lands.at(0).army == @2, 'Map: wrong land army 0');
+        assert(player_lands.at(1).army == @2, 'Map: wrong land army 1');
+        assert(player_lands.at(2).army == @0, 'Map: wrong land army 3');
+        assert(player_lands.at(3).army == @0, 'Map: wrong land army 4');
     }
 }

@@ -2,7 +2,6 @@
 
 // Constants
 
-const CARD_NUMBER: u32 = 6;
 const TILE_NUMBER: u32 = 5;
 const ARMY_NUMBER: u32 = 5;
 
@@ -14,6 +13,21 @@ const CAVALRY: u16 = 10;
 const ARTILLERY: u16 = 100;
 const JOCKER: u16 = 1000;
 
+/// Return the card number based on tile number.
+/// # Arguments
+/// * `id` - The card id.
+/// # Returns
+/// * The corresponding tile id and unit type.
+#[inline(always)]
+fn card_number() -> u32 {
+    // Tile number + 5% if > 20, otherwise add 1
+    if TILE_NUMBER > 20 {
+        TILE_NUMBER + 5 * TILE_NUMBER / 100
+    } else {
+        TILE_NUMBER + 1
+    }
+}
+
 /// Return the tile id and unit type based on the card id.
 /// # Arguments
 /// * `id` - The card id.
@@ -22,11 +36,7 @@ const JOCKER: u16 = 1000;
 #[inline(always)]
 fn card(id: u8) -> Option<(u8, u16)> {
     // Tile number + 5% if > 20, otherwise add 1
-    let count = if TILE_NUMBER > 20 {
-        TILE_NUMBER + 5 * TILE_NUMBER / 100
-    } else {
-        TILE_NUMBER + 1
-    };
+    let count = card_number();
 
     // ID cannot be 0
     if id == 0 {

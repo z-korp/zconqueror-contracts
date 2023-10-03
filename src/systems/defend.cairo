@@ -66,5 +66,11 @@ mod defend {
         // [Command] Update target army
         let defender_tile = defender_land.dump(game.id);
         set!(ctx.world, (defender_tile));
+
+        // [Command] Update player
+        if defender_land.defeated && !player.conqueror {
+            player.conqueror = true;
+            set!(ctx.world, (player));
+        };
     }
 }

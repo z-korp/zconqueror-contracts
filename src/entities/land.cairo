@@ -29,6 +29,7 @@ struct Land {
     to: u8,
     from: u8,
     order: felt252,
+    defeated: bool,
 }
 
 /// Errors module
@@ -116,7 +117,16 @@ impl LandImpl of LandTrait {
         let faction = config::faction(id).expect(errors::INVALID_ID);
         let neighbors = config::neighbors(id).expect(errors::INVALID_ID);
         Land {
-            id, army, owner, dispatched: 0, faction, neighbors: neighbors, to: 0, from: 0, order: 0
+            id,
+            army,
+            owner,
+            dispatched: 0,
+            faction,
+            neighbors: neighbors,
+            to: 0,
+            from: 0,
+            order: 0,
+            defeated: false
         }
     }
 
@@ -149,6 +159,7 @@ impl LandImpl of LandTrait {
             to: *tile.to,
             from: *tile.from,
             order: *tile.order,
+            defeated: false,
         }
     }
 
@@ -226,6 +237,7 @@ impl LandImpl of LandTrait {
         if self.army == 0 {
             self.owner = attacker.owner;
             self.army = attacker.dispatched;
+            self.defeated = true;
             attacker.dispatched = 0;
         };
         // [Effect] Update attacker
@@ -672,13 +684,13 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(1_000_000)]
-    fn test_land_attack_and_defend() {
-        let mut attacker = LandTrait::new(1, 4, PLAYER_1);
+    #[available_gas(1_200_000)]
+    fn test_land_attack_and_defend_lose() {
+        let mut attacker = LandTrait::new(1, 10, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
         let neighbor = neighbors.pop_front().expect('Land: no neighbors');
         let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
-        assert(attacker.army == 4, 'Land: wrong attacker army');
+        assert(attacker.army == 10, 'Land: wrong attacker army');
         assert(defender.army == 2, 'Land: wrong defender army');
         assert(defender.owner == PLAYER_2, 'Land: wrong defender owner');
         attacker.attack(3, ref defender, 'ATTACK');
@@ -686,10 +698,33 @@ mod tests {
         assert(defender.from == attacker.id, 'Land: wrong defender from');
         defender.defend(ref attacker, SEED, 'DEFEND');
         assert(attacker.to == 0, 'Land: wrong attacker to');
-        assert(attacker.army == 1, 'Land: wrong attacker army');
+        assert(attacker.army == 7, 'Land: wrong attacker army');
         assert(defender.from == 0, 'Land: wrong defender from');
         assert(defender.army == 2, 'Land: wrong defender army');
         assert(defender.owner == PLAYER_2, 'Land: wrong defender owner');
+        assert(defender.defeated == false, 'Land: wrong defender defeated');
+    }
+
+    #[test]
+    #[available_gas(1_200_000)]
+    fn test_land_attack_and_defend_win() {
+        let mut attacker = LandTrait::new(1, 10, PLAYER_1);
+        let mut neighbors = config::neighbors(attacker.id).expect('Land: invalid id');
+        let neighbor = neighbors.pop_front().expect('Land: no neighbors');
+        let mut defender = LandTrait::new(*neighbor, 2, PLAYER_2);
+        assert(attacker.army == 10, 'Land: wrong attacker army');
+        assert(defender.army == 2, 'Land: wrong defender army');
+        assert(defender.owner == PLAYER_2, 'Land: wrong defender owner');
+        attacker.attack(9, ref defender, 'ATTACK');
+        assert(attacker.to == defender.id, 'Land: wrong attacker to');
+        assert(defender.from == attacker.id, 'Land: wrong defender from');
+        defender.defend(ref attacker, SEED, 'DEFEND');
+        assert(attacker.to == 0, 'Land: wrong attacker to');
+        assert(attacker.army == 1, 'Land: wrong attacker army');
+        assert(defender.from == 0, 'Land: wrong defender from');
+        assert(defender.army == 5, 'Land: wrong defender army');
+        assert(defender.owner == PLAYER_1, 'Land: wrong defender owner');
+        assert(defender.defeated == true, 'Land: wrong defender defeated');
     }
 
     #[test]

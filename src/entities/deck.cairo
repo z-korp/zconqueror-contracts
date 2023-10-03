@@ -31,7 +31,7 @@ trait DeckTrait {
     /// * `number` - The initial number of cards.
     /// # Returns
     /// * The initialized `Deck`.
-    fn new(seed: felt252, number: u32) -> Deck;
+    fn new(seed: felt252, number: u32, nonce: u8) -> Deck;
     /// Returns a card type after a draw.
     /// # Arguments
     /// * `self` - The Deck.
@@ -43,18 +43,18 @@ trait DeckTrait {
     /// * `self` - The Deck.
     /// * `card` - The card to discard.
     fn discard(ref self: Deck, card: u8);
-    /// Set the card status to owned.
+    /// Set the cards status to owned, they are not drawable anymore.
     /// # Arguments
     /// * `self` - The Deck.
-    /// * `card` - The card to set.
-    fn set_owned(ref self: Deck, card: u8);
+    /// * `cards` - The card to set.
+    fn remove(ref self: Deck, cards: Span<u8>);
 }
 
 /// Implementation of the `DeckTrait` trait for the `Deck` struct.
 impl DeckImpl of DeckTrait {
     #[inline(always)]
-    fn new(seed: felt252, number: u32) -> Deck {
-        Deck { seed, owned: Default::default(), total: number, remaining: number, nonce: 0 }
+    fn new(seed: felt252, number: u32, nonce: u8) -> Deck {
+        Deck { seed, owned: Default::default(), total: number, remaining: number, nonce }
     }
 
     fn draw(ref self: Deck) -> u8 {
@@ -90,10 +90,18 @@ impl DeckImpl of DeckTrait {
         self.owned.insert(card.into(), nullable_from_box(BoxTrait::new(false)));
     }
 
-    #[inline(always)]
-    fn set_owned(ref self: Deck, card: u8) {
-        self.remaining -= 1;
-        self.owned.insert(card.into(), nullable_from_box(BoxTrait::new(true)));
+    fn remove(ref self: Deck, mut cards: Span<u8>) {
+        loop {
+            match cards.pop_front() {
+                Option::Some(card) => {
+                    self.remaining -= 1;
+                    self.owned.insert((*card).into(), nullable_from_box(BoxTrait::new(true)));
+                },
+                Option::None => {
+                    break;
+                },
+            };
+        };
     }
 }
 
@@ -114,7 +122,7 @@ mod tests {
     #[test]
     #[available_gas(4_725_000)]
     fn test_deck_new_draw() {
-        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER);
+        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER, 0);
         assert(deck.total == DECK_CARDS_NUMBER, 'Wrong total');
         assert(deck.remaining == DECK_CARDS_NUMBER, 'Wrong remaining');
         assert(deck.draw() == 0x28, 'Wrong card 01');
@@ -167,7 +175,7 @@ mod tests {
     #[available_gas(27_000)]
     #[should_panic(expected: ('Deck: no card left',))]
     fn test_deck_new_draw_revert_no_card_left() {
-        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER);
+        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER, 0);
         deck.remaining = 0;
         deck.draw();
     }
@@ -175,7 +183,7 @@ mod tests {
     #[test]
     #[available_gas(6_568_000)]
     fn test_deck_new_discard() {
-        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER);
+        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER, 0);
         loop {
             if deck.remaining == 0 {
                 break;
@@ -189,16 +197,18 @@ mod tests {
 
     #[test]
     #[available_gas(7_927_000)]
-    fn test_deck_new_set_owned() {
-        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER);
+    fn test_deck_new_remove() {
+        let mut deck = DeckTrait::new('seed', DECK_CARDS_NUMBER, 0);
+        let mut cards: Array<u8> = array![];
         let mut card: u8 = 1;
         loop {
-            if deck.remaining == 0 {
+            if card.into() > DECK_CARDS_NUMBER {
                 break;
             };
-            deck.set_owned(card);
+            cards.append(card);
             card += 1;
         };
+        deck.remove(cards.span());
         let card: u8 = 0x11;
         deck.discard(card);
         assert(deck.draw() == card, 'Wrong card');

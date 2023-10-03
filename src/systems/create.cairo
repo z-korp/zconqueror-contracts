@@ -56,7 +56,7 @@ mod create {
         // [Command] Player components
         // Use the deck mechanism to define the player order, human player is 1
         // First player got his supply set
-        let mut deck = DeckTrait::new(game.seed, game.player_count.into());
+        let mut deck = DeckTrait::new(game.seed, game.player_count.into(), game.nonce);
         let mut player_index = 0;
         loop {
             if player_index == game.player_count {
