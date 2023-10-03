@@ -1,4 +1,4 @@
-//! Set struct and card management.
+//! Set struct and score management.
 
 // Internal imports
 

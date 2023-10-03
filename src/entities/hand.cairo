@@ -24,17 +24,15 @@ use zrisk::entities::set::{Set, SetTrait};
 
 const TWO_POW_8: u128 = 0x100;
 const MASK_8: u128 = 0xff;
-const SET_SIZE: u32 = 3;
 
 /// Hand struct.
-#[derive(Destruct)]
+#[derive(Drop)]
 struct Hand {
     cards: Array<u8>,
 }
 
 /// Errors module.
 mod errors {
-    const INVALID_CARD: felt252 = 'Hand: invalid card';
     const INVALID_SET: felt252 = 'Hand: invalid set';
     const MAX_HAND_SIZE_REACHED: felt252 = 'Hand: max hand size reached';
 }
@@ -111,7 +109,7 @@ impl HandImpl of HandTrait {
 
     fn add(ref self: Hand, card: u8) {
         // [Check] Maximum
-        assert(self.cards.len() <= HAND_MAX_SIZE.into(), errors::MAX_HAND_SIZE_REACHED);
+        assert(self.cards.len() < HAND_MAX_SIZE.into(), errors::MAX_HAND_SIZE_REACHED);
         self.cards.append(card);
     }
 
@@ -181,135 +179,6 @@ fn _unpack(mut packed: u128) -> Array<u8> {
     unpacked
 }
 
-/// Returns the best score according to the given cards.
-/// # Arguments
-/// * `cards` - The cards.
-/// # Returns
-/// * The best score and the types to dispatch.
-fn _score(mut cards: Span<u8>) -> (u32, Span<u16>) {
-    let mut discards: Array<u16> = array![];
-
-    // [Case] Not enough card
-    if cards.len() < SET_SIZE {
-        return (0, discards.span());
-    }
-
-    // [Compute] Card types
-    let mut types: Felt252Dict<u8> = Default::default();
-    loop {
-        match cards.pop_front() {
-            Option::Some(card) => {
-                let (_, _type) = config_card(*card).expect(errors::INVALID_CARD);
-                let key: felt252 = _type.into();
-                types.insert(key, types.get(key) + 1);
-            },
-            Option::None => {
-                break;
-            },
-        };
-    };
-    let artillery_count = types.get(ARTILLERY.into());
-    let cavalry_count = types.get(CAVALRY.into());
-    let infantry_count = types.get(INFANTRY.into());
-    let jocker_count = types.get(JOCKER.into());
-
-    // [Case] All different without jocker
-    if artillery_count > 0 && cavalry_count > 0 && infantry_count > 0 {
-        discards.append(ARTILLERY);
-        discards.append(CAVALRY);
-        discards.append(INFANTRY);
-        return (10, discards.span());
-    }
-
-    // [Case] All differnt with 1 jocker
-    if jocker_count == 1 {
-        if artillery_count > 0 && cavalry_count > 0 {
-            discards.append(JOCKER);
-            discards.append(ARTILLERY);
-            discards.append(CAVALRY);
-            return (10, discards.span());
-        } else if artillery_count > 0 && infantry_count > 0 {
-            discards.append(JOCKER);
-            discards.append(ARTILLERY);
-            discards.append(INFANTRY);
-            return (10, discards.span());
-        } else if cavalry_count > 0 && infantry_count > 0 {
-            discards.append(JOCKER);
-            discards.append(CAVALRY);
-            discards.append(INFANTRY);
-            return (10, discards.span());
-        }
-    }
-
-    // [Case] All diffrent with 2 jockers
-    if jocker_count == 2 {
-        if artillery_count > 0 {
-            discards.append(JOCKER);
-            discards.append(JOCKER);
-            discards.append(ARTILLERY);
-            return (10, discards.span());
-        } else if cavalry_count > 0 {
-            discards.append(JOCKER);
-            discards.append(JOCKER);
-            discards.append(CAVALRY);
-            return (10, discards.span());
-        } else if infantry_count > 0 {
-            discards.append(JOCKER);
-            discards.append(JOCKER);
-            discards.append(INFANTRY);
-            return (10, discards.span());
-        }
-    }
-
-    // [Case] All diffrent with 3+ Jockers
-    if jocker_count > 2 {
-        discards.append(JOCKER);
-        discards.append(JOCKER);
-        discards.append(JOCKER);
-        return (10, discards.span());
-    }
-
-    // [Case] All same without jocker
-    if artillery_count.into() > SET_SIZE {
-        discards.append(ARTILLERY);
-        discards.append(ARTILLERY);
-        discards.append(ARTILLERY);
-        return (8, discards.span());
-    } else if cavalry_count.into() > SET_SIZE {
-        discards.append(CAVALRY);
-        discards.append(CAVALRY);
-        discards.append(CAVALRY);
-        return (6, discards.span());
-    } else if infantry_count.into() > SET_SIZE {
-        discards.append(INFANTRY);
-        discards.append(INFANTRY);
-        discards.append(INFANTRY);
-        return (4, discards.span());
-    }
-
-    // [Case] All same with 1 jocker
-    if artillery_count.into() + jocker_count.into() > SET_SIZE {
-        discards.append(JOCKER);
-        discards.append(ARTILLERY);
-        discards.append(ARTILLERY);
-        return (8, discards.span());
-    } else if cavalry_count.into() + jocker_count.into() > SET_SIZE {
-        discards.append(JOCKER);
-        discards.append(CAVALRY);
-        discards.append(CAVALRY);
-        return (6, discards.span());
-    } else if infantry_count.into() + jocker_count.into() > SET_SIZE {
-        discards.append(JOCKER);
-        discards.append(INFANTRY);
-        discards.append(INFANTRY);
-        return (4, discards.span());
-    }
-
-    // [Case] Not valid set
-    return (0, discards.span());
-}
-
-
 #[cfg(test)]
 mod tests {
     // Core imports
@@ -375,6 +244,19 @@ mod tests {
         hand.add(2);
         let cards = hand.dump();
         assert(cards == 0x020102, 'Hand: wrong add');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    #[should_panic(expected: ('Hand: max hand size reached',))]
+    fn test_hand_add_invalid_size() {
+        let mut hand = HandTrait::new();
+        hand.add(1);
+        hand.add(2);
+        hand.add(3);
+        hand.add(4);
+        hand.add(5);
+        hand.add(6);
     }
 
     #[test]
