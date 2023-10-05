@@ -5,8 +5,6 @@
 use array::{ArrayTrait, SpanTrait};
 use poseidon::PoseidonTrait;
 use hash::HashStateTrait;
-use debug::PrintTrait;
-
 // External imports
 
 use alexandria_data_structures::array_ext::SpanTraitExt;

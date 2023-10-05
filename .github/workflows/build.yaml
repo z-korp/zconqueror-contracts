@@ -4,11 +4,14 @@ on:
   push:
   pull_request:
 
+env:
+    DOJO_VERSION: v0.3.0-rc2
+
 jobs:
   sozo-build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - run: curl -L https://install.dojoengine.org | bash
-    - run: /home/runner/.config/.dojo/bin/dojoup
+    - run: /home/runner/.config/.dojo/bin/dojoup --version ${{ env.DOJO_VERSION }}
     - run: /home/runner/.config/.dojo/bin/sozo build
