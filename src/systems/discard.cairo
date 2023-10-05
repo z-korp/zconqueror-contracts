@@ -1,8 +1,32 @@
-#[system]
+// Dojo imports
+
+use dojo::world::IWorldDispatcher;
+
+// System trait
+
+#[starknet::interface]
+trait IDiscard<TContractState> {
+    fn discard(
+        self: @TContractState,
+        world: IWorldDispatcher,
+        account: felt252,
+        card_one: u8,
+        card_two: u8,
+        card_three: u8
+    );
+}
+
+// System implementation
+
+#[starknet::contract]
 mod discard {
+    // Starknet imports
+
+    use starknet::get_caller_address;
+
     // Dojo imports
 
-    use dojo::world::{Context, IWorld};
+    use dojo::world::IWorldDispatcher;
 
     // Components imports
 
@@ -19,7 +43,12 @@ mod discard {
 
     // Internal imports
 
+    use zrisk::datastore::{DataStore, DataStoreTrait};
     use zrisk::config::TILE_NUMBER;
+
+    // Local imports
+
+    use super::IDiscard;
 
     // Errors
 
@@ -29,57 +58,75 @@ mod discard {
         const INVALID_OWNER: felt252 = 'Supply: invalid owner';
     }
 
-    fn execute(ctx: Context, account: felt252, card_one: u8, card_two: u8, card_three: u8) {
-        // [Command] Game component
-        let mut game: Game = get!(ctx.world, account, (Game));
+    #[storage]
+    struct Storage {}
 
-        // [Check] Turn
-        assert(game.turn() == Turn::Supply, errors::INVALID_TURN);
+    #[external(v0)]
+    impl DiscardImpl of IDiscard<ContractState> {
+        fn discard(
+            self: @ContractState,
+            world: IWorldDispatcher,
+            account: felt252,
+            card_one: u8,
+            card_two: u8,
+            card_three: u8
+        ) {
+            // [Setup] Datastore
+            let mut datastore: DataStore = DataStoreTrait::new(world);
 
-        // [Command] Player component
-        let player_key = (game.id, game.player());
-        let mut player: Player = get!(ctx.world, player_key.into(), (Player));
+            // [Check] Turn
+            let mut game: Game = datastore.game(account);
+            assert(game.turn() == Turn::Supply, errors::INVALID_TURN);
 
-        // [Check] Caller is player
-        assert(player.address == ctx.origin, errors::INVALID_PLAYER);
+            // [Check] Caller is player
+            let caller = get_caller_address();
+            let mut player = datastore.current_player(game);
+            assert(caller == player.address, errors::INVALID_PLAYER);
 
+            // [Compute] Discard
+            let tiles = datastore.tiles(game);
+            let tiles = _discard(@game, ref player, tiles, card_one, card_two, card_three);
+
+            // [Effect] Update tiles
+            datastore.set_tiles(tiles);
+
+            // [Effect] Update player
+            datastore.set_player(player);
+        }
+    }
+
+    fn _discard(
+        game: @Game,
+        ref player: Player,
+        mut tiles: Span<Tile>,
+        card_one: u8,
+        card_two: u8,
+        card_three: u8
+    ) -> Span<Tile> {
         // [Compute] Set supply
         let mut hand = HandTrait::load(@player);
         let set = SetTrait::new(card_one, card_two, card_three);
         let supply = hand.deploy(@set);
-
-        // [Compute] Map tiles
-        let mut lands: Array<Land> = array![];
-        let mut tile_index = 1;
-        loop {
-            if tile_index > TILE_NUMBER {
-                break;
-            }
-            let tile_key = (game.id, tile_index);
-            let tile = get!(ctx.world, tile_key.into(), (Tile));
-            lands.append(LandTrait::load(@tile));
-            tile_index += 1;
-        };
+        player.supply += supply.into();
 
         // [Compute] Additional supplies for owned lands
-        let mut map = MapTrait::from_lands(game.player_count.into(), lands.span());
+        let player_count = *game.player_count;
+        let mut map = MapTrait::from_tiles(player_count.into(), tiles);
         let mut player_lands = map.deploy(player.index, @set);
 
-        // [Command] Update player tiles
+        // [Return] Player tiles
+        let mut tiles: Array<Tile> = array![];
         loop {
             match player_lands.pop_front() {
                 Option::Some(land) => {
-                    let tile: Tile = land.dump(game.id);
-                    set!(ctx.world, (tile));
+                    let tile: Tile = land.dump(*game.id);
+                    tiles.append(tile);
                 },
                 Option::None => {
                     break;
                 },
             };
         };
-
-        // [Command] Update player
-        player.supply += supply.into();
-        set!(ctx.world, (player));
+        tiles.span()
     }
 }

@@ -1,12 +1,31 @@
-#[system]
+// Dojo imports
+
+use dojo::world::IWorldDispatcher;
+
+// System trait
+
+#[starknet::interface]
+trait IDefend<TContractState> {
+    fn defend(
+        self: @TContractState,
+        world: IWorldDispatcher,
+        account: felt252,
+        attacker_index: u8,
+        defender_index: u8
+    );
+}
+
+// System implementation
+
+#[starknet::contract]
 mod defend {
     // Starknet imports
 
-    use starknet::get_tx_info;
+    use starknet::{get_tx_info, get_caller_address};
 
     // Dojo imports
 
-    use dojo::world::{Context, IWorld};
+    use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
     // Components imports
 
@@ -20,7 +39,12 @@ mod defend {
 
     // Internal imports
 
+    use zrisk::datastore::{DataStore, DataStoreTrait};
     use zrisk::config::TILE_NUMBER;
+
+    // Local imports
+
+    use super::IDefend;
 
     // Errors
 
@@ -30,47 +54,56 @@ mod defend {
         const INVALID_OWNER: felt252 = 'Defend: invalid owner';
     }
 
-    fn execute(ctx: Context, account: felt252, attacker_index: u8, defender_index: u8) {
-        // [Command] Game component
-        let mut game: Game = get!(ctx.world, account, (Game));
+    #[storage]
+    struct Storage {}
 
-        // [Check] Turn
-        assert(game.turn() == Turn::Attack, errors::INVALID_TURN);
+    #[external(v0)]
+    impl DefendImpl of IDefend<ContractState> {
+        fn defend(
+            self: @ContractState,
+            world: IWorldDispatcher,
+            account: felt252,
+            attacker_index: u8,
+            defender_index: u8
+        ) {
+            // [Setup] Datastore
+            let mut datastore: DataStore = DataStoreTrait::new(world);
 
-        // [Command] Player component
-        let player_key = (game.id, game.player());
-        let mut player: Player = get!(ctx.world, player_key.into(), (Player));
+            // [Check] Turn
+            let mut game: Game = datastore.game(account);
+            assert(game.turn() == Turn::Attack, errors::INVALID_TURN);
 
-        // [Check] Caller is player
-        assert(player.address == ctx.origin, errors::INVALID_PLAYER);
+            // [Check] Caller is player
+            let caller = get_caller_address();
+            let mut player = datastore.current_player(game);
+            assert(caller == player.address, errors::INVALID_PLAYER);
 
-        // [Command] Tile components
-        let attacker_key = (game.id, attacker_index);
-        let mut attacker_tile: Tile = get!(ctx.world, attacker_key.into(), (Tile));
-        let defender_key = (game.id, defender_index);
-        let mut defender_tile: Tile = get!(ctx.world, defender_key.into(), (Tile));
+            // [Check] Tiles owner
+            let attacker_tile = datastore.tile(game, attacker_index);
+            let defender_tile = datastore.tile(game, defender_index);
+            assert(attacker_tile.owner == player.index.into(), errors::INVALID_OWNER);
 
-        // [Check] Tiles owner
-        assert(attacker_tile.owner == player.index.into(), errors::INVALID_OWNER);
+            // [Compute] Defend
+            let tiles = _defend(@game, ref player, @attacker_tile, @defender_tile);
 
-        // [Compute] Defend
-        let mut attacker_land = LandTrait::load(@attacker_tile);
-        let mut defender_land = LandTrait::load(@defender_tile);
+            // [Effect] Update tiles
+            datastore.set_tiles(tiles);
+
+            // [Effect] Update player
+            datastore.set_player(player);
+        }
+    }
+
+    fn _defend(game: @Game, ref player: Player, attacker: @Tile, defender: @Tile) -> Span<Tile> {
+        let mut attacker_land = LandTrait::load(attacker);
+        let mut defender_land = LandTrait::load(defender);
         let order = get_tx_info().unbox().transaction_hash;
-        defender_land.defend(ref attacker_land, game.seed, order);
+        defender_land.defend(ref attacker_land, *game.seed, order);
 
-        // [Command] Update source army
-        let attacker_tile = attacker_land.dump(game.id);
-        set!(ctx.world, (attacker_tile));
-
-        // [Command] Update target army
-        let defender_tile = defender_land.dump(game.id);
-        set!(ctx.world, (defender_tile));
-
-        // [Command] Update player
         if defender_land.defeated && !player.conqueror {
             player.conqueror = true;
-            set!(ctx.world, (player));
         };
+
+        array![attacker_land.dump(*game.id), defender_land.dump(*game.id)].span()
     }
 }

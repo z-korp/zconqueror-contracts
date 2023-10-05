@@ -1,8 +1,31 @@
-#[system]
+// Dojo imports
+
+use dojo::world::IWorldDispatcher;
+
+// System trait
+
+#[starknet::interface]
+trait ISupply<TContractState> {
+    fn supply(
+        self: @TContractState,
+        world: IWorldDispatcher,
+        account: felt252,
+        tile_index: u8,
+        supply: u32
+    );
+}
+
+// System implementation
+
+#[starknet::contract]
 mod supply {
+    // Starknet imports
+
+    use starknet::get_caller_address;
+
     // Dojo imports
 
-    use dojo::world::{Context, IWorld};
+    use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
     // Components imports
 
@@ -16,7 +39,12 @@ mod supply {
 
     // Internal imports
 
+    use zrisk::datastore::{DataStore, DataStoreTrait};
     use zrisk::config::TILE_NUMBER;
+
+    // Local imports
+
+    use super::ISupply;
 
     // Errors
 
@@ -26,36 +54,51 @@ mod supply {
         const INVALID_OWNER: felt252 = 'Supply: invalid owner';
     }
 
-    fn execute(ctx: Context, account: felt252, tile_index: u8, supply: u32) {
-        // [Command] Game component
-        let mut game: Game = get!(ctx.world, account, (Game));
+    #[storage]
+    struct Storage {}
 
-        // [Check] Turn
-        assert(game.turn() == Turn::Supply, errors::INVALID_TURN);
+    #[external(v0)]
+    impl SupplyImpl of ISupply<ContractState> {
+        fn supply(
+            self: @ContractState,
+            world: IWorldDispatcher,
+            account: felt252,
+            tile_index: u8,
+            supply: u32
+        ) {
+            // [Setup] Datastore
+            let mut datastore: DataStore = DataStoreTrait::new(world);
 
-        // [Command] Player component
-        let player_key = (game.id, game.player());
-        let mut player: Player = get!(ctx.world, player_key.into(), (Player));
+            // [Check] Turn
+            let mut game: Game = datastore.game(account);
+            assert(game.turn() == Turn::Supply, errors::INVALID_TURN);
 
-        // [Check] Caller is player
-        assert(player.address == ctx.origin, errors::INVALID_PLAYER);
+            // [Check] Caller is player
+            let caller = get_caller_address();
+            let mut player = datastore.current_player(game);
+            assert(caller == player.address, errors::INVALID_PLAYER);
 
-        // [Command] Tile component
-        let tile_key = (game.id, tile_index);
-        let mut tile: Tile = get!(ctx.world, tile_key.into(), (Tile));
+            // [Compute] Supply
+            let tile = datastore.tile(game, tile_index.into());
+            let tile = _supply(@game, ref player, @tile, supply);
 
+            // [Effect] Update tile
+            datastore.set_tile(tile);
+
+            // [Effect] Update player
+            datastore.set_player(player);
+        }
+    }
+
+    fn _supply(game: @Game, ref player: Player, tile: @Tile, supply: u32) -> Tile {
         // [Check] Tile owner
-        assert(tile.owner == player.index.into(), errors::INVALID_OWNER);
+        assert(tile.owner == @player.index.into(), errors::INVALID_OWNER);
 
         // [Compute] Supply
-        let mut land = LandTrait::load(@tile);
+        let mut land = LandTrait::load(tile);
         land.supply(ref player, supply);
 
-        // [Command] Update player
-        set!(ctx.world, (player));
-
-        // [Compute] Update tile
-        let tile = land.dump(game.id);
-        set!(ctx.world, (tile));
+        // [Return] Update tile
+        land.dump(*game.id)
     }
 }

@@ -7,7 +7,6 @@ use hash::HashStateTrait;
 use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
 use poseidon::PoseidonTrait;
 use traits::{Into, Drop};
-use debug::PrintTrait;
 
 // External imports
 
@@ -74,6 +73,11 @@ trait HandTrait {
     /// # Returns
     /// * The corresponding score.
     fn deploy(ref self: Hand, set: @Set) -> u8;
+    /// Merge a hand.
+    /// # Arguments
+    /// * `self` - The Hand.
+    /// * `hand` - The hand to merge.
+    fn merge(ref self: Hand, hand: @Hand);
 }
 
 /// Implementation of the `HandTrait` trait for the `Hand` struct.
@@ -136,6 +140,20 @@ impl HandImpl of HandTrait {
         };
         self.cards = remaining_cards;
         score
+    }
+
+    fn merge(ref self: Hand, hand: @Hand) {
+        let mut cards = hand.cards.span();
+        loop {
+            match cards.pop_front() {
+                Option::Some(card) => {
+                    self.cards.append(*card);
+                },
+                Option::None => {
+                    break;
+                },
+            };
+        };
     }
 }
 
@@ -310,5 +328,18 @@ mod tests {
         let set = SetTrait::new(1, 2, 3);
         let score = hand.deploy(@set);
         assert(score > 0, 'Hand: wrong score');
+    }
+
+    #[test]
+    #[available_gas(1_000_000)]
+    fn test_hand_merge() {
+        let mut player: Player = Default::default();
+        player.cards = 0x1020303;
+        let mut main = HandTrait::load(@player);
+        let mut player: Player = Default::default();
+        player.cards = 0x4050603;
+        let mut hand = HandTrait::load(@player);
+        main.merge(@hand);
+        assert(main.cards == array![3, 2, 1, 6, 5, 4], 'Hand: wrong merge');
     }
 }

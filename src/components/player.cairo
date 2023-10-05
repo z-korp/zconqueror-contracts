@@ -6,7 +6,7 @@ use starknet::ContractAddress;
 
 use zrisk::constants;
 
-#[derive(Component, Copy, Drop, Serde, SerdeLen)]
+#[derive(Model, Copy, Drop, Serde)]
 struct Player {
     #[key]
     game_id: u32,

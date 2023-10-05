@@ -2,10 +2,10 @@
 
 const TURN_COUNT: u8 = 3;
 
-#[derive(Component, Copy, Drop, Serde, SerdeLen)]
+#[derive(Model, Copy, Drop, Serde)]
 struct Game {
     #[key]
-    account: felt252,
+    key: felt252,
     id: u32,
     over: bool,
     seed: felt252,
@@ -27,12 +27,11 @@ trait GameTrait {
     fn next_player(self: @Game) -> u8;
     fn next_turn(self: @Game) -> Turn;
     fn increment(ref self: Game);
-    fn set_over(ref self: Game, over: bool);
 }
 
 impl GameImpl of GameTrait {
     fn new(account: felt252, id: u32, seed: felt252, player_count: u8) -> Game {
-        Game { account, id, over: false, seed, player_count, nonce: 0 }
+        Game { key: account, id, over: false, seed, player_count, nonce: 0 }
     }
 
     fn player(self: @Game) -> u8 {
@@ -55,10 +54,6 @@ impl GameImpl of GameTrait {
 
     fn increment(ref self: Game) {
         self.nonce += 1;
-    }
-
-    fn set_over(ref self: Game, over: bool) {
-        self.over = true;
     }
 }
 
@@ -98,7 +93,7 @@ mod tests {
     #[available_gas(100_000)]
     fn test_game_new() {
         let game = GameTrait::new(ACCOUNT, ID, SEED, PLAYER_COUNT);
-        assert(game.account == ACCOUNT, 'Game: wrong account');
+        assert(game.key == ACCOUNT, 'Game: wrong account');
         assert(game.id == ID, 'Game: wrong id');
         assert(game.over == false, 'Game: wrong over');
         assert(game.seed == SEED, 'Game: wrong seed');

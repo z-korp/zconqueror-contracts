@@ -1,8 +1,32 @@
-#[system]
+// Dojo imports
+
+use dojo::world::IWorldDispatcher;
+
+// System trait
+
+#[starknet::interface]
+trait ITransfer<TContractState> {
+    fn transfer(
+        self: @TContractState,
+        world: IWorldDispatcher,
+        account: felt252,
+        source_index: u8,
+        target_index: u8,
+        army: u32
+    );
+}
+
+// System implementation
+
+#[starknet::contract]
 mod transfer {
+    // Starknet imports
+
+    use starknet::get_caller_address;
+
     // Dojo imports
 
-    use dojo::world::{Context, IWorld};
+    use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
     // Components imports
 
@@ -12,11 +36,17 @@ mod transfer {
 
     // Entities imports
 
+    use zrisk::entities::map::{Map, MapTrait};
     use zrisk::entities::land::{Land, LandTrait};
 
     // Internal imports
 
+    use zrisk::datastore::{DataStore, DataStoreTrait};
     use zrisk::config::TILE_NUMBER;
+
+    // Local imports
+
+    use super::ITransfer;
 
     // Errors
 
@@ -26,51 +56,66 @@ mod transfer {
         const INVALID_OWNER: felt252 = 'Transfer: invalid owner';
     }
 
-    fn execute(ctx: Context, account: felt252, source_index: u8, target_index: u8, army: u32) {
-        // [Command] Game entity
-        let mut game: Game = get!(ctx.world, account, (Game));
+    #[storage]
+    struct Storage {}
 
-        // [Check] Turn
-        assert(game.turn() == Turn::Transfer, errors::INVALID_TURN);
+    #[external(v0)]
+    impl TransferImpl of ITransfer<ContractState> {
+        fn transfer(
+            self: @ContractState,
+            world: IWorldDispatcher,
+            account: felt252,
+            source_index: u8,
+            target_index: u8,
+            army: u32
+        ) {
+            // [Setup] Datastore
+            let mut datastore: DataStore = DataStoreTrait::new(world);
 
-        // [Command] Player entity
-        let player_key = (game.id, game.player());
-        let mut player: Player = get!(ctx.world, player_key.into(), (Player));
+            // [Check] Turn
+            let mut game: Game = datastore.game(account);
+            assert(game.turn() == Turn::Transfer, errors::INVALID_TURN);
 
-        // [Check] Caller is player
-        assert(player.address == ctx.origin, errors::INVALID_PLAYER);
+            // [Check] Caller is player
+            let caller = get_caller_address();
+            let mut player = datastore.current_player(game);
+            assert(caller == player.address, errors::INVALID_PLAYER);
 
-        // [Command] Tile entities
-        let source_key = (game.id, source_index);
-        let mut source: Tile = get!(ctx.world, source_key.into(), (Tile));
-        let target_key = (game.id, target_index);
-        let mut target: Tile = get!(ctx.world, target_key.into(), (Tile));
+            // [Check] Tiles owner
+            let source = datastore.tile(game, source_index);
+            let target = datastore.tile(game, target_index);
+            assert(source.owner == player.index.into(), errors::INVALID_OWNER);
 
-        // [Check] Source Tile ownership
-        assert(source.owner == player.index.into(), errors::INVALID_OWNER);
+            // [Compute] Transfer
+            let tiles = datastore.tiles(game);
+            let (source, target) = _transfer(@game, @source, @target, tiles, army);
 
+            // [Effect] Update tiles
+            datastore.set_tile(source);
+            datastore.set_tile(target);
+        }
+    }
+
+    fn _transfer(
+        game: @Game, source: @Tile, target: @Tile, mut tiles: Span<Tile>, army: u32
+    ) -> (Tile, Tile) {
         // [Effect] Transfer
+        let player_count = *game.player_count;
         let mut lands: Array<Land> = array![];
-        let mut tile_index = 1;
         loop {
-            if tile_index > TILE_NUMBER {
-                break;
-            }
-            let tile_key = (game.id, tile_index);
-            let tile = get!(ctx.world, tile_key.into(), (Tile));
-            lands.append(LandTrait::load(@tile));
-            tile_index += 1;
+            match tiles.pop_front() {
+                Option::Some(tile) => {
+                    let land = LandTrait::load(tile);
+                    lands.append(land);
+                },
+                Option::None => {
+                    break;
+                },
+            };
         };
-        let mut from = LandTrait::load(@source);
-        let mut to = LandTrait::load(@target);
+        let mut from = LandTrait::load(source);
+        let mut to = LandTrait::load(target);
         from.transfer(ref to, army, lands.span());
-
-        // [Command] Update source army
-        let source = from.dump(game.id);
-        set!(ctx.world, (source));
-
-        // [Compute] Update target army
-        let target = to.dump(game.id);
-        set!(ctx.world, (target));
+        (from.dump(*game.id), to.dump(*game.id))
     }
 }

@@ -5,6 +5,7 @@
 use array::{ArrayTrait, SpanTrait};
 use poseidon::PoseidonTrait;
 use hash::HashStateTrait;
+use debug::PrintTrait;
 
 // External imports
 
@@ -433,7 +434,7 @@ fn _sort(values: Span<u8>) -> Span<u8> {
 fn _connected(
     source: u8, target: u8, owner: @u32, lands: Span<Land>, ref visiteds: Array<u8>
 ) -> bool {
-    if source == target && lands.at(source.into() - 1).owner == owner {
+    if source == target {
         return true;
     };
     let mut neighbors = config::neighbors(source).expect(errors::INVALID_ID);

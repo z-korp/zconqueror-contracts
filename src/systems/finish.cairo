@@ -1,8 +1,25 @@
-#[system]
+// Dojo imports
+
+use dojo::world::IWorldDispatcher;
+
+// System trait
+
+#[starknet::interface]
+trait IFinish<TContractState> {
+    fn finish(self: @TContractState, world: IWorldDispatcher, account: felt252);
+}
+
+// System implementation
+
+#[starknet::contract]
 mod finish {
+    // Starknet imports
+
+    use starknet::get_caller_address;
+
     // Dojo imports
 
-    use dojo::world::{Context, IWorld};
+    use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
     // Components imports
 
@@ -20,7 +37,12 @@ mod finish {
 
     // Internal imports
 
+    use zrisk::datastore::{DataStore, DataStoreTrait};
     use zrisk::config::TILE_NUMBER;
+
+    // Local imports
+
+    use super::IFinish;
 
     // Errors
 
@@ -29,68 +51,52 @@ mod finish {
         const INVALID_SUPPLY: felt252 = 'Finish: invalid supply';
     }
 
-    fn execute(ctx: Context, account: felt252) {
-        // [Command] Game entity
-        let mut game: Game = get!(ctx.world, account, (Game));
+    #[storage]
+    struct Storage {}
 
-        // [Command] Player entity
-        let player_key = (game.id, game.player());
-        let mut player: Player = get!(ctx.world, player_key.into(), (Player));
+    #[external(v0)]
+    impl FinishImpl of IFinish<ContractState> {
+        fn finish(self: @ContractState, world: IWorldDispatcher, account: felt252) {
+            // [Setup] Datastore
+            let mut datastore: DataStore = DataStoreTrait::new(world);
 
-        // [Check] Caller is player
-        assert(player.address == ctx.origin, errors::INVALID_PLAYER);
+            // [Check] Caller is player
+            let caller = get_caller_address();
+            let mut game: Game = datastore.game(account);
+            let mut player = datastore.current_player(game);
+            assert(caller == player.address, errors::INVALID_PLAYER);
 
+            // [Compute] Finish
+            let tiles = datastore.tiles(game);
+            let mut next_player = datastore.next_player(game);
+            _finish(ref game, ref player, ref next_player, tiles);
+
+            // [Effect] Update players
+            datastore.set_player(player);
+            datastore.set_player(next_player);
+
+            // [Effect] Update game
+            datastore.set_game(game);
+        }
+    }
+
+    fn _finish(ref game: Game, ref player: Player, ref next_player: Player, tiles: Span<Tile>) {
         // [Check] Player supply is empty
         assert(player.supply == 0, errors::INVALID_SUPPLY);
 
         // [Command] Update next player supply if next turn is supply
         if game.next_turn() == Turn::Supply {
-            let player_key = (game.id, game.next_player());
-            let mut player: Player = get!(ctx.world, player_key.into(), (Player));
-
-            // [Compute] Map tiles
-            let mut lands: Array<Land> = array![];
-            let mut tile_index = 1;
-            loop {
-                if tile_index > TILE_NUMBER {
-                    break;
-                }
-                let tile_key = (game.id, tile_index);
-                let tile = get!(ctx.world, tile_key.into(), (Tile));
-                lands.append(LandTrait::load(@tile));
-                tile_index += 1;
-            };
-
             // [Compute] Draw card if conqueror
-            if player.conqueror {
-                // Setup deck
-                let mut deck = DeckTrait::new(game.seed, config::card_number(), game.nonce);
-                let mut player_index = 0;
-                loop {
-                    if player_index >= game.player_count {
-                        break;
-                    }
-                    let player_key = (game.id, player_index);
-                    let mut player: Player = get!(ctx.world, player_key.into(), (Player));
-                    let hand = HandTrait::load(@player);
-                    deck.remove(hand.cards.span());
-                    player_index += 1;
-                };
-                // Draw
-                let mut hand = HandTrait::load(@player);
-                hand.add(deck.draw());
-                player.cards = hand.dump();
-            }
+            // TODO
 
-            // [Compute] New supply
-            let mut map = MapTrait::from_lands(game.player_count.into(), lands.span());
-            player.conqueror = false;
-            player.supply = map.score(player.index);
-            set!(ctx.world, (player));
+            // [Compute] Update player
+            let player_count = game.player_count;
+            let mut map = MapTrait::from_tiles(player_count.into(), tiles);
+            next_player.conqueror = false;
+            next_player.supply = map.score(next_player.index);
         }
 
-        // [Command] Update game
+        // [Compute] Update game
         game.increment();
-        set!(ctx.world, (game));
     }
 }

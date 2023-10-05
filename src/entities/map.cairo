@@ -7,7 +7,6 @@ use array::{ArrayTrait, SpanTrait};
 use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
 use poseidon::PoseidonTrait;
 use hash::HashStateTrait;
-use debug::PrintTrait;
 
 // External imports
 
@@ -16,6 +15,7 @@ use alexandria_data_structures::array_ext::ArrayTraitExt;
 // Internal imports
 
 use zrisk::config;
+use zrisk::components::tile::Tile;
 use zrisk::entities::deck::{Deck, DeckTrait};
 use zrisk::entities::land::{Land, LandTrait};
 use zrisk::entities::set::{Set, SetTrait};
@@ -57,6 +57,13 @@ trait MapTrait {
     /// # Returns
     /// * The initialized `Map`.
     fn from_lands(player_count: u32, lands: Span<Land>) -> Map;
+    /// Returns the `Map` struct according to the tiles.
+    /// # Arguments
+    /// * `player_count` - The number of players.
+    /// * `tiles` - The tiles.
+    /// # Returns
+    /// * The initialized `Map`.
+    fn from_tiles(player_count: u32, tiles: Span<Tile>) -> Map;
     /// Returns the player lands.
     /// # Arguments
     /// * `self` - The map.
@@ -156,6 +163,33 @@ impl MapImpl of MapTrait {
                     player_lands.append(*land);
                 };
                 land_index += 1;
+            };
+            realms
+                .insert(player_index.into(), nullable_from_box(BoxTrait::new(player_lands.span())));
+            player_index += 1;
+        };
+        Map { realms }
+    }
+
+    fn from_tiles(player_count: u32, tiles: Span<Tile>) -> Map {
+        let mut realms: Felt252Dict<Nullable<Span<Land>>> = Default::default();
+        let mut player_index = 0;
+        loop {
+            if player_index == player_count {
+                break;
+            };
+            let mut player_lands: Array<Land> = array![];
+            let mut tile_index = 0;
+            loop {
+                if tile_index == tiles.len() {
+                    break;
+                };
+                let tile = tiles.at(tile_index);
+                if tile.owner == @player_index {
+                    let land = LandTrait::load(tile);
+                    player_lands.append(land);
+                };
+                tile_index += 1;
             };
             realms
                 .insert(player_index.into(), nullable_from_box(BoxTrait::new(player_lands.span())));

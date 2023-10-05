@@ -9,10 +9,12 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 // Internal imports
 
 use zrisk::config::TILE_NUMBER;
+use zrisk::datastore::{DataStore, DataStoreTrait};
 use zrisk::components::game::{Game, GameTrait};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
-use zrisk::tests::setup::setup;
+use zrisk::systems::create::ICreateDispatcherTrait;
+use zrisk::tests::setup::{setup, setup::Systems};
 
 // Constants
 
@@ -25,13 +27,14 @@ const PLAYER_COUNT: u8 = 4;
 #[available_gas(1_000_000_000)]
 fn test_create() {
     // [Setup]
-    let world = setup::spawn_game();
+    let (world, systems) = setup::spawn_game();
+    let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    world.execute('create', array![ACCOUNT, SEED, NAME, PLAYER_COUNT.into()]);
+    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Assert] Game
-    let game: Game = get!(world, ACCOUNT, (Game));
+    let game: Game = datastore.game(ACCOUNT);
     assert(game.id == 0, 'Game: wrong id');
     assert(game.seed == SEED, 'Game: wrong seed');
     assert(game.over == false, 'Game: wrong status');
@@ -45,7 +48,7 @@ fn test_create() {
         if player_index == PLAYER_COUNT {
             break;
         }
-        let player: Player = get!(world, (game.id, player_index).into(), (Player));
+        let player: Player = datastore.player(game, player_index.into());
         let player_name: u256 = player.name.into();
         assert(player.game_id == game.id, 'Player: wrong game id');
         assert(player.index == player_index.into(), 'Player: wrong order');
@@ -63,7 +66,7 @@ fn test_create() {
         if TILE_NUMBER == tile_index.into() {
             break;
         }
-        let tile: Tile = get!(world, (game.id, tile_index).into(), (Tile));
+        let tile: Tile = datastore.tile(game, tile_index.into());
         assert(tile.game_id == game.id, 'Tile: wrong game id');
         assert(tile.index == tile_index, 'Tile: wrong tile id');
         assert(tile.army > 0, 'Tile: wrong army');
