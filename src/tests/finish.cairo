@@ -17,9 +17,7 @@ use zrisk::datastore::{DataStore, DataStoreTrait};
 use zrisk::components::game::{Game, GameTrait, Turn};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
-use zrisk::systems::create::ICreateDispatcherTrait;
-use zrisk::systems::supply::ISupplyDispatcherTrait;
-use zrisk::systems::finish::IFinishDispatcherTrait;
+use zrisk::systems::player::IActionsDispatcherTrait;
 use zrisk::tests::setup::{setup, setup::Systems};
 
 // Constants
@@ -38,7 +36,7 @@ fn test_finish_next_player() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Assert] Game
     let game: Game = datastore.game(ACCOUNT);
@@ -58,10 +56,10 @@ fn test_finish_next_player() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, tile_index, supply);
+    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Assert] Game
     let game: Game = datastore.game(ACCOUNT);
@@ -69,7 +67,7 @@ fn test_finish_next_player() {
     assert(game.turn() == Turn::Attack, 'Game: wrong turn 1');
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Assert] Game
     let game: Game = datastore.game(ACCOUNT);
@@ -77,7 +75,7 @@ fn test_finish_next_player() {
     assert(game.turn() == Turn::Transfer, 'Game: wrong turn 2');
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Assert] Game
     let game: Game = datastore.game(ACCOUNT);
@@ -98,10 +96,10 @@ fn test_finish_revert_invalid_supply() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 }
 
 #[test]
@@ -113,7 +111,7 @@ fn test_finish_revert_invalid_player() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Assert] Game
     let game: Game = datastore.game(ACCOUNT);
@@ -122,5 +120,5 @@ fn test_finish_revert_invalid_player() {
 
     // [Finish]
     set_contract_address(starknet::contract_address_const::<1>());
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 }

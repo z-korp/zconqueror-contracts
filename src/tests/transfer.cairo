@@ -17,10 +17,7 @@ use zrisk::datastore::{DataStore, DataStoreTrait};
 use zrisk::components::game::{Game, GameTrait, Turn};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
-use zrisk::systems::create::ICreateDispatcherTrait;
-use zrisk::systems::supply::ISupplyDispatcherTrait;
-use zrisk::systems::finish::IFinishDispatcherTrait;
-use zrisk::systems::transfer::ITransferDispatcherTrait;
+use zrisk::systems::player::IActionsDispatcherTrait;
 use zrisk::tests::setup::{setup, setup::Systems};
 
 // Constants
@@ -39,7 +36,7 @@ fn test_transfer_valid() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = datastore.game(ACCOUNT);
@@ -55,13 +52,13 @@ fn test_transfer_valid() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, tile_index, supply);
+    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Compute] First 2 owned tiles
     let mut tiles: Array<Tile> = array![];
@@ -81,7 +78,7 @@ fn test_transfer_valid() {
     let source = tiles.pop_front().unwrap();
     let target = tiles.pop_front().unwrap();
     let army = source.army - 1;
-    systems.transfer.transfer(world, ACCOUNT, source.index, target.index, army);
+    systems.player_actions.transfer(world, ACCOUNT, source.index, target.index, army);
 
     // [Assert] Source army
     let tile: Tile = datastore.tile(game, source.index);
@@ -102,7 +99,7 @@ fn test_transfer_revert_invalid_player() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = datastore.game(ACCOUNT);
@@ -118,17 +115,17 @@ fn test_transfer_revert_invalid_player() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, tile_index, supply);
+    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Transfer]
     set_contract_address(starknet::contract_address_const::<1>());
-    systems.transfer.transfer(world, ACCOUNT, 0, 0, 0);
+    systems.player_actions.transfer(world, ACCOUNT, 0, 0, 0);
 }
 
 
@@ -141,7 +138,7 @@ fn test_transfer_revert_invalid_owner() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = datastore.game(ACCOUNT);
@@ -157,13 +154,13 @@ fn test_transfer_revert_invalid_owner() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, tile_index, supply);
+    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Compute] Invalid owned tile
     let game: Game = datastore.game(ACCOUNT);
@@ -177,5 +174,5 @@ fn test_transfer_revert_invalid_owner() {
     };
 
     // [Transfer]
-    systems.transfer.transfer(world, ACCOUNT, index, 0, 0);
+    systems.player_actions.transfer(world, ACCOUNT, index, 0, 0);
 }

@@ -17,8 +17,7 @@ use zrisk::datastore::{DataStore, DataStoreTrait};
 use zrisk::components::game::{Game, GameTrait};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
-use zrisk::systems::create::ICreateDispatcherTrait;
-use zrisk::systems::supply::ISupplyDispatcherTrait;
+use zrisk::systems::player::IActionsDispatcherTrait;
 use zrisk::tests::setup::{setup, setup::Systems};
 
 // Constants
@@ -36,7 +35,7 @@ fn test_supply() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = datastore.game(ACCOUNT);
@@ -52,7 +51,7 @@ fn test_supply() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, tile_index, supply);
+    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
 
     // [Assert] Player supply
     let player: Player = datastore.player(game, PLAYER_INDEX);
@@ -73,11 +72,11 @@ fn test_supply_revert_invalid_player() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Supply]
     set_contract_address(starknet::contract_address_const::<1>());
-    systems.supply.supply(world, ACCOUNT, 0, 0);
+    systems.player_actions.supply(world, ACCOUNT, 0, 0);
 }
 
 
@@ -90,7 +89,7 @@ fn test_supply_revert_invalid_owner() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Invalid owned tile
     let game: Game = datastore.game(ACCOUNT);
@@ -104,5 +103,5 @@ fn test_supply_revert_invalid_owner() {
     };
 
     // [Transfer]
-    systems.supply.supply(world, ACCOUNT, index, 0);
+    systems.player_actions.supply(world, ACCOUNT, index, 0);
 }

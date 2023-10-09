@@ -13,22 +13,11 @@ mod setup {
     use zrisk::components::game::{game, Game};
     use zrisk::components::player::{player, Player};
     use zrisk::components::tile::{tile, Tile};
-    use zrisk::systems::create::{create, ICreateDispatcher};
-    use zrisk::systems::supply::{supply, ISupplyDispatcher};
-    use zrisk::systems::discard::{discard, IDiscardDispatcher};
-    use zrisk::systems::attack::{attack, IAttackDispatcher};
-    use zrisk::systems::defend::{defend, IDefendDispatcher};
-    use zrisk::systems::transfer::{transfer, ITransferDispatcher};
-    use zrisk::systems::finish::{finish, IFinishDispatcher};
+    use zrisk::systems::player::{actions as player_actions, IActionsDispatcher};
 
     #[derive(Drop)]
     struct Systems {
-        create: ICreateDispatcher,
-        supply: ISupplyDispatcher,
-        attack: IAttackDispatcher,
-        defend: IDefendDispatcher,
-        transfer: ITransferDispatcher,
-        finish: IFinishDispatcher,
+        player_actions: IActionsDispatcher,
     }
 
     fn spawn_game() -> (IWorldDispatcher, Systems) {
@@ -40,19 +29,11 @@ mod setup {
         let world = spawn_test_world(components);
 
         // [Setup] Systems
-        let create_address = deploy_contract(create::TEST_CLASS_HASH, array![].span());
-        let supply_address = deploy_contract(supply::TEST_CLASS_HASH, array![].span());
-        let attack_address = deploy_contract(attack::TEST_CLASS_HASH, array![].span());
-        let defend_address = deploy_contract(defend::TEST_CLASS_HASH, array![].span());
-        let transfer_address = deploy_contract(transfer::TEST_CLASS_HASH, array![].span());
-        let finish_address = deploy_contract(finish::TEST_CLASS_HASH, array![].span());
+        let player_actions_address = deploy_contract(
+            player_actions::TEST_CLASS_HASH, array![].span()
+        );
         let systems = Systems {
-            create: ICreateDispatcher { contract_address: create_address },
-            supply: ISupplyDispatcher { contract_address: supply_address },
-            attack: IAttackDispatcher { contract_address: attack_address },
-            defend: IDefendDispatcher { contract_address: defend_address },
-            transfer: ITransferDispatcher { contract_address: transfer_address },
-            finish: IFinishDispatcher { contract_address: finish_address },
+            player_actions: IActionsDispatcher { contract_address: player_actions_address },
         };
 
         // [Return]

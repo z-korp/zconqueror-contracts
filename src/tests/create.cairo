@@ -13,7 +13,7 @@ use zrisk::datastore::{DataStore, DataStoreTrait};
 use zrisk::components::game::{Game, GameTrait};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
-use zrisk::systems::create::ICreateDispatcherTrait;
+use zrisk::systems::player::IActionsDispatcherTrait;
 use zrisk::tests::setup::{setup, setup::Systems};
 
 // Constants
@@ -31,7 +31,7 @@ fn test_create() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Assert] Game
     let game: Game = datastore.game(ACCOUNT);

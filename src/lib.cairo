@@ -22,13 +22,7 @@ mod components {
 }
 
 mod systems {
-    mod attack;
-    mod create;
-    mod defend;
-    mod discard;
-    mod finish;
-    mod supply;
-    mod transfer;
+    mod player;
 }
 
 #[cfg(test)]

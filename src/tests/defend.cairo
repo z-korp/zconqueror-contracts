@@ -17,11 +17,7 @@ use zrisk::datastore::{DataStore, DataStoreTrait};
 use zrisk::components::game::{Game, GameTrait};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
-use zrisk::systems::create::ICreateDispatcherTrait;
-use zrisk::systems::supply::ISupplyDispatcherTrait;
-use zrisk::systems::finish::IFinishDispatcherTrait;
-use zrisk::systems::attack::IAttackDispatcherTrait;
-use zrisk::systems::defend::IDefendDispatcherTrait;
+use zrisk::systems::player::IActionsDispatcherTrait;
 use zrisk::tests::setup::{setup, setup::Systems};
 
 // Constants
@@ -40,7 +36,7 @@ fn test_defend() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Attacker tile
     let game: Game = datastore.game(ACCOUNT);
@@ -56,10 +52,10 @@ fn test_defend() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, attacker, supply);
+    systems.player_actions.supply(world, ACCOUNT, attacker, supply);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Compute] Defender tile
     let mut neighbors = config::neighbors(attacker).expect('Attack: invalid tile id');
@@ -71,20 +67,18 @@ fn test_defend() {
                     break tile.index;
                 }
             },
-            Option::None => {
-                panic(array!['Attack: defender not found']);
-            },
+            Option::None => { panic(array!['Attack: defender not found']); },
         };
     };
 
     // [Attack]
     set_transaction_hash('ATTACK');
     let distpached: u32 = (army + supply - 1).into();
-    systems.attack.attack(world, ACCOUNT, attacker, defender, distpached);
+    systems.player_actions.attack(world, ACCOUNT, attacker, defender, distpached);
 
     // [Defend]
     set_transaction_hash('DEFEND');
-    systems.defend.defend(world, ACCOUNT, attacker, defender);
+    systems.player_actions.defend(world, ACCOUNT, attacker, defender);
 }
 
 
@@ -97,7 +91,7 @@ fn test_defend_revert_invalid_order() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Attacker tile
     let game: Game = datastore.game(ACCOUNT);
@@ -113,10 +107,10 @@ fn test_defend_revert_invalid_order() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, attacker, supply);
+    systems.player_actions.supply(world, ACCOUNT, attacker, supply);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Compute] Defender tile
     let mut neighbors = config::neighbors(attacker).expect('Attack: invalid tile id');
@@ -128,20 +122,18 @@ fn test_defend_revert_invalid_order() {
                     break tile.index;
                 }
             },
-            Option::None => {
-                panic(array!['Attack: defender not found']);
-            },
+            Option::None => { panic(array!['Attack: defender not found']); },
         };
     };
 
     // [Attack]
     set_transaction_hash('ORDER');
     let distpached: u32 = (army + supply - 1).into();
-    systems.attack.attack(world, ACCOUNT, attacker, defender, distpached);
+    systems.player_actions.attack(world, ACCOUNT, attacker, defender, distpached);
 
     // [Defend]
     set_transaction_hash('ORDER');
-    systems.defend.defend(world, ACCOUNT, attacker, defender);
+    systems.player_actions.defend(world, ACCOUNT, attacker, defender);
 }
 
 
@@ -154,7 +146,7 @@ fn test_defend_revert_invalid_player() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = datastore.game(ACCOUNT);
@@ -170,14 +162,14 @@ fn test_defend_revert_invalid_player() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, tile_index, supply);
+    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Defend]
     set_contract_address(starknet::contract_address_const::<1>());
-    systems.defend.defend(world, ACCOUNT, 0, 0);
+    systems.player_actions.defend(world, ACCOUNT, 0, 0);
 }
 
 
@@ -190,7 +182,7 @@ fn test_defend_revert_invalid_owner() {
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.create.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = datastore.game(ACCOUNT);
@@ -206,10 +198,10 @@ fn test_defend_revert_invalid_owner() {
     };
 
     // [Supply]
-    systems.supply.supply(world, ACCOUNT, tile_index, supply);
+    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
 
     // [Finish]
-    systems.finish.finish(world, ACCOUNT);
+    systems.player_actions.finish(world, ACCOUNT);
 
     // [Compute] Invalid owned tile
     let game: Game = datastore.game(ACCOUNT);
@@ -223,6 +215,6 @@ fn test_defend_revert_invalid_owner() {
     };
 
     // [Defend]
-    systems.defend.defend(world, ACCOUNT, index, 0);
+    systems.player_actions.defend(world, ACCOUNT, index, 0);
 }
 
