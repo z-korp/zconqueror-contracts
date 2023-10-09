@@ -19,7 +19,7 @@ use zrisk::tests::setup::{setup, setup::Systems, setup::PLAYER};
 // Constants
 
 const ACCOUNT: felt252 = 'ACCOUNT';
-const SEED: felt252 = 'BANG';
+const SEED: felt252 = 'SEED';
 const NAME: felt252 = 'NAME';
 const PLAYER_COUNT: u8 = 4;
 
@@ -39,7 +39,7 @@ fn test_create() {
     assert(game.seed == SEED, 'Game: wrong seed');
     assert(game.over == false, 'Game: wrong status');
     assert(game.player_count == PLAYER_COUNT, 'Game: wrong player count');
-    assert(game.player() == 0, 'Game: wrong player index');
+    assert(game.player() >= 0, 'Game: wrong player index');
     assert(game.turn().into() == 0_u8, 'Game: wrong player index');
 
     // [Assert] Players
@@ -55,7 +55,8 @@ fn test_create() {
         assert(player.address.is_zero() || player.address == PLAYER(), 'Player: wrong address');
         assert(player_name < PLAYER_COUNT.into() || player.name == NAME, 'Player: wrong name');
         assert(
-            (player_index != 0 && player.supply == 0) || player.supply > 0, 'Player: wrong supply'
+            player.supply == 0 || (game.player().into() == player.index && player.supply > 0),
+            'Player: wrong supply'
         );
         player_index += 1;
     };

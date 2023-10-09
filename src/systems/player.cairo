@@ -190,6 +190,12 @@ mod actions {
                 datastore.set_player(player);
                 player_index += 1;
             };
+
+            // [Effect] Play bots until real player
+            let player = datastore.current_player(game);
+            if player.address.is_zero() {
+                self.finish(world, account);
+            };
         }
 
         fn attack(
