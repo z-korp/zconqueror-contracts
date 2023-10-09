@@ -99,10 +99,14 @@ impl HandImpl of HandTrait {
         let mut cards = set.cards();
         loop {
             match cards.pop_front() {
-                Option::Some(item) => { if !self.cards.contains(*item) {
-                    break false;
-                } },
-                Option::None => { break true; },
+                Option::Some(item) => {
+                    if !self.cards.contains(*item) {
+                        break false;
+                    }
+                },
+                Option::None => {
+                    break true;
+                },
             };
         }
     }
@@ -129,7 +133,9 @@ impl HandImpl of HandTrait {
                         remaining_cards.append(item);
                     };
                 },
-                Option::None => { break; },
+                Option::None => {
+                    break;
+                },
             };
         };
         self.cards = remaining_cards;
@@ -140,8 +146,12 @@ impl HandImpl of HandTrait {
         let mut cards = hand.cards.span();
         loop {
             match cards.pop_front() {
-                Option::Some(card) => { self.cards.append(*card); },
-                Option::None => { break; },
+                Option::Some(card) => {
+                    self.cards.append(*card);
+                },
+                Option::None => {
+                    break;
+                },
             };
         };
     }

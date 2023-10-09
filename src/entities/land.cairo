@@ -66,16 +66,22 @@ trait LandTrait {
     fn try_new(id: u8, army: u32, owner: u32) -> Option<Land>;
     /// Load Land from LandComponent.
     /// # Arguments
-    /// * `self` - The land.
+    /// * `self` - The tile.
+    /// # Returns
+    /// * The corresponding land.
     fn load(tile: @Tile) -> Land;
     /// Dump Land into LandComponent.
     /// # Arguments
     /// * `self` - The land.
     /// * `game_id` - The game id.
+    /// # Returns
+    /// * The corresponding tile.
     fn dump(self: @Land, game_id: u32) -> Tile;
     /// Check validity.
     /// # Arguments
     /// * `self` - The land.
+    /// # Returns
+    /// * Land validity status.
     fn check(self: @Land) -> bool;
     /// Assert validity.
     /// # Arguments
@@ -460,7 +466,9 @@ fn _connected_iter(
             }
             return _connected_iter(target, owner, lands, ref visiteds, ref unvisiteds);
         },
-        Option::None => { return false; },
+        Option::None => {
+            return false;
+        },
     }
 }
 
@@ -487,7 +495,9 @@ fn _owned_dedup(ref array: Span<u8>, lands: Span<Land>, drops: Span<u8>, owner: 
                     result.append(element);
                 };
             },
-            Option::None => { break; },
+            Option::None => {
+                break;
+            },
         };
     };
     result.span()
@@ -659,7 +669,9 @@ mod tests {
                         break index;
                     };
                 },
-                Option::None => { panic(array!['Land: foreigner not found']); },
+                Option::None => {
+                    panic(array!['Land: foreigner not found']);
+                },
             };
         };
         let mut to = LandTrait::new(*index, 2, PLAYER_1);
@@ -761,10 +773,14 @@ mod tests {
         let mut allies = config::neighbors(attacker.id).expect('Land: invalid id');
         let index = loop {
             match allies.pop_front() {
-                Option::Some(index) => { if index != @defender.id {
-                    break index;
-                }; },
-                Option::None => { panic(array!['Land: ally not found']); },
+                Option::Some(index) => {
+                    if index != @defender.id {
+                        break index;
+                    };
+                },
+                Option::None => {
+                    panic(array!['Land: ally not found']);
+                },
             };
         };
         let mut ally = LandTrait::new(*index, 2, PLAYER_1);
@@ -848,7 +864,9 @@ mod tests {
                         break index;
                     };
                 },
-                Option::None => { panic(array!['Land: foreigner not found']); },
+                Option::None => {
+                    panic(array!['Land: foreigner not found']);
+                },
             };
         };
         let mut foreigner = LandTrait::new(*index, 2, PLAYER_2);
@@ -935,7 +953,9 @@ mod tests {
                         break index;
                     };
                 },
-                Option::None => { panic(array!['Land: ally not found']); },
+                Option::None => {
+                    panic(array!['Land: ally not found']);
+                },
             };
         };
         attacker.attack(1, ref defender, 'ATTACK');

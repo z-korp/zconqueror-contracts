@@ -23,7 +23,7 @@ use zrisk::tests::setup::{setup, setup::Systems};
 // Constants
 
 const ACCOUNT: felt252 = 'ACCOUNT';
-const SEED: felt252 = 'SEED';
+const SEED: felt252 = 'BANG';
 const NAME: felt252 = 'NAME';
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u8 = 0;
@@ -42,13 +42,13 @@ fn test_defend() {
     let game: Game = datastore.game(ACCOUNT);
     let initial_player: Player = datastore.player(game, PLAYER_INDEX);
     let supply = initial_player.supply.into();
-    let mut attacker = 1;
+    let mut attacker: u8 = config::TILE_NUMBER.try_into().unwrap();
     let army = loop {
         let tile: Tile = datastore.tile(game, attacker.into());
         if tile.owner == PLAYER_INDEX.into() {
             break tile.army;
         }
-        attacker += 1;
+        attacker -= 1;
     };
 
     // [Supply]
@@ -67,7 +67,9 @@ fn test_defend() {
                     break tile.index;
                 }
             },
-            Option::None => { panic(array!['Attack: defender not found']); },
+            Option::None => {
+                panic(array!['Attack: defender not found']);
+            },
         };
     };
 
@@ -97,13 +99,13 @@ fn test_defend_revert_invalid_order() {
     let game: Game = datastore.game(ACCOUNT);
     let initial_player: Player = datastore.player(game, PLAYER_INDEX);
     let supply = initial_player.supply.into();
-    let mut attacker = 1;
+    let mut attacker: u8 = config::TILE_NUMBER.try_into().unwrap();
     let army = loop {
         let tile: Tile = datastore.tile(game, attacker.into());
         if tile.owner == PLAYER_INDEX.into() {
             break tile.army;
         }
-        attacker += 1;
+        attacker -= 1;
     };
 
     // [Supply]
@@ -122,7 +124,9 @@ fn test_defend_revert_invalid_order() {
                     break tile.index;
                 }
             },
-            Option::None => { panic(array!['Attack: defender not found']); },
+            Option::None => {
+                panic(array!['Attack: defender not found']);
+            },
         };
     };
 

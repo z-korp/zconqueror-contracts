@@ -27,6 +27,8 @@ trait GameTrait {
     fn next_player(self: @Game) -> u8;
     fn next_turn(self: @Game) -> Turn;
     fn increment(ref self: Game);
+    fn decrement(ref self: Game);
+    fn roll(ref self: Game);
 }
 
 impl GameImpl of GameTrait {
@@ -44,7 +46,7 @@ impl GameImpl of GameTrait {
     }
 
     fn next_player(self: @Game) -> u8 {
-        (*self.nonce + TURN_COUNT) % *self.player_count
+        (*self.nonce / TURN_COUNT + 1) % *self.player_count
     }
 
     fn next_turn(self: @Game) -> Turn {
@@ -54,6 +56,14 @@ impl GameImpl of GameTrait {
 
     fn increment(ref self: Game) {
         self.nonce += 1;
+    }
+
+    fn decrement(ref self: Game) {
+        self.nonce -= 1;
+    }
+
+    fn roll(ref self: Game) {
+        self.nonce += TURN_COUNT;
     }
 }
 
@@ -117,6 +127,17 @@ mod tests {
         game.nonce += TURN_COUNT;
         assert(game.player() == 0, 'Game: wrong player index 1+12');
         game.nonce += TURN_COUNT;
+    }
+
+    #[test]
+    #[available_gas(100_000)]
+    fn test_game_get_next_player_index() {
+        let mut game = GameTrait::new(ACCOUNT, ID, SEED, PLAYER_COUNT);
+        assert(game.player() == 0, 'Game: wrong player index 0+0');
+        assert(game.next_player() == 1, 'Game: wrong next player 0+0');
+        game.nonce += TURN_COUNT;
+        assert(game.player() == 1, 'Game: wrong player index 0+3');
+        assert(game.next_player() == 2, 'Game: wrong next player 0+3');
     }
 
     #[test]

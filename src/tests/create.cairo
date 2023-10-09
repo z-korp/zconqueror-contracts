@@ -14,12 +14,12 @@ use zrisk::components::game::{Game, GameTrait};
 use zrisk::components::player::Player;
 use zrisk::components::tile::Tile;
 use zrisk::systems::player::IActionsDispatcherTrait;
-use zrisk::tests::setup::{setup, setup::Systems};
+use zrisk::tests::setup::{setup, setup::Systems, setup::PLAYER};
 
 // Constants
 
 const ACCOUNT: felt252 = 'ACCOUNT';
-const SEED: felt252 = 'SEED';
+const SEED: felt252 = 'BANG';
 const NAME: felt252 = 'NAME';
 const PLAYER_COUNT: u8 = 4;
 
@@ -52,7 +52,7 @@ fn test_create() {
         let player_name: u256 = player.name.into();
         assert(player.game_id == game.id, 'Player: wrong game id');
         assert(player.index == player_index.into(), 'Player: wrong order');
-        assert(player.address.is_zero(), 'Player: wrong address');
+        assert(player.address.is_zero() || player.address == PLAYER(), 'Player: wrong address');
         assert(player_name < PLAYER_COUNT.into() || player.name == NAME, 'Player: wrong name');
         assert(
             (player_index != 0 && player.supply == 0) || player.supply > 0, 'Player: wrong supply'

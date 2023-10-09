@@ -214,8 +214,12 @@ impl MapImpl of MapTrait {
         let mut player_ids: Array<u8> = array![];
         loop {
             match player_lands.pop_front() {
-                Option::Some(land) => { player_ids.append(*land.id); },
-                Option::None => { break; },
+                Option::Some(land) => {
+                    player_ids.append(*land.id);
+                },
+                Option::None => {
+                    break;
+                },
             };
         };
 
@@ -234,7 +238,9 @@ impl MapImpl of MapTrait {
                                     player_ids.append(*land.id);
                                 };
                             },
-                            Option::None => { break; },
+                            Option::None => {
+                                break;
+                            },
                         };
                     };
                     // [Effect] Increase score
@@ -243,7 +249,9 @@ impl MapImpl of MapTrait {
                         score += config::score(*faction).unwrap();
                     };
                 },
-                Option::None => { break; },
+                Option::None => {
+                    break;
+                },
             };
         };
 
@@ -261,7 +269,9 @@ impl MapImpl of MapTrait {
                     let (tile_id, _) = config::card(*card).expect(errors::INVALID_CARD_ID);
                     tile_ids.append(tile_id);
                 },
-                Option::None => { break; },
+                Option::None => {
+                    break;
+                },
             };
         };
         // [Compute] Update player lands if tile ids match
@@ -276,7 +286,9 @@ impl MapImpl of MapTrait {
                     };
                     updated_lands.append(updated_land);
                 },
-                Option::None => { break; },
+                Option::None => {
+                    break;
+                },
             };
         };
         // [Compute] Update player lands

@@ -2,6 +2,7 @@ mod setup {
     // Starknet imports
 
     use starknet::ContractAddress;
+    use starknet::testing::set_contract_address;
 
     // Dojo imports
 
@@ -14,6 +15,12 @@ mod setup {
     use zrisk::components::player::{player, Player};
     use zrisk::components::tile::{tile, Tile};
     use zrisk::systems::player::{actions as player_actions, IActionsDispatcher};
+
+    // Constants
+
+    fn PLAYER() -> ContractAddress {
+        starknet::contract_address_const::<'PLAYER'>()
+    }
 
     #[derive(Drop)]
     struct Systems {
@@ -37,6 +44,7 @@ mod setup {
         };
 
         // [Return]
+        set_contract_address(PLAYER());
         (world, systems)
     }
 }

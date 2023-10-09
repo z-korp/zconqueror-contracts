@@ -105,8 +105,12 @@ fn ids(faction: felt252) -> Option<Span<u8>> {
 #[inline(always)]
 fn score(faction: felt252) -> Option<u32> {
     match ids(faction) {
-        Option::Some(_ids) => { Option::Some((_ids.len() - 1) / 2) },
-        Option::None => { Option::None },
+        Option::Some(_ids) => {
+            Option::Some((_ids.len() - 1) / 2)
+        },
+        Option::None => {
+            Option::None
+        },
     }
 }
 

@@ -6,6 +6,10 @@ mod data {
     mod v01;
 }
 
+mod bot {
+    mod simple;
+}
+
 mod entities {
     mod dice;
     mod deck;

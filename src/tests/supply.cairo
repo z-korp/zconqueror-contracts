@@ -23,7 +23,7 @@ use zrisk::tests::setup::{setup, setup::Systems};
 // Constants
 
 const ACCOUNT: felt252 = 'ACCOUNT';
-const SEED: felt252 = 'SEED';
+const SEED: felt252 = 'BANG';
 const NAME: felt252 = 'NAME';
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u8 = 0;

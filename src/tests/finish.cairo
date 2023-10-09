@@ -23,7 +23,7 @@ use zrisk::tests::setup::{setup, setup::Systems};
 // Constants
 
 const ACCOUNT: felt252 = 'ACCOUNT';
-const SEED: felt252 = 'SEED';
+const SEED: felt252 = 'BANG';
 const NAME: felt252 = 'NAME';
 const PLAYER_COUNT: u8 = 4;
 const PLAYER_INDEX: u8 = 0;
@@ -79,7 +79,7 @@ fn test_finish_next_player() {
 
     // [Assert] Game
     let game: Game = datastore.game(ACCOUNT);
-    assert(game.player() == 1, 'Game: wrong player index 3');
+    assert(game.player() == 0, 'Game: wrong player index 3');
     assert(game.turn() == Turn::Supply, 'Game: wrong turn 3');
 
     // [Assert] Player

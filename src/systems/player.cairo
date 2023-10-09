@@ -83,8 +83,10 @@ mod actions {
 
     // Internal imports
 
+    use zrisk::constants::ZERO;
     use zrisk::config::{TILE_NUMBER, ARMY_NUMBER};
     use zrisk::datastore::{DataStore, DataStoreTrait};
+    use zrisk::bot::simple::SimpleTrait;
 
     // Local imports
 
@@ -151,7 +153,9 @@ mod actions {
                             let tile: Tile = land.dump(game.id);
                             datastore.set_tile(tile);
                         },
-                        Option::None => { break; },
+                        Option::None => {
+                            break;
+                        },
                     };
                 };
                 player_index += 1;
@@ -172,7 +176,7 @@ mod actions {
                     PlayerTrait::new(game_id, player_index.into(), address: caller, name: name)
                 } else {
                     PlayerTrait::new(
-                        game_id, player_index.into(), address: caller, name: card.into()
+                        game_id, player_index.into(), address: ZERO(), name: card.into()
                     )
                 };
                 if player_index == 0 {
@@ -293,18 +297,53 @@ mod actions {
             let caller = get_caller_address();
             let mut game: Game = datastore.game(account);
             let mut player = datastore.current_player(game);
-            assert(caller == player.address, errors::FINISH_INVALID_PLAYER);
+            assert(
+                caller == player.address || player.address.is_zero(), errors::FINISH_INVALID_PLAYER
+            );
 
             // [Compute] Finish
             let tiles = datastore.tiles(game);
-            let mut next_player = datastore.next_player(game);
-            self._finish(ref game, ref player, ref next_player, tiles);
 
-            // [Effect] Update players
-            datastore.set_player(player);
-            datastore.set_player(next_player);
+            // [Check] Player is a bot
+            if player.address.is_zero() {
+                // [Compute] Bot actions
+                let (new_player, new_tiles) = SimpleTrait::supply(game, player, tiles);
+                // [Effect] Update components
+                datastore.set_player(new_player);
+                datastore.set_tiles(new_tiles);
+                // [Compute] Game turn
+                game.roll();
+                game.decrement();
+                datastore.set_game(game);
+            }
+
+            // [Check] Player supply is empty
+            let player = datastore.current_player(game);
+            assert(player.supply == 0, errors::FINISH_INVALID_SUPPLY);
+
+            // [Command] Update next player supply if next turn is supply
+            if game.next_turn() == Turn::Supply {
+                // [Compute] Draw card if conqueror
+                // TODO
+
+                // [Compute] Update player
+                let player_count = game.player_count;
+                let mut map = MapTrait::from_tiles(player_count.into(), tiles);
+                let mut next_player = datastore.next_player(game);
+                next_player.conqueror = false;
+                next_player.supply = map.score(next_player.index);
+                datastore.set_player(next_player);
+
+                // [Check] If next next player is a bot, operate recursive iteration
+                if next_player.address.is_zero() {
+                    game.increment();
+                    datastore.set_game(game);
+                    return self.finish(world, account);
+                }
+            }
 
             // [Effect] Update game
+            game.increment();
             datastore.set_game(game);
         }
 
@@ -428,36 +467,12 @@ mod actions {
                         let tile: Tile = land.dump(*game.id);
                         tiles.append(tile);
                     },
-                    Option::None => { break; },
+                    Option::None => {
+                        break;
+                    },
                 };
             };
             tiles.span()
-        }
-
-        fn _finish(
-            self: @ContractState,
-            ref game: Game,
-            ref player: Player,
-            ref next_player: Player,
-            tiles: Span<Tile>
-        ) {
-            // [Check] Player supply is empty
-            assert(player.supply == 0, errors::FINISH_INVALID_SUPPLY);
-
-            // [Command] Update next player supply if next turn is supply
-            if game.next_turn() == Turn::Supply {
-                // [Compute] Draw card if conqueror
-                // TODO
-
-                // [Compute] Update player
-                let player_count = game.player_count;
-                let mut map = MapTrait::from_tiles(player_count.into(), tiles);
-                next_player.conqueror = false;
-                next_player.supply = map.score(next_player.index);
-            }
-
-            // [Compute] Update game
-            game.increment();
         }
 
         fn _supply(
@@ -491,7 +506,9 @@ mod actions {
                         let land = LandTrait::load(tile);
                         lands.append(land);
                     },
-                    Option::None => { break; },
+                    Option::None => {
+                        break;
+                    },
                 };
             };
             let mut from = LandTrait::load(source);
