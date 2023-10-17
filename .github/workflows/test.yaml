@@ -5,7 +5,7 @@ on:
   pull_request:
 
 env:
-  DOJO_VERSION: v0.3.0-rc2
+  DOJO_VERSION: v0.3.0-rc9
 
 jobs:
   sozo-test:
