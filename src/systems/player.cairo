@@ -66,6 +66,7 @@ mod actions {
     // Dojo imports
 
     use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
+    use origami::deck::DeckTrait;
 
     // Components imports
 
@@ -75,7 +76,6 @@ mod actions {
 
     // Entities imports
 
-    use zrisk::entities::deck::DeckTrait;
     use zrisk::entities::hand::HandTrait;
     use zrisk::entities::land::{Land, LandTrait};
     use zrisk::entities::map::{Map, MapTrait};

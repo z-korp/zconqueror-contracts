@@ -11,12 +11,12 @@ use hash::HashStateTrait;
 // External imports
 
 use alexandria_data_structures::array_ext::ArrayTraitExt;
+use origami::deck::{Deck, DeckTrait};
 
 // Internal imports
 
 use zrisk::config;
 use zrisk::components::tile::Tile;
-use zrisk::entities::deck::{Deck, DeckTrait};
 use zrisk::entities::land::{Land, LandTrait};
 use zrisk::entities::set::{Set, SetTrait};
 

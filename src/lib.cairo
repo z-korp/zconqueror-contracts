@@ -11,8 +11,6 @@ mod bot {
 }
 
 mod entities {
-    mod dice;
-    mod deck;
     mod hand;
     mod land;
     mod map;

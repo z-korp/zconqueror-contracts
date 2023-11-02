@@ -9,10 +9,14 @@ use hash::HashStateTrait;
 
 use alexandria_data_structures::array_ext::SpanTraitExt;
 
+// External imports
+
+use origami::dice::{Dice, DiceTrait};
+
 // Internal imports
 
+use zrisk::constants::DICE_FACES_NUMBER;
 use zrisk::config;
-use zrisk::entities::dice::{Dice, DiceTrait};
 use zrisk::components::tile::Tile;
 use zrisk::components::player::Player;
 
@@ -232,7 +236,7 @@ impl LandImpl of LandTrait {
         let mut state = PoseidonTrait::new();
         state = state.update(seed);
         state = state.update(attacker.order);
-        let mut dice = DiceTrait::new(state.finalize());
+        let mut dice = DiceTrait::new(DICE_FACES_NUMBER, state.finalize());
         let (defensive_survivors, offensive_survivors) = _battle(
             self.army, attacker.dispatched, ref dice
         );
@@ -508,12 +512,13 @@ mod tests {
     // External imports
 
     use alexandria_data_structures::array_ext::SpanTraitExt;
+    use origami::dice::{Dice, DiceTrait};
 
     // Internal imports
 
+    use zrisk::constants::DICE_FACES_NUMBER;
     use zrisk::config;
     use zrisk::components::player::Player;
-    use zrisk::entities::dice::{Dice, DiceTrait};
 
     // Local imports
 
@@ -1061,7 +1066,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_land_round() {
-        let mut dice = DiceTrait::new(SEED);
+        let mut dice = DiceTrait::new(DICE_FACES_NUMBER, SEED);
         let defensive = 2;
         let offensive = 3;
         let (defensive_losses, offensive_losses) = _round(defensive, offensive, ref dice);
@@ -1072,7 +1077,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_land_battle_small() {
-        let mut dice = DiceTrait::new(SEED);
+        let mut dice = DiceTrait::new(DICE_FACES_NUMBER, SEED);
         let defensive = 2;
         let offensive = 3;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
@@ -1083,7 +1088,7 @@ mod tests {
     #[test]
     #[available_gas(10_000_000)]
     fn test_land_battle_big_conquered() {
-        let mut dice = DiceTrait::new(SEED);
+        let mut dice = DiceTrait::new(DICE_FACES_NUMBER, SEED);
         let defensive = 20;
         let offensive = 30;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
@@ -1094,7 +1099,7 @@ mod tests {
     #[test]
     #[available_gas(10_000_000)]
     fn test_land_battle_big_repelled() {
-        let mut dice = DiceTrait::new(SEED);
+        let mut dice = DiceTrait::new(DICE_FACES_NUMBER, SEED);
         let defensive = 30;
         let offensive = 20;
         let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);

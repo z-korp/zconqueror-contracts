@@ -19,9 +19,15 @@ name = "dojo_plugin"
 version = "0.3.3"
 
 [[package]]
+name = "origami"
+version = "0.3.2"
+source = "git+https://github.com/Bal7hazar/dojo.git?branch=feat%2Fprimitives-setup#19b8881504df6936a1c445d390f7e683220b5dce"
+
+[[package]]
 name = "zrisk"
 version = "0.1.0"
 dependencies = [
  "alexandria_data_structures",
  "dojo",
+ "origami",
 ]
