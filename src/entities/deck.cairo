@@ -97,9 +97,7 @@ impl DeckImpl of DeckTrait {
                     self.remaining -= 1;
                     self.owned.insert((*card).into(), nullable_from_box(BoxTrait::new(true)));
                 },
-                Option::None => {
-                    break;
-                },
+                Option::None => { break; },
             };
         };
     }

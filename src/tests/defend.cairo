@@ -67,9 +67,7 @@ fn test_defend() {
                     break tile.index;
                 }
             },
-            Option::None => {
-                panic(array!['Attack: defender not found']);
-            },
+            Option::None => { panic(array!['Attack: defender not found']); },
         };
     };
 
@@ -124,9 +122,7 @@ fn test_defend_revert_invalid_order() {
                     break tile.index;
                 }
             },
-            Option::None => {
-                panic(array!['Attack: defender not found']);
-            },
+            Option::None => { panic(array!['Attack: defender not found']); },
         };
     };
 

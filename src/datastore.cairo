@@ -104,9 +104,7 @@ impl DataStoreImpl of DataStoreTrait {
         loop {
             match players.pop_front() {
                 Option::Some(player) => self.set_player(*player),
-                Option::None => {
-                    break;
-                },
+                Option::None => { break; },
             };
         };
     }
@@ -119,9 +117,7 @@ impl DataStoreImpl of DataStoreTrait {
         loop {
             match tiles.pop_front() {
                 Option::Some(tile) => self.set_tile(*tile),
-                Option::None => {
-                    break;
-                },
+                Option::None => { break; },
             };
         };
     }

@@ -153,9 +153,7 @@ mod actions {
                             let tile: Tile = land.dump(game.id);
                             datastore.set_tile(tile);
                         },
-                        Option::None => {
-                            break;
-                        },
+                        Option::None => { break; },
                     };
                 };
                 player_index += 1;
@@ -473,9 +471,7 @@ mod actions {
                         let tile: Tile = land.dump(*game.id);
                         tiles.append(tile);
                     },
-                    Option::None => {
-                        break;
-                    },
+                    Option::None => { break; },
                 };
             };
             tiles.span()
@@ -512,9 +508,7 @@ mod actions {
                         let land = LandTrait::load(tile);
                         lands.append(land);
                     },
-                    Option::None => {
-                        break;
-                    },
+                    Option::None => { break; },
                 };
             };
             let mut from = LandTrait::load(source);

@@ -67,9 +67,7 @@ fn test_attack() {
                     break tile.index;
                 }
             },
-            Option::None => {
-                panic(array!['Attack: defender not found']);
-            }
+            Option::None => { panic(array!['Attack: defender not found']); }
         };
     };
 
