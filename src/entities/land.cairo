@@ -5,12 +5,10 @@
 use array::{ArrayTrait, SpanTrait};
 use poseidon::PoseidonTrait;
 use hash::HashStateTrait;
+
 // External imports
 
 use alexandria_data_structures::array_ext::SpanTraitExt;
-
-// External imports
-
 use origami::dice::{Dice, DiceTrait};
 
 // Internal imports
