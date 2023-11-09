@@ -25,27 +25,29 @@ use zrisk::tests::setup::{setup, setup::Systems};
 const ACCOUNT: felt252 = 'ACCOUNT';
 const SEED: felt252 = 'BANG';
 const NAME: felt252 = 'NAME';
-const PLAYER_COUNT: u8 = 2;
+const PLAYER_COUNT: u8 = 4;
 const PLAYER_INDEX: u8 = 0;
 
 #[test]
 #[available_gas(1_000_000_000)]
-fn test_defend() {
+fn test_defend_win() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
     let mut datastore = DataStoreTrait::new(world);
 
     // [Create]
-    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    let seed: felt252 = 123;
+    systems.player_actions.create(world, ACCOUNT, seed, NAME, PLAYER_COUNT);
 
     // [Compute] Attacker tile
     let game: Game = datastore.game(ACCOUNT);
-    let initial_player: Player = datastore.player(game, PLAYER_INDEX);
+    let player_index = game.player();
+    let initial_player: Player = datastore.player(game, player_index);
     let supply = initial_player.supply.into();
     let mut attacker: u8 = config::TILE_NUMBER.try_into().unwrap();
     let army = loop {
         let tile: Tile = datastore.tile(game, attacker.into());
-        if tile.owner == PLAYER_INDEX.into() {
+        if tile.owner == player_index.into() {
             break tile.army;
         }
         attacker -= 1;
@@ -63,7 +65,7 @@ fn test_defend() {
         match neighbors.pop_front() {
             Option::Some(index) => {
                 let tile: Tile = datastore.tile(game, *index);
-                if tile.owner != PLAYER_INDEX.into() {
+                if tile.owner != player_index.into() {
                     break tile.index;
                 }
             },
@@ -76,9 +78,25 @@ fn test_defend() {
     let distpached: u32 = (army + supply - 1).into();
     systems.player_actions.attack(world, ACCOUNT, attacker, defender, distpached);
 
+    // [Assert] Defender tile
+    let game: Game = datastore.game(ACCOUNT);
+    let tile: Tile = datastore.tile(game, defender.into());
+    assert(tile.owner != player_index.into(), 'Defend: invalid owner');
+
     // [Defend]
     set_transaction_hash('DEFEND');
     systems.player_actions.defend(world, ACCOUNT, attacker, defender);
+
+    // [Assert] Defender tile
+    let game: Game = datastore.game(ACCOUNT);
+    let tile: Tile = datastore.tile(game, defender.into());
+    assert(tile.owner == player_index.into(), 'Defend: invalid owner');
+
+    // [Finish]
+    systems.player_actions.finish(world, ACCOUNT);
+
+    // [Finish]
+    systems.player_actions.finish(world, ACCOUNT);
 }
 
 
