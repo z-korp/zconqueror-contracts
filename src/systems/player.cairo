@@ -335,7 +335,12 @@ mod actions {
                 let mut map = MapTrait::from_tiles(player_count.into(), tiles);
                 let mut next_player = datastore.next_player(game);
                 next_player.conqueror = false;
-                next_player.supply = map.score(next_player.index);
+                let score = map.score(next_player.index);
+                next_player.supply = if score < 3 {
+                    3
+                } else {
+                    score
+                };
                 datastore.set_player(next_player);
 
                 // [Check] If next next player is a bot, operate recursive iteration
