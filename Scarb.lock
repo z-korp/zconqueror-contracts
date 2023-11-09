@@ -8,8 +8,8 @@ source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=46c8d8
 
 [[package]]
 name = "dojo"
-version = "0.3.3"
-source = "git+https://github.com/dojoengine/dojo.git?tag=v0.3.3#3c9f109e667ca5d12739e6553fdb8261378f4ecf"
+version = "0.3.6"
+source = "git+https://github.com/dojoengine/dojo.git?tag=v0.3.6#08f1eba55b53de56b08221ae093a00f799fa60c1"
 dependencies = [
  "dojo_plugin",
 ]
