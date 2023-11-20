@@ -2,6 +2,10 @@
 
 use debug::PrintTrait;
 
+// Starknet imports
+
+use starknet::testing::set_contract_address;
+
 // Dojo imports
 
 use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
@@ -10,16 +14,16 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
 use zconqueror::config::TILE_NUMBER;
 use zconqueror::store::{Store, StoreTrait};
-use zconqueror::components::game::{Game, GameTrait};
-use zconqueror::components::player::Player;
-use zconqueror::components::tile::Tile;
-use zconqueror::systems::player::IActionsDispatcherTrait;
-use zconqueror::tests::setup::{setup, setup::Systems, setup::PLAYER};
+use zconqueror::models::game::{Game, GameTrait};
+use zconqueror::models::player::Player;
+use zconqueror::models::tile::Tile;
+use zconqueror::systems::host::IHostDispatcherTrait;
+use zconqueror::systems::play::IPlayDispatcherTrait;
+use zconqueror::tests::setup::{setup, setup::{Systems, HOST, PLAYER}};
 
 // Constants
 
 const ACCOUNT: felt252 = 'ACCOUNT';
-const SEED: felt252 = 'SEED';
 const NAME: felt252 = 'NAME';
 const PLAYER_COUNT: u8 = 4;
 
@@ -31,12 +35,13 @@ fn test_create() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    let game_id = systems.host.create(world, PLAYER_COUNT, NAME);
+    systems.host.start(world, game_id);
 
     // [Assert] Game
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(0);
     assert(game.id == 0, 'Game: wrong id');
-    assert(game.seed == SEED, 'Game: wrong seed');
+    assert(game.seed != 0, 'Game: wrong seed');
     assert(game.over == false, 'Game: wrong status');
     assert(game.player_count == PLAYER_COUNT, 'Game: wrong player count');
     assert(game.player() >= 0, 'Game: wrong player index');
@@ -44,6 +49,7 @@ fn test_create() {
 
     // [Assert] Players
     let mut player_index: u8 = 0;
+    let mut supply = 0;
     loop {
         if player_index == PLAYER_COUNT {
             break;
@@ -52,14 +58,16 @@ fn test_create() {
         let player_name: u256 = player.name.into();
         assert(player.game_id == game.id, 'Player: wrong game id');
         assert(player.index == player_index.into(), 'Player: wrong order');
-        assert(player.address.is_zero() || player.address == PLAYER(), 'Player: wrong address');
+        assert(player.address.is_zero() || player.address == HOST(), 'Player: wrong address');
         assert(player_name < PLAYER_COUNT.into() || player.name == NAME, 'Player: wrong name');
         assert(
             player.supply == 0 || (game.player().into() == player.index && player.supply > 0),
             'Player: wrong supply'
         );
+        supply += player.supply;
         player_index += 1;
     };
+    assert(supply > 0, 'Player: wrong total supply');
 
     // [Assert] Tiles
     let mut tile_index: u8 = 1;

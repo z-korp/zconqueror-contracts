@@ -55,6 +55,10 @@ mod play {
 
     use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
+    // External imports
+
+    use origami::random::deck::{Deck, DeckTrait};
+
     // Models imports
 
     use zconqueror::models::game::{Game, GameTrait, Turn};
@@ -63,7 +67,6 @@ mod play {
 
     // Entities imports
 
-    use zconqueror::entities::deck::DeckTrait;
     use zconqueror::entities::hand::HandTrait;
     use zconqueror::entities::land::{Land, LandTrait};
     use zconqueror::entities::map::{Map, MapTrait};

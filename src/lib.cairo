@@ -11,8 +11,6 @@ mod bot {
 }
 
 mod entities {
-    mod dice;
-    mod deck;
     mod hand;
     mod land;
     mod map;
@@ -33,7 +31,7 @@ mod systems {
 #[cfg(test)]
 mod tests {
     mod setup;
-// mod create;
+    mod create;
 // mod supply;
 // mod attack;
 // mod defend;

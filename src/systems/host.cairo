@@ -8,7 +8,7 @@ use dojo::world::IWorldDispatcher;
 trait IHost<TContractState> {
     fn create(
         self: @TContractState, world: IWorldDispatcher, player_count: u8, player_name: felt252,
-    );
+    ) -> u32;
     fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252,);
     fn leave(self: @TContractState, world: IWorldDispatcher, game_id: u32,);
     fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32,);
@@ -18,6 +18,10 @@ trait IHost<TContractState> {
 
 #[starknet::contract]
 mod host {
+    // Core imports
+
+    use debug::PrintTrait;
+
     // Starknet imports
 
     use starknet::{get_tx_info, get_caller_address};
@@ -25,6 +29,10 @@ mod host {
     // Dojo imports
 
     use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
+
+    // External imports
+
+    use origami::random::deck::{Deck, DeckTrait};
 
     // Models imports
 
@@ -34,7 +42,6 @@ mod host {
 
     // Entities imports
 
-    use zconqueror::entities::deck::DeckTrait;
     use zconqueror::entities::hand::HandTrait;
     use zconqueror::entities::land::{Land, LandTrait};
     use zconqueror::entities::map::{Map, MapTrait};
@@ -54,9 +61,9 @@ mod host {
     // Errors
 
     mod errors {
-        const HOST_INVALID_PLAYER_COUNT: felt252 = 'Host: invalid player count';
         const HOST_PLAYER_ALREADY_IN_LOBBY: felt252 = 'Host: player already in lobby';
         const HOST_PLAYER_NOT_IN_LOBBY: felt252 = 'Host: player not in lobby';
+        const HOST_CALLER_IS_NOT_THE_HOST: felt252 = 'Host: caller is not the host';
     }
 
     #[storage]
@@ -66,11 +73,7 @@ mod host {
     impl Host of IHost<ContractState> {
         fn create(
             self: @ContractState, world: IWorldDispatcher, player_count: u8, player_name: felt252,
-        ) {
-            // [Check] Player count
-            // TODO: unlock more players
-            assert(player_count == 1, errors::HOST_INVALID_PLAYER_COUNT);
-
+        ) -> u32 {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
@@ -80,7 +83,7 @@ mod host {
             let mut game = GameTrait::new(
                 id: game_id, host: player_address, player_count: player_count
             );
-            let player_index: u32 = game.join(player_address).into();
+            let player_index: u32 = game.join().into();
             store.set_game(game);
 
             // [Effect] Player
@@ -88,6 +91,9 @@ mod host {
                 game_id, index: player_index, address: player_address, name: player_name
             );
             store.set_player(player);
+
+            // [Return] Game id
+            game_id
         }
 
         fn join(
@@ -105,7 +111,7 @@ mod host {
             };
 
             // [Effect] Game
-            let player_index: u32 = game.join(player_address).into();
+            let player_index: u32 = game.join().into();
             store.set_game(game);
 
             // [Effect] Player
@@ -141,24 +147,32 @@ mod host {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
-            // [Effect] Game
+            // [Check] Caller is the host
             let mut game = store.game(game_id);
-            let mut players = store.players(game);
+            let caller = get_caller_address();
+            assert(caller == game.host, errors::HOST_CALLER_IS_NOT_THE_HOST);
+
+            // [Effect] Game
             // Complete missing players with bots
-            let mut missings = game.player_count.into() - players.len();
             loop {
-                if missings == 0 {
+                if game.slots == 0 {
                     break;
                 };
-                let player_address = ZERO();
-                let player_index = game.join(player_address);
+                let player_index = game.join();
                 let bot = PlayerTrait::new(
-                    game_id, player_index.into(), address: player_address, name: 0
+                    game_id, player_index.into(), address: ZERO(), name: player_index.into()
                 );
-                players.append(bot);
-                missings - 1;
             };
-            game.start(players.span());
+            // Start game
+            let mut addresses = array![];
+            let mut players = store.players(game);
+            loop {
+                match players.pop_front() {
+                    Option::Some(player) => { addresses.append(player.address); },
+                    Option::None => { break; },
+                };
+            };
+            game.start(addresses.span());
             store.set_game(game);
 
             // [Effect] Tiles
@@ -189,7 +203,7 @@ mod host {
             // [Effect] Players
             // Use the deck mechanism to define the player order
             // First player got his supply set
-            let mut deck = DeckTrait::new(game.seed, game.player_count.into(), game.nonce);
+            let mut deck = DeckTrait::new(game.seed, game.player_count.into());
             let mut player_index = 0;
             let mut ordered_players: Array<Player> = array![];
             loop {
@@ -199,7 +213,6 @@ mod host {
                 let index = deck.draw() - 1;
                 let mut player = store.player(game, index);
                 player.index = player_index;
-                ordered_players.append(player);
                 if player_index == 0 {
                     let player_score = map.score(player_index.into());
                     player.supply = if player_score < 3 {
@@ -208,6 +221,7 @@ mod host {
                         player_score
                     };
                 };
+                ordered_players.append(player);
                 player_index += 1;
             };
             // Store ordered players

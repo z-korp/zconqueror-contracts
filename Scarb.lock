@@ -4,12 +4,36 @@ version = 1
 [[package]]
 name = "alexandria_data_structures"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/alexandria.git?rev=46c8d8ab9e3bfb68b70a29b3246f809cd8bf70e4#46c8d8ab9e3bfb68b70a29b3246f809cd8bf70e4"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=d32162a#d32162a1bbf5b7c8220d7858ebec7837c50ffbb3"
+dependencies = [
+ "alexandria_encoding",
+]
+
+[[package]]
+name = "alexandria_encoding"
+version = "0.1.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=d32162a#d32162a1bbf5b7c8220d7858ebec7837c50ffbb3"
+dependencies = [
+ "alexandria_math",
+]
+
+[[package]]
+name = "alexandria_math"
+version = "0.2.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=d32162a#d32162a1bbf5b7c8220d7858ebec7837c50ffbb3"
+dependencies = [
+ "alexandria_data_structures",
+]
+
+[[package]]
+name = "cubit"
+version = "1.2.0"
+source = "git+https://github.com/influenceth/cubit?rev=b459053#b4590530d5aeae9aabd36740cc2a3d9e6adc5fde"
 
 [[package]]
 name = "dojo"
 version = "0.3.10"
-source = "git+https://github.com/dojoengine/dojo.git?tag=v0.3.10#be1676252c41f8188465741edcbcb381d2c12080"
+source = "git+https://github.com/dojoengine/dojo?tag=v0.3.10#be1676252c41f8188465741edcbcb381d2c12080"
 dependencies = [
  "dojo_plugin",
 ]
@@ -19,9 +43,19 @@ name = "dojo_plugin"
 version = "0.3.10"
 
 [[package]]
+name = "origami"
+version = "0.0.0"
+source = "git+https://github.com/dojoengine/origami?rev=5532979#5532979b4b455a4a84365ec3ac8b1421851a13b7"
+dependencies = [
+ "cubit",
+ "dojo",
+]
+
+[[package]]
 name = "zconqueror"
 version = "0.1.0"
 dependencies = [
  "alexandria_data_structures",
  "dojo",
+ "origami",
 ]
