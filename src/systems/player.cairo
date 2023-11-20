@@ -69,24 +69,24 @@ mod actions {
 
     // Components imports
 
-    use zrisk::components::game::{Game, GameTrait, Turn};
-    use zrisk::components::player::{Player, PlayerTrait};
-    use zrisk::components::tile::Tile;
+    use zconqueror::components::game::{Game, GameTrait, Turn};
+    use zconqueror::components::player::{Player, PlayerTrait};
+    use zconqueror::components::tile::Tile;
 
     // Entities imports
 
-    use zrisk::entities::deck::DeckTrait;
-    use zrisk::entities::hand::HandTrait;
-    use zrisk::entities::land::{Land, LandTrait};
-    use zrisk::entities::map::{Map, MapTrait};
-    use zrisk::entities::set::SetTrait;
+    use zconqueror::entities::deck::DeckTrait;
+    use zconqueror::entities::hand::HandTrait;
+    use zconqueror::entities::land::{Land, LandTrait};
+    use zconqueror::entities::map::{Map, MapTrait};
+    use zconqueror::entities::set::SetTrait;
 
     // Internal imports
 
-    use zrisk::constants::ZERO;
-    use zrisk::config::{TILE_NUMBER, ARMY_NUMBER};
-    use zrisk::datastore::{DataStore, DataStoreTrait};
-    use zrisk::bot::simple::SimpleTrait;
+    use zconqueror::constants::ZERO;
+    use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
+    use zconqueror::datastore::{DataStore, DataStoreTrait};
+    use zconqueror::bot::simple::SimpleTrait;
 
     // Local imports
 

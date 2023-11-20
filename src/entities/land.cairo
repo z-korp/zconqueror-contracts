@@ -11,10 +11,10 @@ use alexandria_data_structures::array_ext::SpanTraitExt;
 
 // Internal imports
 
-use zrisk::config;
-use zrisk::entities::dice::{Dice, DiceTrait};
-use zrisk::components::tile::Tile;
-use zrisk::components::player::Player;
+use zconqueror::config;
+use zconqueror::entities::dice::{Dice, DiceTrait};
+use zconqueror::components::tile::Tile;
+use zconqueror::components::player::Player;
 
 /// Land struct.
 #[derive(Drop, Copy, Serde)]
@@ -511,9 +511,9 @@ mod tests {
 
     // Internal imports
 
-    use zrisk::config;
-    use zrisk::components::player::Player;
-    use zrisk::entities::dice::{Dice, DiceTrait};
+    use zconqueror::config;
+    use zconqueror::components::player::Player;
+    use zconqueror::entities::dice::{Dice, DiceTrait};
 
     // Local imports
 

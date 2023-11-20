@@ -3,10 +3,10 @@ description: Report a bug
 labels: [ "bug" ]
 body:
   - type: input
-    id: zrisk-version
+    id: zconqueror-version
     attributes:
-      label: zRisk Version
-      description: What zRisk version are you using?
+      label: zConqueror Version
+      description: What zConqueror version are you using?
     validations:
       required: true
 

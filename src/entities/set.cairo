@@ -2,7 +2,7 @@
 
 // Internal imports
 
-use zrisk::config::{INFANTRY, CAVALRY, ARTILLERY, JOCKER, card as config_card};
+use zconqueror::config::{INFANTRY, CAVALRY, ARTILLERY, JOCKER, card as config_card};
 
 /// Set struct.
 #[derive(Drop)]
@@ -117,7 +117,7 @@ mod tests {
 
     // Internal imports
 
-    use zrisk::config::{INFANTRY, CAVALRY, ARTILLERY, JOCKER, TILE_NUMBER};
+    use zconqueror::config::{INFANTRY, CAVALRY, ARTILLERY, JOCKER, TILE_NUMBER};
 
     // Local imports
 

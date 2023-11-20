@@ -4,7 +4,7 @@ use starknet::ContractAddress;
 
 // Internal imports
 
-use zrisk::constants;
+use zconqueror::constants;
 
 #[derive(Model, Copy, Drop, Serde)]
 struct Player {

@@ -40,4 +40,4 @@ mod tests {
     mod finish;
 }
 
-use zrisk::data::v00 as config;
+use zconqueror::data::v00 as config;

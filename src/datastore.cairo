@@ -6,13 +6,13 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
 // Components imports
 
-use zrisk::components::game::{Game, GameTrait};
-use zrisk::components::player::{Player, PlayerTrait};
-use zrisk::components::tile::Tile;
+use zconqueror::components::game::{Game, GameTrait};
+use zconqueror::components::player::{Player, PlayerTrait};
+use zconqueror::components::tile::Tile;
 
 // Internal imports
 
-use zrisk::config;
+use zconqueror::config;
 
 /// DataStore struct.
 #[derive(Drop)]

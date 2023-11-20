@@ -11,10 +11,10 @@ mod setup {
 
     // Internal imports
 
-    use zrisk::components::game::{game, Game};
-    use zrisk::components::player::{player, Player};
-    use zrisk::components::tile::{tile, Tile};
-    use zrisk::systems::player::{actions as player_actions, IActionsDispatcher};
+    use zconqueror::components::game::{game, Game};
+    use zconqueror::components::player::{player, Player};
+    use zconqueror::components::tile::{tile, Tile};
+    use zconqueror::systems::player::{actions as player_actions, IActionsDispatcher};
 
     // Constants
 

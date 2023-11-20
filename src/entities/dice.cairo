@@ -8,7 +8,7 @@ use traits::Into;
 
 // Internal imports
 
-use zrisk::constants::DICE_FACES_NUMBER;
+use zconqueror::constants::DICE_FACES_NUMBER;
 
 /// Dice struct.
 #[derive(Drop)]
