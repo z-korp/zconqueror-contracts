@@ -309,12 +309,20 @@ mod actions {
             let tiles = datastore.tiles(game);
 
             // [Check] Player is a bot
+            let player_count = game.player_count;
             if player.address.is_zero() {
-                // [Compute] Bot actions
-                let (new_player, new_tiles) = SimpleTrait::supply(game, player, tiles);
-                // [Effect] Update components
-                datastore.set_player(new_player);
-                datastore.set_tiles(new_tiles);
+                let mut map = MapTrait::from_tiles(player_count.into(), tiles);
+                let score = map.score(player.index);
+
+                // [Check] Bot is not dead
+                if 0 != score.into() {
+                    // [Compute] Bot actions
+                    let (new_player, new_tiles) = SimpleTrait::supply(game, player, tiles);
+                    // [Effect] Update components
+                    datastore.set_player(new_player);
+                    datastore.set_tiles(new_tiles);
+                }
+
                 // [Compute] Game turn
                 game.roll();
                 game.decrement();
@@ -331,11 +339,20 @@ mod actions {
                 // TODO
 
                 // [Compute] Update player
-                let player_count = game.player_count;
                 let mut map = MapTrait::from_tiles(player_count.into(), tiles);
                 let mut next_player = datastore.next_player(game);
                 next_player.conqueror = false;
-                next_player.supply = map.score(next_player.index);
+
+                // [Compute] Supply, 0 if player is dead
+                let score = map.score(next_player.index);
+                next_player
+                    .supply = if 0 == score.into() {
+                        0
+                    } else if score < 3 {
+                        3
+                    } else {
+                        score
+                    };
                 datastore.set_player(next_player);
 
                 // [Check] If next next player is a bot, operate recursive iteration
