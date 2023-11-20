@@ -14,10 +14,10 @@ use alexandria_data_structures::array_ext::{SpanTraitExt, ArrayTraitExt};
 
 // Internal imports
 
-use zrisk::constants::HAND_MAX_SIZE;
-use zrisk::config::{INFANTRY, CAVALRY, ARTILLERY, JOCKER, card as config_card};
-use zrisk::components::player::Player;
-use zrisk::entities::set::{Set, SetTrait};
+use zconqueror::constants::HAND_MAX_SIZE;
+use zconqueror::config::{INFANTRY, CAVALRY, ARTILLERY, JOCKER, card as config_card};
+use zconqueror::components::player::Player;
+use zconqueror::entities::set::{Set, SetTrait};
 
 // Constants
 
@@ -195,8 +195,8 @@ mod tests {
 
     // Internal imports
 
-    use zrisk::components::player::Player;
-    use zrisk::entities::set::{Set, SetTrait};
+    use zconqueror::components::player::Player;
+    use zconqueror::entities::set::{Set, SetTrait};
 
     // Local imports
 

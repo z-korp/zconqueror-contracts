@@ -19,7 +19,7 @@ name = "dojo_plugin"
 version = "0.3.10"
 
 [[package]]
-name = "zrisk"
+name = "zconqueror"
 version = "0.1.0"
 dependencies = [
  "alexandria_data_structures",

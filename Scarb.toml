@@ -1,6 +1,6 @@
 [package]
 cairo-version = "2.2.0"
-name = "zrisk"
+name = "zconqueror"
 version = "0.1.0"
 
 [cairo]

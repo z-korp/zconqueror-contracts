@@ -8,13 +8,13 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
 // Internal imports
 
-use zrisk::config::TILE_NUMBER;
-use zrisk::datastore::{DataStore, DataStoreTrait};
-use zrisk::components::game::{Game, GameTrait};
-use zrisk::components::player::Player;
-use zrisk::components::tile::Tile;
-use zrisk::systems::player::IActionsDispatcherTrait;
-use zrisk::tests::setup::{setup, setup::Systems, setup::PLAYER};
+use zconqueror::config::TILE_NUMBER;
+use zconqueror::datastore::{DataStore, DataStoreTrait};
+use zconqueror::components::game::{Game, GameTrait};
+use zconqueror::components::player::Player;
+use zconqueror::components::tile::Tile;
+use zconqueror::systems::player::IActionsDispatcherTrait;
+use zconqueror::tests::setup::{setup, setup::Systems, setup::PLAYER};
 
 // Constants
 

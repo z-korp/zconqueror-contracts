@@ -3,11 +3,11 @@ authors = ["Z-Labs"]
 language = "en"
 multilingual = false
 src = "src"
-title = "zRisk Book"
+title = "zConqueror Book"
 
 [output.html]
-git-repository-url = "https://github.com/risk-labs/zrisk-contracts/"
-edit-url-template = "https://github.com/risk-labs/zrisk-contracts/book/{path}"
+git-repository-url = "https://github.com/z-korp/zconqueror-contracts/"
+edit-url-template = "https://github.com/z-korp/zconqueror-contracts/book/{path}"
 
 [output.html.playground]
 runnable = false

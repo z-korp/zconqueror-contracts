@@ -14,11 +14,11 @@ use alexandria_data_structures::array_ext::ArrayTraitExt;
 
 // Internal imports
 
-use zrisk::config;
-use zrisk::components::tile::Tile;
-use zrisk::entities::deck::{Deck, DeckTrait};
-use zrisk::entities::land::{Land, LandTrait};
-use zrisk::entities::set::{Set, SetTrait};
+use zconqueror::config;
+use zconqueror::components::tile::Tile;
+use zconqueror::entities::deck::{Deck, DeckTrait};
+use zconqueror::entities::land::{Land, LandTrait};
+use zconqueror::entities::set::{Set, SetTrait};
 
 // Constants
 
@@ -309,9 +309,9 @@ mod tests {
 
     // Internal imports
 
-    use zrisk::config;
-    use zrisk::entities::land::{Land, LandTrait};
-    use zrisk::entities::set::{Set, SetTrait};
+    use zconqueror::config;
+    use zconqueror::entities::land::{Land, LandTrait};
+    use zconqueror::entities::set::{Set, SetTrait};
 
     // Local imports
 

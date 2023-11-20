@@ -1,11 +1,11 @@
 // Internal imports
 
-use zrisk::config;
-use zrisk::components::game::{Game, GameTrait};
-use zrisk::components::player::{Player, PlayerTrait};
-use zrisk::components::tile::Tile;
-use zrisk::entities::land::{Land, LandTrait};
-use zrisk::entities::map::{Map, MapTrait};
+use zconqueror::config;
+use zconqueror::components::game::{Game, GameTrait};
+use zconqueror::components::player::{Player, PlayerTrait};
+use zconqueror::components::tile::Tile;
+use zconqueror::entities::land::{Land, LandTrait};
+use zconqueror::entities::map::{Map, MapTrait};
 
 // Errors
 
