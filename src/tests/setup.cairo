@@ -11,10 +11,11 @@ mod setup {
 
     // Internal imports
 
-    use zconqueror::components::game::{game, Game};
-    use zconqueror::components::player::{player, Player};
-    use zconqueror::components::tile::{tile, Tile};
-    use zconqueror::systems::player::{actions as player_actions, IActionsDispatcher};
+    use zconqueror::models::game::{game, Game};
+    use zconqueror::models::player::{player, Player};
+    use zconqueror::models::tile::{tile, Tile};
+    use zconqueror::systems::host::{host, IHostDispatcher};
+    use zconqueror::systems::play::{play, IPlayDispatcher};
 
     // Constants
 
@@ -24,23 +25,24 @@ mod setup {
 
     #[derive(Drop)]
     struct Systems {
-        player_actions: IActionsDispatcher,
+        host: IHostDispatcher,
+        play: IPlayDispatcher,
     }
 
     fn spawn_game() -> (IWorldDispatcher, Systems) {
         // [Setup] World
-        let mut components = array::ArrayTrait::new();
-        components.append(game::TEST_CLASS_HASH);
-        components.append(player::TEST_CLASS_HASH);
-        components.append(tile::TEST_CLASS_HASH);
-        let world = spawn_test_world(components);
+        let mut models = array::ArrayTrait::new();
+        models.append(game::TEST_CLASS_HASH);
+        models.append(player::TEST_CLASS_HASH);
+        models.append(tile::TEST_CLASS_HASH);
+        let world = spawn_test_world(models);
 
         // [Setup] Systems
-        let player_actions_address = deploy_contract(
-            player_actions::TEST_CLASS_HASH, array![].span()
-        );
+        let host_address = deploy_contract(host_address::TEST_CLASS_HASH, array![].span());
+        let play_address = deploy_contract(play_address::TEST_CLASS_HASH, array![].span());
         let systems = Systems {
-            player_actions: IActionsDispatcher { contract_address: player_actions_address },
+            host: IHostDispatcher { contract_address: host_address },
+            play: IPlayDispatcher { contract_address: play_address },
         };
 
         // [Return]

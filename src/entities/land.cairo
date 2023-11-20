@@ -13,8 +13,8 @@ use alexandria_data_structures::array_ext::SpanTraitExt;
 
 use zconqueror::config;
 use zconqueror::entities::dice::{Dice, DiceTrait};
-use zconqueror::components::tile::Tile;
-use zconqueror::components::player::Player;
+use zconqueror::models::tile::Tile;
+use zconqueror::models::player::Player;
 
 /// Land struct.
 #[derive(Drop, Copy, Serde)]

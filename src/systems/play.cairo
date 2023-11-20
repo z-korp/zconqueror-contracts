@@ -5,19 +5,11 @@ use dojo::world::IWorldDispatcher;
 // System trait
 
 #[starknet::interface]
-trait IActions<TContractState> {
-    fn create(
-        self: @TContractState,
-        world: IWorldDispatcher,
-        account: felt252,
-        seed: felt252,
-        name: felt252,
-        player_count: u8
-    );
+trait IPlay<TContractState> {
     fn attack(
         self: @TContractState,
         world: IWorldDispatcher,
-        account: felt252,
+        game_id: u32,
         attacker_index: u8,
         defender_index: u8,
         dispatched: u32
@@ -25,30 +17,26 @@ trait IActions<TContractState> {
     fn defend(
         self: @TContractState,
         world: IWorldDispatcher,
-        account: felt252,
+        game_id: u32,
         attacker_index: u8,
         defender_index: u8
     );
     fn discard(
         self: @TContractState,
         world: IWorldDispatcher,
-        account: felt252,
+        game_id: u32,
         card_one: u8,
         card_two: u8,
         card_three: u8
     );
-    fn finish(self: @TContractState, world: IWorldDispatcher, account: felt252);
+    fn finish(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn supply(
-        self: @TContractState,
-        world: IWorldDispatcher,
-        account: felt252,
-        tile_index: u8,
-        supply: u32
+        self: @TContractState, world: IWorldDispatcher, game_id: u32, tile_index: u8, supply: u32
     );
     fn transfer(
         self: @TContractState,
         world: IWorldDispatcher,
-        account: felt252,
+        game_id: u32,
         source_index: u8,
         target_index: u8,
         army: u32
@@ -58,7 +46,7 @@ trait IActions<TContractState> {
 // System implementation
 
 #[starknet::contract]
-mod actions {
+mod play {
     // Starknet imports
 
     use starknet::{get_tx_info, get_caller_address};
@@ -67,11 +55,11 @@ mod actions {
 
     use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
-    // Components imports
+    // Models imports
 
-    use zconqueror::components::game::{Game, GameTrait, Turn};
-    use zconqueror::components::player::{Player, PlayerTrait};
-    use zconqueror::components::tile::Tile;
+    use zconqueror::models::game::{Game, GameTrait, Turn};
+    use zconqueror::models::player::{Player, PlayerTrait};
+    use zconqueror::models::tile::Tile;
 
     // Entities imports
 
@@ -85,12 +73,12 @@ mod actions {
 
     use zconqueror::constants::ZERO;
     use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
-    use zconqueror::datastore::{DataStore, DataStoreTrait};
+    use zconqueror::store::{Store, StoreTrait};
     use zconqueror::bot::simple::SimpleTrait;
 
     // Local imports
 
-    use super::IActions;
+    use super::IPlay;
 
     // Errors
 
@@ -117,196 +105,118 @@ mod actions {
     struct Storage {}
 
     #[external(v0)]
-    impl Actions of IActions<ContractState> {
-        fn create(
-            self: @ContractState,
-            world: IWorldDispatcher,
-            account: felt252,
-            seed: felt252,
-            name: felt252,
-            player_count: u8
-        ) {
-            // [Setup] Datastore
-            let mut datastore: DataStore = DataStoreTrait::new(world);
-
-            // [Effect] Game
-            let game_id = world.uuid();
-            let mut game = GameTrait::new(account, game_id, seed, player_count);
-            datastore.set_game(game);
-
-            // [Effect] Tile components
-            let mut map = MapTrait::new(
-                seed: game.seed,
-                player_count: game.player_count.into(),
-                land_count: TILE_NUMBER,
-                army_count: ARMY_NUMBER
-            );
-            let mut player_index = 0;
-            loop {
-                if player_index == game.player_count {
-                    break;
-                }
-                let mut player_lands = map.player_lands(player_index.into());
-                loop {
-                    match player_lands.pop_front() {
-                        Option::Some(land) => {
-                            let tile: Tile = land.dump(game.id);
-                            datastore.set_tile(tile);
-                        },
-                        Option::None => { break; },
-                    };
-                };
-                player_index += 1;
-            };
-
-            // [Effect] Player components
-            // Use the deck mechanism to define the player order, human player is 1
-            // First player got his supply set
-            let caller = get_caller_address();
-            let mut deck = DeckTrait::new(game.seed, game.player_count.into(), game.nonce);
-            let mut player_index = 0;
-            loop {
-                if player_index == game.player_count {
-                    break;
-                };
-                let card = deck.draw() - 1;
-                let mut player = if card == 1 {
-                    PlayerTrait::new(game_id, player_index.into(), address: caller, name: name)
-                } else {
-                    PlayerTrait::new(
-                        game_id, player_index.into(), address: ZERO(), name: card.into()
-                    )
-                };
-                if player_index == 0 {
-                    let player_score = map.score(player_index.into());
-                    player.supply = if player_score < 3 {
-                        3
-                    } else {
-                        player_score
-                    };
-                };
-                datastore.set_player(player);
-                player_index += 1;
-            };
-
-            // [Effect] Play bots until real player
-            let player = datastore.current_player(game);
-            if player.address.is_zero() {
-                self.finish(world, account);
-            };
-        }
-
+    impl Play of IPlay<ContractState> {
         fn attack(
             self: @ContractState,
             world: IWorldDispatcher,
-            account: felt252,
+            game_id: u32,
             attacker_index: u8,
             defender_index: u8,
             dispatched: u32
         ) {
             // [Setup] Datastore
-            let mut datastore: DataStore = DataStoreTrait::new(world);
+            let mut store: Store = StoreTrait::new(world);
 
             // [Check] Turn
-            let mut game: Game = datastore.game(account);
+            let mut game: Game = store.game(game_id);
             assert(game.turn() == Turn::Attack, errors::ATTACK_INVALID_TURN);
 
             // [Check] Caller is player
             let caller = get_caller_address();
-            let mut player = datastore.current_player(game);
+            let mut player = store.current_player(game);
             assert(caller == player.address, errors::ATTACK_INVALID_PLAYER);
 
             // [Check] Tiles owner
-            let attacker_tile = datastore.tile(game, attacker_index);
-            let defender_tile = datastore.tile(game, defender_index);
+            let attacker_tile = store.tile(game, attacker_index);
+            let defender_tile = store.tile(game, defender_index);
             assert(attacker_tile.owner == player.index.into(), errors::ATTACK_INVALID_OWNER);
 
             // [Compute] Attack
             let tiles = self._attack(@game, @attacker_tile, @defender_tile, dispatched);
 
             // [Effect] Update tiles
-            datastore.set_tiles(tiles);
+            store.set_tiles(tiles);
         }
 
         fn defend(
             self: @ContractState,
             world: IWorldDispatcher,
-            account: felt252,
+            game_id: u32,
             attacker_index: u8,
             defender_index: u8
         ) {
             // [Setup] Datastore
-            let mut datastore: DataStore = DataStoreTrait::new(world);
+            let mut store: Store = StoreTrait::new(world);
 
             // [Check] Turn
-            let mut game: Game = datastore.game(account);
+            let mut game: Game = store.game(game_id);
             assert(game.turn() == Turn::Attack, errors::DEFEND_INVALID_TURN);
 
             // [Check] Caller is player
             let caller = get_caller_address();
-            let mut player = datastore.current_player(game);
+            let mut player = store.current_player(game);
             assert(caller == player.address, errors::DEFEND_INVALID_PLAYER);
 
             // [Check] Tiles owner
-            let attacker_tile = datastore.tile(game, attacker_index);
-            let defender_tile = datastore.tile(game, defender_index);
+            let attacker_tile = store.tile(game, attacker_index);
+            let defender_tile = store.tile(game, defender_index);
             assert(attacker_tile.owner == player.index.into(), errors::DEFEND_INVALID_OWNER);
 
             // [Compute] Defend
             let tiles = self._defend(@game, ref player, @attacker_tile, @defender_tile);
 
             // [Effect] Update tiles
-            datastore.set_tiles(tiles);
+            store.set_tiles(tiles);
 
             // [Effect] Update player
-            datastore.set_player(player);
+            store.set_player(player);
         }
 
         fn discard(
             self: @ContractState,
             world: IWorldDispatcher,
-            account: felt252,
+            game_id: u32,
             card_one: u8,
             card_two: u8,
             card_three: u8
         ) {
             // [Setup] Datastore
-            let mut datastore: DataStore = DataStoreTrait::new(world);
+            let mut store: Store = StoreTrait::new(world);
 
             // [Check] Turn
-            let mut game: Game = datastore.game(account);
+            let mut game: Game = store.game(game_id);
             assert(game.turn() == Turn::Supply, errors::DISCARD_INVALID_TURN);
 
             // [Check] Caller is player
             let caller = get_caller_address();
-            let mut player = datastore.current_player(game);
+            let mut player = store.current_player(game);
             assert(caller == player.address, errors::DISCARD_INVALID_PLAYER);
 
             // [Compute] Discard
-            let tiles = datastore.tiles(game);
+            let tiles = store.tiles(game).span();
             let tiles = self._discard(@game, ref player, tiles, card_one, card_two, card_three);
 
             // [Effect] Update tiles
-            datastore.set_tiles(tiles);
+            store.set_tiles(tiles);
 
             // [Effect] Update player
-            datastore.set_player(player);
+            store.set_player(player);
         }
 
-        fn finish(self: @ContractState, world: IWorldDispatcher, account: felt252) {
+        fn finish(self: @ContractState, world: IWorldDispatcher, game_id: u32) {
             // [Setup] Datastore
-            let mut datastore: DataStore = DataStoreTrait::new(world);
+            let mut store: Store = StoreTrait::new(world);
 
             // [Check] Caller is player
             let caller = get_caller_address();
-            let mut game: Game = datastore.game(account);
-            let mut player = datastore.current_player(game);
+            let mut game: Game = store.game(game_id);
+            let mut player = store.current_player(game);
             assert(
                 caller == player.address || player.address.is_zero(), errors::FINISH_INVALID_PLAYER
             );
 
             // [Compute] Finish
-            let tiles = datastore.tiles(game);
+            let tiles = store.tiles(game).span();
 
             // [Check] Player is a bot
             let player_count = game.player_count;
@@ -319,18 +229,17 @@ mod actions {
                     // [Compute] Bot actions
                     let (new_player, new_tiles) = SimpleTrait::supply(game, player, tiles);
                     // [Effect] Update components
-                    datastore.set_player(new_player);
-                    datastore.set_tiles(new_tiles);
+                    store.set_player(new_player);
+                    store.set_tiles(new_tiles);
                 }
 
                 // [Compute] Game turn
-                game.roll();
-                game.decrement();
-                datastore.set_game(game);
+                game.pass(); // Update nonce to be next player first turn
+                store.set_game(game);
             }
 
             // [Check] Player supply is empty
-            let player = datastore.current_player(game);
+            let player = store.current_player(game);
             assert(player.supply == 0, errors::FINISH_INVALID_SUPPLY);
 
             // [Command] Update next player supply if next turn is supply
@@ -340,7 +249,7 @@ mod actions {
 
                 // [Compute] Update player
                 let mut map = MapTrait::from_tiles(player_count.into(), tiles);
-                let mut next_player = datastore.next_player(game);
+                let mut next_player = store.next_player(game);
                 next_player.conqueror = false;
 
                 // [Compute] Supply, 0 if player is dead
@@ -353,83 +262,79 @@ mod actions {
                     } else {
                         score
                     };
-                datastore.set_player(next_player);
+                store.set_player(next_player);
 
                 // [Check] If next next player is a bot, operate recursive iteration
                 if next_player.address.is_zero() {
                     game.increment();
-                    datastore.set_game(game);
-                    return self.finish(world, account);
+                    store.set_game(game);
+                    return self.finish(world, game_id);
                 }
             }
 
             // [Effect] Update game
             game.increment();
-            datastore.set_game(game);
+            store.set_game(game);
         }
 
         fn supply(
-            self: @ContractState,
-            world: IWorldDispatcher,
-            account: felt252,
-            tile_index: u8,
-            supply: u32
+            self: @ContractState, world: IWorldDispatcher, game_id: u32, tile_index: u8, supply: u32
         ) {
             // [Setup] Datastore
-            let mut datastore: DataStore = DataStoreTrait::new(world);
+            let mut store: Store = StoreTrait::new(world);
 
             // [Check] Turn
-            let mut game: Game = datastore.game(account);
+            let mut game: Game = store.game(game_id);
             assert(game.turn() == Turn::Supply, errors::SUPPLY_INVALID_TURN);
 
             // [Check] Caller is player
             let caller = get_caller_address();
-            let mut player = datastore.current_player(game);
+            let mut player = store.current_player(game);
             assert(caller == player.address, errors::SUPPLY_INVALID_PLAYER);
 
             // [Compute] Supply
-            let tile = datastore.tile(game, tile_index.into());
+            let tile = store.tile(game, tile_index.into());
             let tile = self._supply(@game, ref player, @tile, supply);
 
             // [Effect] Update tile
-            datastore.set_tile(tile);
+            store.set_tile(tile);
 
             // [Effect] Update player
-            datastore.set_player(player);
+            store.set_player(player);
         }
 
         fn transfer(
             self: @ContractState,
             world: IWorldDispatcher,
-            account: felt252,
+            game_id: u32,
             source_index: u8,
             target_index: u8,
             army: u32
         ) {
             // [Setup] Datastore
-            let mut datastore: DataStore = DataStoreTrait::new(world);
+            let mut store: Store = StoreTrait::new(world);
 
             // [Check] Turn
-            let mut game: Game = datastore.game(account);
+            let mut game: Game = store.game(game_id);
             assert(game.turn() == Turn::Transfer, errors::TRANSFER_INVALID_TURN);
 
             // [Check] Caller is player
             let caller = get_caller_address();
-            let mut player = datastore.current_player(game);
+            let mut player = store.current_player(game);
             assert(caller == player.address, errors::TRANSFER_INVALID_PLAYER);
 
             // [Check] Tiles owner
-            let source = datastore.tile(game, source_index);
-            let target = datastore.tile(game, target_index);
+            let source = store.tile(game, source_index);
+            let target = store.tile(game, target_index);
             assert(source.owner == player.index.into(), errors::TRANSFER_INVALID_OWNER);
 
             // [Compute] Transfer
-            let tiles = datastore.tiles(game);
+            let tiles = store.tiles(game).span();
             let (source, target) = self._transfer(@game, @source, @target, tiles, army);
 
             // [Effect] Update tiles
-            datastore.set_tile(source);
-            datastore.set_tile(target);
+            store.set_tile(source);
+            store.set_tile(target);
         }
     }
 

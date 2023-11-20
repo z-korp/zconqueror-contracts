@@ -15,7 +15,7 @@ use alexandria_data_structures::array_ext::ArrayTraitExt;
 // Internal imports
 
 use zconqueror::config;
-use zconqueror::components::tile::Tile;
+use zconqueror::models::tile::Tile;
 use zconqueror::entities::deck::{Deck, DeckTrait};
 use zconqueror::entities::land::{Land, LandTrait};
 use zconqueror::entities::set::{Set, SetTrait};

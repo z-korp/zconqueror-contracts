@@ -13,7 +13,7 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 // Internal imports
 
 use zconqueror::config;
-use zconqueror::datastore::{DataStore, DataStoreTrait};
+use zconqueror::store::{Store, StoreTrait};
 use zconqueror::components::game::{Game, GameTrait};
 use zconqueror::components::player::Player;
 use zconqueror::components::tile::Tile;
@@ -33,20 +33,20 @@ const PLAYER_INDEX: u8 = 0;
 fn test_defend_win() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
-    let mut datastore = DataStoreTrait::new(world);
+    let mut store = StoreTrait::new(world);
 
     // [Create]
     let seed: felt252 = 123;
     systems.player_actions.create(world, ACCOUNT, seed, NAME, PLAYER_COUNT);
 
     // [Compute] Attacker tile
-    let game: Game = datastore.game(ACCOUNT);
+    let game: Game = store.game(ACCOUNT);
     let player_index = game.player();
-    let initial_player: Player = datastore.player(game, player_index);
+    let initial_player: Player = store.player(game, player_index);
     let supply = initial_player.supply.into();
     let mut attacker: u8 = config::TILE_NUMBER.try_into().unwrap();
     let army = loop {
-        let tile: Tile = datastore.tile(game, attacker.into());
+        let tile: Tile = store.tile(game, attacker.into());
         if tile.owner == player_index.into() {
             break tile.army;
         }
@@ -64,7 +64,7 @@ fn test_defend_win() {
     let mut defender = loop {
         match neighbors.pop_front() {
             Option::Some(index) => {
-                let tile: Tile = datastore.tile(game, *index);
+                let tile: Tile = store.tile(game, *index);
                 if tile.owner != player_index.into() {
                     break tile.index;
                 }
@@ -79,8 +79,8 @@ fn test_defend_win() {
     systems.player_actions.attack(world, ACCOUNT, attacker, defender, distpached);
 
     // [Assert] Defender tile
-    let game: Game = datastore.game(ACCOUNT);
-    let tile: Tile = datastore.tile(game, defender.into());
+    let game: Game = store.game(ACCOUNT);
+    let tile: Tile = store.tile(game, defender.into());
     assert(tile.owner != player_index.into(), 'Defend: invalid owner');
 
     // [Defend]
@@ -88,8 +88,8 @@ fn test_defend_win() {
     systems.player_actions.defend(world, ACCOUNT, attacker, defender);
 
     // [Assert] Defender tile
-    let game: Game = datastore.game(ACCOUNT);
-    let tile: Tile = datastore.tile(game, defender.into());
+    let game: Game = store.game(ACCOUNT);
+    let tile: Tile = store.tile(game, defender.into());
     assert(tile.owner == player_index.into(), 'Defend: invalid owner');
 
     // [Finish]
@@ -106,18 +106,18 @@ fn test_defend_win() {
 fn test_defend_revert_invalid_order() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
-    let mut datastore = DataStoreTrait::new(world);
+    let mut store = StoreTrait::new(world);
 
     // [Create]
     systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Attacker tile
-    let game: Game = datastore.game(ACCOUNT);
-    let initial_player: Player = datastore.player(game, PLAYER_INDEX);
+    let game: Game = store.game(ACCOUNT);
+    let initial_player: Player = store.player(game, PLAYER_INDEX);
     let supply = initial_player.supply.into();
     let mut attacker: u8 = config::TILE_NUMBER.try_into().unwrap();
     let army = loop {
-        let tile: Tile = datastore.tile(game, attacker.into());
+        let tile: Tile = store.tile(game, attacker.into());
         if tile.owner == PLAYER_INDEX.into() {
             break tile.army;
         }
@@ -135,7 +135,7 @@ fn test_defend_revert_invalid_order() {
     let mut defender = loop {
         match neighbors.pop_front() {
             Option::Some(index) => {
-                let tile: Tile = datastore.tile(game, *index);
+                let tile: Tile = store.tile(game, *index);
                 if tile.owner != PLAYER_INDEX.into() {
                     break tile.index;
                 }
@@ -161,18 +161,18 @@ fn test_defend_revert_invalid_order() {
 fn test_defend_revert_invalid_player() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
-    let mut datastore = DataStoreTrait::new(world);
+    let mut store = StoreTrait::new(world);
 
     // [Create]
     systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Tile army and player available supply
-    let game: Game = datastore.game(ACCOUNT);
-    let initial_player: Player = datastore.player(game, PLAYER_INDEX);
+    let game: Game = store.game(ACCOUNT);
+    let initial_player: Player = store.player(game, PLAYER_INDEX);
     let supply: u32 = initial_player.supply.into();
     let mut tile_index: u8 = 1;
     loop {
-        let tile: Tile = datastore.tile(game, tile_index);
+        let tile: Tile = store.tile(game, tile_index);
         if tile.owner == PLAYER_INDEX.into() {
             break;
         }
@@ -197,18 +197,18 @@ fn test_defend_revert_invalid_player() {
 fn test_defend_revert_invalid_owner() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
-    let mut datastore = DataStoreTrait::new(world);
+    let mut store = StoreTrait::new(world);
 
     // [Create]
     systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
 
     // [Compute] Tile army and player available supply
-    let game: Game = datastore.game(ACCOUNT);
-    let initial_player: Player = datastore.player(game, PLAYER_INDEX);
+    let game: Game = store.game(ACCOUNT);
+    let initial_player: Player = store.player(game, PLAYER_INDEX);
     let supply: u32 = initial_player.supply.into();
     let mut tile_index: u8 = 1;
     loop {
-        let tile: Tile = datastore.tile(game, tile_index);
+        let tile: Tile = store.tile(game, tile_index);
         if tile.owner == PLAYER_INDEX.into() {
             break;
         }
@@ -222,10 +222,10 @@ fn test_defend_revert_invalid_owner() {
     systems.player_actions.finish(world, ACCOUNT);
 
     // [Compute] Invalid owned tile
-    let game: Game = datastore.game(ACCOUNT);
+    let game: Game = store.game(ACCOUNT);
     let mut index = 1;
     loop {
-        let tile: Tile = datastore.tile(game, index);
+        let tile: Tile = store.tile(game, index);
         if tile.owner != PLAYER_INDEX.into() {
             break;
         }
