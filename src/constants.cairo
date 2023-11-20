@@ -1,5 +1,6 @@
 // Constants
 
+#[inline(always)]
 fn ZERO() -> starknet::ContractAddress {
     starknet::contract_address_const::<0>()
 }

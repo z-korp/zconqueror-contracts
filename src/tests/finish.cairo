@@ -14,9 +14,9 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
 use zconqueror::config;
 use zconqueror::store::{Store, StoreTrait};
-use zconqueror::components::game::{Game, GameTrait, Turn};
-use zconqueror::components::player::Player;
-use zconqueror::components::tile::Tile;
+use zconqueror::models::game::{Game, GameTrait, Turn};
+use zconqueror::models::player::Player;
+use zconqueror::models::tile::Tile;
 use zconqueror::systems::player::IActionsDispatcherTrait;
 use zconqueror::tests::setup::{setup, setup::Systems};
 

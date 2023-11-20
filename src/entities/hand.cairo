@@ -195,7 +195,7 @@ mod tests {
 
     // Internal imports
 
-    use zconqueror::components::player::Player;
+    use zconqueror::models::player::Player;
     use zconqueror::entities::set::{Set, SetTrait};
 
     // Local imports

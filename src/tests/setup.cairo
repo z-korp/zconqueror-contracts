@@ -19,6 +19,10 @@ mod setup {
 
     // Constants
 
+    fn HOST() -> ContractAddress {
+        starknet::contract_address_const::<'HOST'>()
+    }
+
     fn PLAYER() -> ContractAddress {
         starknet::contract_address_const::<'PLAYER'>()
     }
@@ -38,15 +42,15 @@ mod setup {
         let world = spawn_test_world(models);
 
         // [Setup] Systems
-        let host_address = deploy_contract(host_address::TEST_CLASS_HASH, array![].span());
-        let play_address = deploy_contract(play_address::TEST_CLASS_HASH, array![].span());
+        let host_address = deploy_contract(host::TEST_CLASS_HASH, array![].span());
+        let play_address = deploy_contract(play::TEST_CLASS_HASH, array![].span());
         let systems = Systems {
             host: IHostDispatcher { contract_address: host_address },
             play: IPlayDispatcher { contract_address: play_address },
         };
 
         // [Return]
-        set_contract_address(PLAYER());
+        set_contract_address(HOST());
         (world, systems)
     }
 }

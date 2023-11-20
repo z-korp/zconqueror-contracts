@@ -11,12 +11,12 @@ use hash::HashStateTrait;
 // External imports
 
 use alexandria_data_structures::array_ext::ArrayTraitExt;
+use origami::random::deck::{Deck, DeckTrait};
 
 // Internal imports
 
 use zconqueror::config;
 use zconqueror::models::tile::Tile;
-use zconqueror::entities::deck::{Deck, DeckTrait};
 use zconqueror::entities::land::{Land, LandTrait};
 use zconqueror::entities::set::{Set, SetTrait};
 
@@ -96,7 +96,7 @@ impl MapImpl of MapTrait {
         // [Compute] Seed in u256 for futher operations
         let base_seed: u256 = seed.into();
         // Use the deck mechanism to shuffle the lands
-        let mut deck = DeckTrait::new(seed, land_count, 0);
+        let mut deck = DeckTrait::new(seed, land_count);
         // Each player draw R/N where R is the remaining cards and N the number of players left
         let mut realms: Felt252Dict<Nullable<Span<Land>>> = Default::default();
         let mut player_index: u32 = 0;
