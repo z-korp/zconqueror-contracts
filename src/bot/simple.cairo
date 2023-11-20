@@ -1,9 +1,9 @@
 // Internal imports
 
 use zconqueror::config;
-use zconqueror::components::game::{Game, GameTrait};
-use zconqueror::components::player::{Player, PlayerTrait};
-use zconqueror::components::tile::Tile;
+use zconqueror::models::game::{Game, GameTrait};
+use zconqueror::models::player::{Player, PlayerTrait};
+use zconqueror::models::tile::Tile;
 use zconqueror::entities::land::{Land, LandTrait};
 use zconqueror::entities::map::{Map, MapTrait};
 

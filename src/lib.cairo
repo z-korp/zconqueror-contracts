@@ -1,5 +1,5 @@
 mod constants;
-mod datastore;
+mod store;
 
 mod data {
     mod v00;
@@ -19,25 +19,26 @@ mod entities {
     mod set;
 }
 
-mod components {
+mod models {
     mod game;
     mod player;
     mod tile;
 }
 
 mod systems {
-    mod player;
+    mod host;
+    mod play;
 }
 
 #[cfg(test)]
 mod tests {
     mod setup;
-    mod create;
-    mod supply;
-    mod attack;
-    mod defend;
-    mod transfer;
-    mod finish;
+// mod create;
+// mod supply;
+// mod attack;
+// mod defend;
+// mod transfer;
+// mod finish;
 }
 
 use zconqueror::data::v00 as config;
