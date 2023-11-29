@@ -162,10 +162,7 @@ mod play {
 
             // [Compute] Defend
             let order = get_tx_info().unbox().transaction_hash;
-            defender.defend(ref attacker, game.seed, order);
-            if defender.defeated && !player.conqueror {
-                player.conqueror = true;
-            };
+            player.conqueror = defender.defend(ref attacker, game.seed, order);
 
             // [Effect] Update tiles
             store.set_tiles(array![attacker, defender].span());
