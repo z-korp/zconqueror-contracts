@@ -70,7 +70,7 @@ fn test_defend_win() {
             Option::Some(index) => {
                 let tile: Tile = store.tile(game, *index);
                 if tile.owner != player_index.into() {
-                    break tile.index;
+                    break tile.id;
                 }
             },
             Option::None => { panic(array!['Defend: defender not found']); },
@@ -149,7 +149,7 @@ fn test_defend_lose() {
             Option::Some(index) => {
                 let tile: Tile = store.tile(game, *index);
                 if tile.owner != player_index.into() {
-                    break tile.index;
+                    break tile.id;
                 }
             },
             Option::None => { panic(array!['Defend: defender not found']); },
@@ -189,7 +189,7 @@ fn test_defend_lose() {
 
 #[test]
 #[available_gas(1_000_000_000)]
-#[should_panic(expected: ('Land: invalid order status', 'ENTRYPOINT_FAILED',))]
+#[should_panic(expected: ('Tile: invalid order status', 'ENTRYPOINT_FAILED',))]
 fn test_defend_revert_invalid_order() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
@@ -229,7 +229,7 @@ fn test_defend_revert_invalid_order() {
             Option::Some(index) => {
                 let tile: Tile = store.tile(game, *index);
                 if tile.owner != PLAYER_INDEX.into() {
-                    break tile.index;
+                    break tile.id;
                 }
             },
             Option::None => { panic(array!['Attack: defender not found']); },

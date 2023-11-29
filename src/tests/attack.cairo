@@ -69,7 +69,7 @@ fn test_attack() {
             Option::Some(index) => {
                 let tile: Tile = store.tile(game, *index);
                 if tile.owner != PLAYER_INDEX.into() {
-                    break tile.index;
+                    break tile.id;
                 }
             },
             Option::None => { panic(array!['Attack: defender not found']); }

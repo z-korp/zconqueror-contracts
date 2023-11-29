@@ -37,8 +37,8 @@ trait IPlay<TContractState> {
         self: @TContractState,
         world: IWorldDispatcher,
         game_id: u32,
-        source_index: u8,
-        target_index: u8,
+        from_index: u8,
+        to_index: u8,
         army: u32
     );
 }
@@ -63,14 +63,10 @@ mod play {
 
     use zconqueror::models::game::{Game, GameTrait, Turn};
     use zconqueror::models::player::{Player, PlayerTrait};
-    use zconqueror::models::tile::Tile;
-
-    // Entities imports
-
-    use zconqueror::entities::hand::HandTrait;
-    use zconqueror::entities::land::{Land, LandTrait};
-    use zconqueror::entities::map::{Map, MapTrait};
-    use zconqueror::entities::set::SetTrait;
+    use zconqueror::models::tile::{Tile, TileTrait};
+    use zconqueror::models::hand::HandTrait;
+    use zconqueror::models::map::{Map, MapTrait};
+    use zconqueror::models::set::SetTrait;
 
     // Internal imports
 
@@ -128,15 +124,16 @@ mod play {
             assert(caller == player.address, errors::ATTACK_INVALID_PLAYER);
 
             // [Check] Tiles owner
-            let attacker_tile = store.tile(game, attacker_index);
-            let defender_tile = store.tile(game, defender_index);
-            assert(attacker_tile.owner == player.index.into(), errors::ATTACK_INVALID_OWNER);
+            let mut attacker = store.tile(game, attacker_index);
+            let mut defender = store.tile(game, defender_index);
+            assert(attacker.owner == player.index.into(), errors::ATTACK_INVALID_OWNER);
 
             // [Compute] Attack
-            let tiles = self._attack(@game, @attacker_tile, @defender_tile, dispatched);
+            let order = get_tx_info().unbox().transaction_hash;
+            attacker.attack(dispatched, ref defender, order);
 
             // [Effect] Update tiles
-            store.set_tiles(tiles);
+            store.set_tiles(array![attacker, defender].span());
         }
 
         fn defend(
@@ -159,15 +156,19 @@ mod play {
             assert(caller == player.address, errors::DEFEND_INVALID_PLAYER);
 
             // [Check] Tiles owner
-            let attacker_tile = store.tile(game, attacker_index);
-            let defender_tile = store.tile(game, defender_index);
-            assert(attacker_tile.owner == player.index.into(), errors::DEFEND_INVALID_OWNER);
+            let mut attacker = store.tile(game, attacker_index);
+            let mut defender = store.tile(game, defender_index);
+            assert(attacker.owner == player.index.into(), errors::DEFEND_INVALID_OWNER);
 
             // [Compute] Defend
-            let tiles = self._defend(@game, ref player, @attacker_tile, @defender_tile);
+            let order = get_tx_info().unbox().transaction_hash;
+            defender.defend(ref attacker, game.seed, order);
+            if defender.defeated && !player.conqueror {
+                player.conqueror = true;
+            };
 
             // [Effect] Update tiles
-            store.set_tiles(tiles);
+            store.set_tiles(array![attacker, defender].span());
 
             // [Effect] Update player
             store.set_player(player);
@@ -266,9 +267,12 @@ mod play {
             let mut player = store.current_player(game);
             assert(caller == player.address, errors::SUPPLY_INVALID_PLAYER);
 
+            // [Check] Tile owner
+            let mut tile = store.tile(game, tile_index.into());
+            assert(tile.owner == player.index.into(), errors::SUPPLY_INVALID_OWNER);
+
             // [Compute] Supply
-            let tile = store.tile(game, tile_index.into());
-            let tile = self._supply(@game, ref player, @tile, supply);
+            tile.supply(ref player, supply);
 
             // [Effect] Update tile
             store.set_tile(tile);
@@ -281,8 +285,8 @@ mod play {
             self: @ContractState,
             world: IWorldDispatcher,
             game_id: u32,
-            source_index: u8,
-            target_index: u8,
+            from_index: u8,
+            to_index: u8,
             army: u32
         ) {
             // [Setup] Datastore
@@ -298,47 +302,22 @@ mod play {
             assert(caller == player.address, errors::TRANSFER_INVALID_PLAYER);
 
             // [Check] Tiles owner
-            let source = store.tile(game, source_index);
-            let target = store.tile(game, target_index);
-            assert(source.owner == player.index.into(), errors::TRANSFER_INVALID_OWNER);
+            let mut from = store.tile(game, from_index);
+            let mut to = store.tile(game, to_index);
+            assert(from.owner == player.index.into(), errors::TRANSFER_INVALID_OWNER);
 
             // [Compute] Transfer
             let tiles = store.tiles(game).span();
-            let (source, target) = self._transfer(@game, @source, @target, tiles, army);
+            from.transfer(ref to, army, tiles);
 
             // [Effect] Update tiles
-            store.set_tile(source);
-            store.set_tile(target);
+            store.set_tile(from);
+            store.set_tile(to);
         }
     }
 
     #[generate_trait]
     impl Internal of InternalTrait {
-        fn _attack(
-            self: @ContractState, game: @Game, attacker: @Tile, defender: @Tile, dispatched: u32
-        ) -> Span<Tile> {
-            let mut attacker_land = LandTrait::load(attacker);
-            let mut defender_land = LandTrait::load(defender);
-            let order = get_tx_info().unbox().transaction_hash;
-            attacker_land.attack(dispatched, ref defender_land, order);
-            array![attacker_land.dump(*game.id), defender_land.dump(*game.id)].span()
-        }
-
-        fn _defend(
-            self: @ContractState, game: @Game, ref player: Player, attacker: @Tile, defender: @Tile
-        ) -> Span<Tile> {
-            let mut attacker_land = LandTrait::load(attacker);
-            let mut defender_land = LandTrait::load(defender);
-            let order = get_tx_info().unbox().transaction_hash;
-            defender_land.defend(ref attacker_land, *game.seed, order);
-
-            if defender_land.defeated && !player.conqueror {
-                player.conqueror = true;
-            };
-
-            array![attacker_land.dump(*game.id), defender_land.dump(*game.id)].span()
-        }
-
         fn _draw(
             self: @ContractState, game: @Game, ref player: Player, ref players: Span<Player>,
         ) {
@@ -381,63 +360,20 @@ mod play {
             player.cards = hand.dump();
             player.supply += supply.into();
 
-            // [Compute] Additional supplies for owned lands
+            // [Compute] Additional supplies for owned tiles
             let player_count = *game.player_count;
             let mut map = MapTrait::from_tiles(player_count.into(), tiles);
-            let mut player_lands = map.deploy(player.index, @set);
+            let mut player_tiles = map.deploy(player.index, @set);
 
             // [Return] Player tiles
             let mut tiles: Array<Tile> = array![];
             loop {
-                match player_lands.pop_front() {
-                    Option::Some(land) => {
-                        let tile: Tile = land.dump(*game.id);
-                        tiles.append(tile);
-                    },
+                match player_tiles.pop_front() {
+                    Option::Some(tile) => { tiles.append(*tile); },
                     Option::None => { break; },
                 };
             };
             tiles.span()
-        }
-
-        fn _supply(
-            self: @ContractState, game: @Game, ref player: Player, tile: @Tile, supply: u32
-        ) -> Tile {
-            // [Check] Tile owner
-            assert(tile.owner == @player.index.into(), errors::SUPPLY_INVALID_OWNER);
-
-            // [Compute] Supply
-            let mut land = LandTrait::load(tile);
-            land.supply(ref player, supply);
-
-            // [Return] Update tile
-            land.dump(*game.id)
-        }
-
-        fn _transfer(
-            self: @ContractState,
-            game: @Game,
-            source: @Tile,
-            target: @Tile,
-            mut tiles: Span<Tile>,
-            army: u32
-        ) -> (Tile, Tile) {
-            // [Effect] Transfer
-            let player_count = *game.player_count;
-            let mut lands: Array<Land> = array![];
-            loop {
-                match tiles.pop_front() {
-                    Option::Some(tile) => {
-                        let land = LandTrait::load(tile);
-                        lands.append(land);
-                    },
-                    Option::None => { break; },
-                };
-            };
-            let mut from = LandTrait::load(source);
-            let mut to = LandTrait::load(target);
-            from.transfer(ref to, army, lands.span());
-            (from.dump(*game.id), to.dump(*game.id))
         }
     }
 }
