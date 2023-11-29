@@ -23,23 +23,26 @@ use zconqueror::tests::setup::{setup, setup::{Systems, HOST, PLAYER}};
 
 // Constants
 
-const ACCOUNT: felt252 = 'ACCOUNT';
-const NAME: felt252 = 'NAME';
-const PLAYER_COUNT: u8 = 4;
+const HOST_NAME: felt252 = 'HOST';
+const PLAYER_NAME: felt252 = 'PLAYER';
+const PLAYER_COUNT: u8 = 2;
 
 #[test]
 #[available_gas(1_000_000_000)]
-fn test_create() {
+fn test_create_and_join() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, NAME);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
     systems.host.start(world, game_id);
 
     // [Assert] Game
-    let game: Game = store.game(0);
+    let game: Game = store.game(game_id);
     assert(game.id == 0, 'Game: wrong id');
     assert(game.seed != 0, 'Game: wrong seed');
     assert(game.over == false, 'Game: wrong status');
@@ -58,8 +61,8 @@ fn test_create() {
         let player_name: u256 = player.name.into();
         assert(player.game_id == game.id, 'Player: wrong game id');
         assert(player.index == player_index.into(), 'Player: wrong order');
-        assert(player.address.is_zero() || player.address == HOST(), 'Player: wrong address');
-        assert(player_name < PLAYER_COUNT.into() || player.name == NAME, 'Player: wrong name');
+        assert(player.address == HOST() || player.address == PLAYER(), 'Player: wrong address');
+        assert(player.name == HOST_NAME || player.name == PLAYER_NAME, 'Player: wrong name');
         assert(
             player.supply == 0 || (game.player().into() == player.index && player.supply > 0),
             'Player: wrong supply'

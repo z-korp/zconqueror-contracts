@@ -31,12 +31,12 @@ mod systems {
 #[cfg(test)]
 mod tests {
     mod setup;
-    mod create;
-// mod supply;
-// mod attack;
-// mod defend;
-// mod transfer;
-// mod finish;
+    mod host;
+    mod supply;
+    mod attack;
+    mod defend;
+    mod transfer;
+    mod finish;
 }
 
 use zconqueror::data::v00 as config;

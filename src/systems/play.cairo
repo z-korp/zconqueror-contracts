@@ -6,7 +6,6 @@ use dojo::world::IWorldDispatcher;
 
 #[starknet::interface]
 trait IPlay<TContractState> {
-    fn setup(self: @TContractState, world: IWorldDispatcher, game_id: u32,);
     fn attack(
         self: @TContractState,
         world: IWorldDispatcher,
@@ -87,7 +86,6 @@ mod play {
     // Errors
 
     mod errors {
-        const SETUP_INVALID_CALLER: felt252 = 'Setup: invalid caller';
         const ATTACK_INVALID_TURN: felt252 = 'Attack: invalid turn';
         const ATTACK_INVALID_PLAYER: felt252 = 'Attack: invalid player';
         const ATTACK_INVALID_OWNER: felt252 = 'Attack: invalid owner';
@@ -111,23 +109,6 @@ mod play {
 
     #[external(v0)]
     impl Play of IPlay<ContractState> {
-        fn setup(self: @ContractState, world: IWorldDispatcher, game_id: u32,) {
-            // [Setup] Datastore
-            let mut store: Store = StoreTrait::new(world);
-
-            // [Check] Caller is the host
-            let mut game = store.game(game_id);
-            let caller = get_caller_address();
-            assert(caller == game.host, errors::SETUP_INVALID_CALLER);
-
-            // [Effect] Game setup
-            // Play bot turns until human player
-            let player = store.current_player(game);
-            if player.address.is_zero() {
-                self.finish(world, game.id);
-            }
-        }
-
         fn attack(
             self: @ContractState,
             world: IWorldDispatcher,

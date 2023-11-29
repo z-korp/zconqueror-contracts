@@ -17,15 +17,15 @@ use zconqueror::store::{Store, StoreTrait};
 use zconqueror::models::game::{Game, GameTrait, Turn};
 use zconqueror::models::player::Player;
 use zconqueror::models::tile::Tile;
-use zconqueror::systems::player::IActionsDispatcherTrait;
-use zconqueror::tests::setup::{setup, setup::Systems};
+use zconqueror::systems::host::IHostDispatcherTrait;
+use zconqueror::systems::play::IPlayDispatcherTrait;
+use zconqueror::tests::setup::{setup, setup::{Systems, HOST, PLAYER}};
 
 // Constants
 
-const ACCOUNT: felt252 = 'ACCOUNT';
-const SEED: felt252 = 'BANG';
-const NAME: felt252 = 'NAME';
-const PLAYER_COUNT: u8 = 4;
+const HOST_NAME: felt252 = 'HOST';
+const PLAYER_NAME: felt252 = 'PLAYER';
+const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u8 = 0;
 
 #[test]
@@ -34,13 +34,17 @@ fn test_finish_next_player() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
-
+    
     // [Create]
-    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
 
     // [Assert] Game
-    let game: Game = store.game(ACCOUNT);
-    assert(game.player() == 0, 'Game: wrong player index 0');
+    let game: Game = store.game(game_id);
+    assert(game.player() == PLAYER_INDEX, 'Game: wrong player index 0');
     assert(game.turn() == Turn::Supply, 'Game: wrong turn 0');
 
     // [Compute] Tile army and player available supply
@@ -56,30 +60,32 @@ fn test_finish_next_player() {
     };
 
     // [Supply]
-    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
+    set_contract_address(player.address);
+    systems.play.supply(world, game_id, tile_index, supply);
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 
     // [Assert] Game
-    let game: Game = store.game(ACCOUNT);
-    assert(game.player() == 0, 'Game: wrong player index 1');
+    let game: Game = store.game(game_id);
+    assert(game.player() == PLAYER_INDEX, 'Game: wrong player index 1');
     assert(game.turn() == Turn::Attack, 'Game: wrong turn 1');
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 
     // [Assert] Game
-    let game: Game = store.game(ACCOUNT);
-    assert(game.player() == 0, 'Game: wrong player index 2');
+    let game: Game = store.game(game_id);
+    assert(game.player() == PLAYER_INDEX, 'Game: wrong player index 2');
     assert(game.turn() == Turn::Transfer, 'Game: wrong turn 2');
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 
     // [Assert] Game
-    let game: Game = store.game(ACCOUNT);
-    assert(game.player() == 0, 'Game: wrong player index 3');
+    let game: Game = store.game(game_id);
+    let player_index = 1 - PLAYER_INDEX;
+    assert(game.player() == player_index, 'Game: wrong player index 3');
     assert(game.turn() == Turn::Supply, 'Game: wrong turn 3');
 
     // [Assert] Player
@@ -96,10 +102,17 @@ fn test_finish_revert_invalid_supply() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    let game: Game = store.game(game_id);
+    let player: Player = store.player(game, PLAYER_INDEX);
+    set_contract_address(player.address);
+    systems.play.finish(world, game_id);
 }
 
 #[test]
@@ -111,14 +124,20 @@ fn test_finish_revert_invalid_player() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
 
     // [Assert] Game
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(game_id);
     assert(game.player() == 0, 'Game: wrong player index 0');
     assert(game.turn() == Turn::Supply, 'Game: wrong turn 0');
 
     // [Finish]
-    set_contract_address(starknet::contract_address_const::<1>());
-    systems.player_actions.finish(world, ACCOUNT);
+    let player_index = 1 - PLAYER_INDEX;
+    let player: Player = store.player(game, player_index);
+    set_contract_address(player.address);
+    systems.play.finish(world, game_id);
 }

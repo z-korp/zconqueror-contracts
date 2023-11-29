@@ -17,15 +17,15 @@ use zconqueror::store::{Store, StoreTrait};
 use zconqueror::models::game::{Game, GameTrait};
 use zconqueror::models::player::Player;
 use zconqueror::models::tile::Tile;
-use zconqueror::systems::player::IActionsDispatcherTrait;
-use zconqueror::tests::setup::{setup, setup::Systems};
+use zconqueror::systems::host::IHostDispatcherTrait;
+use zconqueror::systems::play::IPlayDispatcherTrait;
+use zconqueror::tests::setup::{setup, setup::{Systems, HOST, PLAYER}};
 
 // Constants
 
-const ACCOUNT: felt252 = 'ACCOUNT';
-const SEED: felt252 = 'BANG';
-const NAME: felt252 = 'NAME';
-const PLAYER_COUNT: u8 = 4;
+const HOST_NAME: felt252 = 'HOST';
+const PLAYER_NAME: felt252 = 'PLAYER';
+const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u8 = 0;
 
 #[test]
@@ -36,28 +36,32 @@ fn test_defend_win() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let seed: felt252 = 123;
-    systems.player_actions.create(world, ACCOUNT, seed, NAME, PLAYER_COUNT);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
 
     // [Compute] Attacker tile
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(game_id);
     let player_index = game.player();
     let initial_player: Player = store.player(game, player_index);
     let supply = initial_player.supply.into();
-    let mut attacker: u8 = config::TILE_NUMBER.try_into().unwrap();
+    let mut attacker: u8 = 1;
     let army = loop {
         let tile: Tile = store.tile(game, attacker.into());
         if tile.owner == player_index.into() {
             break tile.army;
         }
-        attacker -= 1;
+        attacker += 1;
     };
 
     // [Supply]
-    systems.player_actions.supply(world, ACCOUNT, attacker, supply);
+    set_contract_address(initial_player.address);
+    systems.play.supply(world, game_id, attacker, supply);
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 
     // [Compute] Defender tile
     let mut neighbors = config::neighbors(attacker).expect('Attack: invalid tile id');
@@ -76,27 +80,27 @@ fn test_defend_win() {
     // [Attack]
     set_transaction_hash('ATTACK');
     let distpached: u32 = (army + supply - 1).into();
-    systems.player_actions.attack(world, ACCOUNT, attacker, defender, distpached);
+    systems.play.attack(world, game_id, attacker, defender, distpached);
 
     // [Assert] Defender tile
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(game_id);
     let tile: Tile = store.tile(game, defender.into());
     assert(tile.owner != player_index.into(), 'Defend: invalid owner');
 
     // [Defend]
     set_transaction_hash('DEFEND');
-    systems.player_actions.defend(world, ACCOUNT, attacker, defender);
+    systems.play.defend(world, game_id, attacker, defender);
 
     // [Assert] Defender tile
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(game_id);
     let tile: Tile = store.tile(game, defender.into());
     assert(tile.owner == player_index.into(), 'Defend: invalid owner');
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 }
 
 
@@ -109,26 +113,31 @@ fn test_defend_revert_invalid_order() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
 
     // [Compute] Attacker tile
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(game_id);
     let initial_player: Player = store.player(game, PLAYER_INDEX);
     let supply = initial_player.supply.into();
-    let mut attacker: u8 = config::TILE_NUMBER.try_into().unwrap();
+    let mut attacker: u8 = 1;
     let army = loop {
         let tile: Tile = store.tile(game, attacker.into());
         if tile.owner == PLAYER_INDEX.into() {
             break tile.army;
         }
-        attacker -= 1;
+        attacker += 1;
     };
 
     // [Supply]
-    systems.player_actions.supply(world, ACCOUNT, attacker, supply);
+    set_contract_address(initial_player.address);
+    systems.play.supply(world, game_id, attacker, supply);
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 
     // [Compute] Defender tile
     let mut neighbors = config::neighbors(attacker).expect('Attack: invalid tile id');
@@ -147,11 +156,11 @@ fn test_defend_revert_invalid_order() {
     // [Attack]
     set_transaction_hash('ORDER');
     let distpached: u32 = (army + supply - 1).into();
-    systems.player_actions.attack(world, ACCOUNT, attacker, defender, distpached);
+    systems.play.attack(world, game_id, attacker, defender, distpached);
 
     // [Defend]
     set_transaction_hash('ORDER');
-    systems.player_actions.defend(world, ACCOUNT, attacker, defender);
+    systems.play.defend(world, game_id, attacker, defender);
 }
 
 
@@ -164,10 +173,14 @@ fn test_defend_revert_invalid_player() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
 
     // [Compute] Tile army and player available supply
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(game_id);
     let initial_player: Player = store.player(game, PLAYER_INDEX);
     let supply: u32 = initial_player.supply.into();
     let mut tile_index: u8 = 1;
@@ -180,14 +193,15 @@ fn test_defend_revert_invalid_player() {
     };
 
     // [Supply]
-    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
+    set_contract_address(initial_player.address);
+    systems.play.supply(world, game_id, tile_index, supply);
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 
     // [Defend]
     set_contract_address(starknet::contract_address_const::<1>());
-    systems.player_actions.defend(world, ACCOUNT, 0, 0);
+    systems.play.defend(world, game_id, 0, 0);
 }
 
 
@@ -200,10 +214,14 @@ fn test_defend_revert_invalid_owner() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    systems.player_actions.create(world, ACCOUNT, SEED, NAME, PLAYER_COUNT);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
 
     // [Compute] Tile army and player available supply
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(game_id);
     let initial_player: Player = store.player(game, PLAYER_INDEX);
     let supply: u32 = initial_player.supply.into();
     let mut tile_index: u8 = 1;
@@ -216,13 +234,14 @@ fn test_defend_revert_invalid_owner() {
     };
 
     // [Supply]
-    systems.player_actions.supply(world, ACCOUNT, tile_index, supply);
+    set_contract_address(initial_player.address);
+    systems.play.supply(world, game_id, tile_index, supply);
 
     // [Finish]
-    systems.player_actions.finish(world, ACCOUNT);
+    systems.play.finish(world, game_id);
 
     // [Compute] Invalid owned tile
-    let game: Game = store.game(ACCOUNT);
+    let game: Game = store.game(game_id);
     let mut index = 1;
     loop {
         let tile: Tile = store.tile(game, index);
@@ -233,6 +252,6 @@ fn test_defend_revert_invalid_owner() {
     };
 
     // [Defend]
-    systems.player_actions.defend(world, ACCOUNT, index, 0);
+    systems.play.defend(world, game_id, index, 0);
 }
 
