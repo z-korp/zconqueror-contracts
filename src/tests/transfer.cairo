@@ -84,7 +84,7 @@ fn test_transfer_valid() {
     let to = tiles.pop_front().unwrap();
     let army = from.army - 1;
     systems.play.transfer(world, game_id, from.id, to.id, army);
-    
+
     // [Assert] Source army
     let tile: Tile = store.tile(game, from.id);
     assert(tile.army == 1, 'Tile: wrong from army');
