@@ -74,18 +74,18 @@ fn test_host_create_and_join() {
     assert(supply > 0, 'Player: wrong total supply');
 
     // [Assert] Tiles
-    let mut tile_index: u8 = 1;
+    let mut tile_id: u8 = 1;
     loop {
-        if TILE_NUMBER == tile_index.into() {
+        if TILE_NUMBER == tile_id.into() {
             break;
         }
-        let tile: Tile = store.tile(game, tile_index.into());
+        let tile: Tile = store.tile(game, tile_id.into());
         assert(tile.game_id == game.id, 'Tile: wrong game id');
-        assert(tile.index == tile_index, 'Tile: wrong tile id');
+        assert(tile.id == tile_id, 'Tile: wrong tile id');
         assert(tile.army > 0, 'Tile: wrong army');
         assert(tile.owner < PLAYER_COUNT.into(), 'Tile: wrong owner');
         assert(tile.dispatched == 0, 'Tile: wrong dispatched');
-        tile_index += 1;
+        tile_id += 1;
     };
 }
 

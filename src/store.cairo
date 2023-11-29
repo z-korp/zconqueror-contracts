@@ -33,7 +33,7 @@ trait StoreTrait {
     fn current_player(ref self: Store, game: Game) -> Player;
     fn next_player(ref self: Store, game: Game) -> Player;
     fn find_player(ref self: Store, game: Game, account: ContractAddress) -> Option<Player>;
-    fn tile(ref self: Store, game: Game, index: u8) -> Tile;
+    fn tile(ref self: Store, game: Game, id: u8) -> Tile;
     fn tiles(ref self: Store, game: Game) -> Array<Tile>;
     fn set_game(ref self: Store, game: Game);
     fn set_player(ref self: Store, player: Player);
@@ -94,20 +94,20 @@ impl StoreImpl of StoreTrait {
         }
     }
 
-    fn tile(ref self: Store, game: Game, index: u8) -> Tile {
-        let tile_key = (game.id, index);
+    fn tile(ref self: Store, game: Game, id: u8) -> Tile {
+        let tile_key = (game.id, id);
         get!(self.world, tile_key.into(), (Tile))
     }
 
     fn tiles(ref self: Store, game: Game) -> Array<Tile> {
-        let mut index: u8 = config::TILE_NUMBER.try_into().unwrap();
+        let mut id: u8 = config::TILE_NUMBER.try_into().unwrap();
         let mut tiles: Array<Tile> = array![];
         loop {
-            if index == 0 {
+            if id == 0 {
                 break;
             };
-            tiles.append(self.tile(game, index));
-            index -= 1;
+            tiles.append(self.tile(game, id));
+            id -= 1;
         };
         tiles
     }

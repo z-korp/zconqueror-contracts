@@ -34,12 +34,8 @@ mod host {
 
     use zconqueror::models::game::{Game, GameTrait};
     use zconqueror::models::player::{Player, PlayerTrait};
-    use zconqueror::models::tile::Tile;
-
-    // Entities imports
-
-    use zconqueror::entities::land::{Land, LandTrait};
-    use zconqueror::entities::map::{Map, MapTrait};
+    use zconqueror::models::tile::{Tile, TileTrait};
+    use zconqueror::models::map::{Map, MapTrait};
 
     // Internal imports
 
@@ -160,9 +156,10 @@ mod host {
 
             // [Effect] Tiles
             let mut map = MapTrait::new(
+                game_id: game.id,
                 seed: game.seed,
                 player_count: game.player_count.into(),
-                land_count: TILE_NUMBER,
+                tile_count: TILE_NUMBER,
                 army_count: ARMY_NUMBER
             );
             let mut player_index = 0;
@@ -170,13 +167,10 @@ mod host {
                 if player_index == game.player_count {
                     break;
                 }
-                let mut player_lands = map.player_lands(player_index.into());
+                let mut player_tiles = map.player_tiles(player_index.into());
                 loop {
-                    match player_lands.pop_front() {
-                        Option::Some(land) => {
-                            let tile: Tile = land.dump(game.id);
-                            store.set_tile(tile);
-                        },
+                    match player_tiles.pop_front() {
+                        Option::Some(tile) => { store.set_tile(*tile); },
                         Option::None => { break; },
                     };
                 };

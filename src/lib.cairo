@@ -6,17 +6,13 @@ mod data {
     mod v01;
 }
 
-mod entities {
-    mod hand;
-    mod land;
-    mod map;
-    mod set;
-}
-
 mod models {
     mod game;
     mod player;
     mod tile;
+    mod hand;
+    mod map;
+    mod set;
 }
 
 mod systems {
