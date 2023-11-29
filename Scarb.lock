@@ -32,20 +32,21 @@ source = "git+https://github.com/influenceth/cubit?rev=b459053#b4590530d5aeae9aa
 
 [[package]]
 name = "dojo"
-version = "0.3.10"
-source = "git+https://github.com/dojoengine/dojo?tag=v0.3.10#be1676252c41f8188465741edcbcb381d2c12080"
+version = "0.3.13"
+source = "git+https://github.com/dojoengine/dojo?tag=v0.3.13#a253b0c8119f5cc8b20f2f2893a20ae3ef79951a"
 dependencies = [
  "dojo_plugin",
 ]
 
 [[package]]
 name = "dojo_plugin"
-version = "0.3.10"
+version = "0.3.11"
+source = "git+https://github.com/dojoengine/dojo?tag=v0.3.11#1e651b5d4d3b79b14a7d8aa29a92062fcb9e6659"
 
 [[package]]
 name = "origami"
-version = "0.0.0"
-source = "git+https://github.com/dojoengine/origami?rev=5532979#5532979b4b455a4a84365ec3ac8b1421851a13b7"
+version = "0.1.0"
+source = "git+https://github.com/dojoengine/origami?rev=204d2f8#204d2f8854ab32732ee5d11fa85e150148ceb752"
 dependencies = [
  "cubit",
  "dojo",
