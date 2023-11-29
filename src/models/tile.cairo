@@ -29,7 +29,6 @@ struct Tile {
     to: u8,
     from: u8,
     order: felt252,
-    defeated: bool,
 }
 
 /// Errors module
@@ -88,7 +87,9 @@ trait TileTrait {
     /// * `attacker` - The attacking tile.
     /// * `dice` - The dice to use for the battle.
     /// * `order` - The defend order (tx hash).
-    fn defend(ref self: Tile, ref attacker: Tile, seed: felt252, order: felt252);
+    /// # Returns
+    /// * The defeated status, true if attacker beat the defender, false otherwise.
+    fn defend(ref self: Tile, ref attacker: Tile, seed: felt252, order: felt252) -> bool;
     /// Supplies the tile with an army.
     /// # Arguments
     /// * `self` - The tile.
@@ -109,7 +110,7 @@ impl TileImpl of TileTrait {
     fn new(game_id: u32, id: u8, army: u32, owner: u32) -> Tile {
         assert(config::TILE_NUMBER >= id.into() && id > 0, errors::INVALID_ID);
         let neighbors = config::neighbors(id).expect(errors::INVALID_ID);
-        Tile { game_id, id, army, owner, dispatched: 0, to: 0, from: 0, order: 0, defeated: false }
+        Tile { game_id, id, army, owner, dispatched: 0, to: 0, from: 0, order: 0 }
     }
 
     #[inline(always)]
@@ -163,7 +164,7 @@ impl TileImpl of TileTrait {
     }
 
     #[inline(always)]
-    fn defend(ref self: Tile, ref attacker: Tile, seed: felt252, order: felt252) {
+    fn defend(ref self: Tile, ref attacker: Tile, seed: felt252, order: felt252) -> bool {
         // [Check] Tile ids
         self.assert();
         attacker.assert();
@@ -188,10 +189,10 @@ impl TileImpl of TileTrait {
         // [Effect] Apply losses and update ownership
         self.army = defensive_survivors;
         attacker.dispatched = offensive_survivors;
-        if self.army == 0 {
+        let defeated = self.army == 0;
+        if defeated {
             self.owner = attacker.owner;
             self.army = attacker.dispatched;
-            self.defeated = true;
             attacker.dispatched = 0;
         };
         // [Effect] Update attacker
@@ -199,6 +200,9 @@ impl TileImpl of TileTrait {
         attacker.to = 0;
         // [Effect] Update defended
         self.from = 0;
+
+        // [Return] Defeated status
+        defeated
     }
 
     #[inline(always)]
@@ -644,13 +648,13 @@ mod tests {
         attacker.attack(3, ref defender, 'ATTACK');
         assert(attacker.to == defender.id, 'Tile: wrong attacker to');
         assert(defender.from == attacker.id, 'Tile: wrong defender from');
-        defender.defend(ref attacker, SEED, 'DEFEND');
+        let defeated = defender.defend(ref attacker, SEED, 'DEFEND');
         assert(attacker.to == 0, 'Tile: wrong attacker to');
         assert(attacker.army == 7, 'Tile: wrong attacker army');
         assert(defender.from == 0, 'Tile: wrong defender from');
         assert(defender.army == 2, 'Tile: wrong defender army');
         assert(defender.owner == PLAYER_2, 'Tile: wrong defender owner');
-        assert(defender.defeated == false, 'Tile: wrong defender defeated');
+        assert(!defeated, 'Tile: wrong defender defeated');
     }
 
     #[test]
@@ -666,13 +670,13 @@ mod tests {
         attacker.attack(9, ref defender, 'ATTACK');
         assert(attacker.to == defender.id, 'Tile: wrong attacker to');
         assert(defender.from == attacker.id, 'Tile: wrong defender from');
-        defender.defend(ref attacker, SEED, 'DEFEND');
+        let defeated = defender.defend(ref attacker, SEED, 'DEFEND');
         assert(attacker.to == 0, 'Tile: wrong attacker to');
         assert(attacker.army == 1, 'Tile: wrong attacker army');
         assert(defender.from == 0, 'Tile: wrong defender from');
         assert(defender.army == 5, 'Tile: wrong defender army');
         assert(defender.owner == PLAYER_1, 'Tile: wrong defender owner');
-        assert(defender.defeated == true, 'Tile: wrong defender defeated');
+        assert(defeated, 'Tile: wrong defender defeated');
     }
 
     #[test]
