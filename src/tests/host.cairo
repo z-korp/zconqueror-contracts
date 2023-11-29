@@ -19,17 +19,18 @@ use zconqueror::models::player::Player;
 use zconqueror::models::tile::Tile;
 use zconqueror::systems::host::IHostDispatcherTrait;
 use zconqueror::systems::play::IPlayDispatcherTrait;
-use zconqueror::tests::setup::{setup, setup::{Systems, HOST, PLAYER}};
+use zconqueror::tests::setup::{setup, setup::{Systems, HOST, PLAYER, ANYONE}};
 
 // Constants
 
 const HOST_NAME: felt252 = 'HOST';
 const PLAYER_NAME: felt252 = 'PLAYER';
+const ANYONE_NAME: felt252 = 'ANYONE';
 const PLAYER_COUNT: u8 = 2;
 
 #[test]
 #[available_gas(1_000_000_000)]
-fn test_create_and_join() {
+fn test_host_create_and_join() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
@@ -86,4 +87,78 @@ fn test_create_and_join() {
         assert(tile.dispatched == 0, 'Tile: wrong dispatched');
         tile_index += 1;
     };
+}
+
+#[test]
+#[available_gas(1_000_000_000)]
+fn test_host_create_and_host_leaves() {
+    // [Setup]
+    let (world, systems) = setup::spawn_game();
+    let mut store = StoreTrait::new(world);
+
+    // [Create]
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    systems.host.leave(world, game_id);
+
+    // [Assert] Game
+    let game: Game = store.game(game_id);
+    assert(game.slots == PLAYER_COUNT, 'Game: wrong slots');
+}
+
+#[test]
+#[available_gas(1_000_000_000)]
+fn test_host_create_and_player_leaves() {
+    // [Setup]
+    let (world, systems) = setup::spawn_game();
+    let mut store = StoreTrait::new(world);
+
+    // [Create]
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    systems.host.leave(world, game_id);
+
+    // [Assert] Game
+    let game: Game = store.game(game_id);
+    assert(game.slots == PLAYER_COUNT - 1, 'Game: wrong slots');
+}
+
+#[test]
+#[available_gas(1_000_000_000)]
+#[should_panic(expected: ('Game: has started', 'ENTRYPOINT_FAILED',))]
+fn test_host_start_then_join_revert_started() {
+    // [Setup]
+    let (world, systems) = setup::spawn_game();
+    let mut store = StoreTrait::new(world);
+
+    // [Create]
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
+
+    // [Join]
+    set_contract_address(ANYONE());
+    systems.host.join(world, game_id, ANYONE_NAME);
+}
+
+#[test]
+#[available_gas(1_000_000_000)]
+#[should_panic(expected: ('Game: has started', 'ENTRYPOINT_FAILED',))]
+fn test_host_start_then_leave_revert_started() {
+    // [Setup]
+    let (world, systems) = setup::spawn_game();
+    let mut store = StoreTrait::new(world);
+
+    // [Create]
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
+
+    // [Join]
+    set_contract_address(PLAYER());
+    systems.host.leave(world, game_id);
 }

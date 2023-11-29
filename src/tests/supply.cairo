@@ -19,11 +19,12 @@ use zconqueror::models::player::Player;
 use zconqueror::models::tile::Tile;
 use zconqueror::systems::host::IHostDispatcherTrait;
 use zconqueror::systems::play::IPlayDispatcherTrait;
-use zconqueror::tests::setup::{setup, setup::Systems};
+use zconqueror::tests::setup::{setup, setup::{Systems, HOST, PLAYER}};
 
 // Constants
 
-const NAME: felt252 = 'NAME';
+const HOST_NAME: felt252 = 'HOST';
+const PLAYER_NAME: felt252 = 'PLAYER';
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u8 = 0;
 
@@ -34,7 +35,10 @@ fn test_supply() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, NAME);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
     systems.host.start(world, game_id);
 
     // [Compute] Tile army and player available supply
@@ -51,6 +55,7 @@ fn test_supply() {
     };
 
     // [Supply]
+    set_contract_address(initial_player.address);
     systems.play.supply(world, game_id, tile_index, supply);
 
     // [Assert] Player supply
@@ -72,11 +77,17 @@ fn test_supply_revert_invalid_player() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, NAME);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
     systems.host.start(world, game_id);
 
     // [Supply]
-    set_contract_address(starknet::contract_address_const::<1>());
+    let game: Game = store.game(game_id);
+    let player_index = 1 - PLAYER_INDEX;
+    let player = store.player(game, player_index);
+    set_contract_address(player.address);
     systems.play.supply(world, game_id, 0, 0);
 }
 
@@ -90,7 +101,10 @@ fn test_supply_revert_invalid_owner() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, NAME);
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
     systems.host.start(world, game_id);
 
     // [Compute] Invalid owned tile
@@ -105,5 +119,7 @@ fn test_supply_revert_invalid_owner() {
     };
 
     // [Transfer]
+    let player = store.player(game, PLAYER_INDEX);
+    set_contract_address(player.address);
     systems.play.supply(world, game_id, index, 0);
 }
