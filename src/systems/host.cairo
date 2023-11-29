@@ -18,13 +18,9 @@ trait IHost<TContractState> {
 
 #[starknet::contract]
 mod host {
-    // Core imports
-
-    use debug::PrintTrait;
-
     // Starknet imports
 
-    use starknet::{get_tx_info, get_caller_address};
+    use starknet::get_caller_address;
 
     // Dojo imports
 
@@ -36,23 +32,19 @@ mod host {
 
     // Models imports
 
-    use zconqueror::models::game::{Game, GameTrait, Turn};
+    use zconqueror::models::game::{Game, GameTrait};
     use zconqueror::models::player::{Player, PlayerTrait};
     use zconqueror::models::tile::Tile;
 
     // Entities imports
 
-    use zconqueror::entities::hand::HandTrait;
     use zconqueror::entities::land::{Land, LandTrait};
     use zconqueror::entities::map::{Map, MapTrait};
-    use zconqueror::entities::set::SetTrait;
 
     // Internal imports
 
-    use zconqueror::constants::ZERO;
     use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
     use zconqueror::store::{Store, StoreTrait};
-    use zconqueror::bot::simple::SimpleTrait;
 
     // Local imports
 
@@ -139,8 +131,10 @@ mod host {
 
             // [Effect] Player
             let mut last_player = store.player(game, last_index);
-            last_player.index = player.index;
-            store.set_player(last_player);
+            if last_player.index != player.index {
+                last_player.index = player.index;
+                store.set_player(last_player);
+            }
         }
 
         fn start(self: @ContractState, world: IWorldDispatcher, game_id: u32,) {
@@ -152,18 +146,7 @@ mod host {
             let caller = get_caller_address();
             assert(caller == game.host, errors::HOST_CALLER_IS_NOT_THE_HOST);
 
-            // [Effect] Game
-            // Complete missing players with bots
-            loop {
-                if game.slots == 0 {
-                    break;
-                };
-                let player_index = game.join();
-                let bot = PlayerTrait::new(
-                    game_id, player_index.into(), address: ZERO(), name: player_index.into()
-                );
-            };
-            // Start game
+            // [Effect] Start game
             let mut addresses = array![];
             let mut players = store.players(game);
             loop {

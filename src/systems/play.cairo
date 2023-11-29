@@ -74,10 +74,8 @@ mod play {
 
     // Internal imports
 
-    use zconqueror::constants::ZERO;
     use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
     use zconqueror::store::{Store, StoreTrait};
-    use zconqueror::bot::simple::SimpleTrait;
 
     // Local imports
 
@@ -214,32 +212,7 @@ mod play {
             let caller = get_caller_address();
             let mut game: Game = store.game(game_id);
             let mut player = store.current_player(game);
-            assert(
-                caller == player.address || player.address.is_zero(), errors::FINISH_INVALID_PLAYER
-            );
-
-            // [Compute] Finish
-            let tiles = store.tiles(game).span();
-
-            // [Check] Player is a bot
-            let player_count = game.player_count;
-            if player.address.is_zero() {
-                let mut map = MapTrait::from_tiles(player_count.into(), tiles);
-                let score = map.score(player.index);
-
-                // [Check] Bot is not dead
-                if 0 != score.into() {
-                    // [Compute] Bot actions
-                    let (new_player, new_tiles) = SimpleTrait::supply(game, player, tiles);
-                    // [Effect] Update components
-                    store.set_player(new_player);
-                    store.set_tiles(new_tiles);
-                }
-
-                // [Compute] Game turn
-                game.pass(); // Update nonce to be next player first turn
-                store.set_game(game);
-            }
+            assert(caller == player.address, errors::FINISH_INVALID_PLAYER);
 
             // [Check] Player supply is empty
             let player = store.current_player(game);
@@ -251,7 +224,8 @@ mod play {
                 // TODO
 
                 // [Compute] Update player
-                let mut map = MapTrait::from_tiles(player_count.into(), tiles);
+                let tiles = store.tiles(game).span();
+                let mut map = MapTrait::from_tiles(game.player_count.into(), tiles);
                 let mut next_player = store.next_player(game);
                 next_player.conqueror = false;
 
@@ -266,13 +240,6 @@ mod play {
                         score
                     };
                 store.set_player(next_player);
-
-                // [Check] If next next player is a bot, operate recursive iteration
-                if next_player.address.is_zero() {
-                    game.increment();
-                    store.set_game(game);
-                    return self.finish(world, game_id);
-                }
             }
 
             // [Effect] Update game

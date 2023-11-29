@@ -68,7 +68,7 @@ trait GameTrait {
 
 impl GameImpl of GameTrait {
     fn new(id: u32, host: ContractAddress, player_count: u8) -> Game {
-        assert(player_count > 0, errors::GAME_NOT_ENOUGH_PLAYERS);
+        assert(player_count > 1, errors::GAME_NOT_ENOUGH_PLAYERS);
         Game { id, host, over: false, seed: 0, player_count, slots: player_count, nonce: 0 }
     }
 

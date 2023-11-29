@@ -27,6 +27,10 @@ mod setup {
         starknet::contract_address_const::<'PLAYER'>()
     }
 
+    fn ANYONE() -> ContractAddress {
+        starknet::contract_address_const::<'ANYONE'>()
+    }
+
     #[derive(Drop)]
     struct Systems {
         host: IHostDispatcher,
