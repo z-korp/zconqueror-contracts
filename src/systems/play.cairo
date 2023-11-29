@@ -215,19 +215,23 @@ mod play {
             assert(caller == player.address, errors::FINISH_INVALID_PLAYER);
 
             // [Check] Player supply is empty
-            let player = store.current_player(game);
+            let mut player = store.current_player(game);
             assert(player.supply == 0, errors::FINISH_INVALID_SUPPLY);
 
             // [Command] Update next player supply if next turn is supply
             if game.next_turn() == Turn::Supply {
                 // [Compute] Draw card if conqueror
-                // TODO
+                if player.conqueror {
+                    let mut players = store.players(game).span();
+                    self._draw(@game, ref player, ref players);
+                    player.conqueror = false;
+                    store.set_player(player);
+                };
 
                 // [Compute] Update player
                 let tiles = store.tiles(game).span();
                 let mut map = MapTrait::from_tiles(game.player_count.into(), tiles);
                 let mut next_player = store.next_player(game);
-                next_player.conqueror = false;
 
                 // [Compute] Supply, 0 if player is dead
                 let score = map.score(next_player.index);
@@ -335,6 +339,30 @@ mod play {
             array![attacker_land.dump(*game.id), defender_land.dump(*game.id)].span()
         }
 
+        fn _draw(
+            self: @ContractState, game: @Game, ref player: Player, ref players: Span<Player>,
+        ) {
+            // [Setup] Deck
+            let mut deck = DeckTrait::new(*game.seed, TILE_NUMBER.into());
+            deck.nonce = *game.nonce;
+            loop {
+                match players.pop_front() {
+                    Option::Some(player) => {
+                        let hand = HandTrait::load(player);
+                        deck.remove(hand.cards.span());
+                    },
+                    Option::None => { break; },
+                };
+            };
+
+            // [Compute] Set supply
+            let mut hand = HandTrait::load(@player);
+            hand.add(deck.draw());
+
+            // [Effect] Player
+            player.cards = hand.dump();
+        }
+
         fn _discard(
             self: @ContractState,
             game: @Game,
@@ -348,6 +376,9 @@ mod play {
             let mut hand = HandTrait::load(@player);
             let set = SetTrait::new(card_one, card_two, card_three);
             let supply = hand.deploy(@set);
+
+            // [Effect] Update player cards and supply
+            player.cards = hand.dump();
             player.supply += supply.into();
 
             // [Compute] Additional supplies for owned lands

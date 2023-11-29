@@ -43,10 +43,12 @@ trait SetTrait {
 
 /// Implementation of the `SetTrait` trait for the `Set` struct.
 impl SetImpl of SetTrait {
+    #[inline(always)]
     fn new(first: u8, second: u8, third: u8) -> Set {
         Set { first: first, second: second, third: third, }
     }
 
+    #[inline(always)]
     fn score(self: @Set) -> u8 {
         // [Compute] Sum of types
         let (_, first_type) = config_card(*self.first).expect(errors::INVALID_CARD);
@@ -104,6 +106,7 @@ impl SetImpl of SetTrait {
         0
     }
 
+    #[inline(always)]
     fn cards(self: @Set) -> Span<u8> {
         array![*self.first, *self.second, *self.third].span()
     }

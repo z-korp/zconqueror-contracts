@@ -64,7 +64,7 @@ fn test_defend_win() {
     systems.play.finish(world, game_id);
 
     // [Compute] Defender tile
-    let mut neighbors = config::neighbors(attacker).expect('Attack: invalid tile id');
+    let mut neighbors = config::neighbors(attacker).expect('Defend: invalid tile id');
     let mut defender = loop {
         match neighbors.pop_front() {
             Option::Some(index) => {
@@ -73,7 +73,7 @@ fn test_defend_win() {
                     break tile.index;
                 }
             },
-            Option::None => { panic(array!['Attack: defender not found']); },
+            Option::None => { panic(array!['Defend: defender not found']); },
         };
     };
 
@@ -101,6 +101,89 @@ fn test_defend_win() {
 
     // [Finish]
     systems.play.finish(world, game_id);
+
+    // [Assert] Player cards
+    let player = store.player(game, player_index);
+    assert(player.cards > 0, 'Defend: invalid player cards');
+}
+
+#[test]
+#[available_gas(1_000_000_000)]
+fn test_defend_lose() {
+    // [Setup]
+    let (world, systems) = setup::spawn_game();
+    let mut store = StoreTrait::new(world);
+
+    // [Create]
+    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
+
+    // [Compute] Attacker tile
+    let game: Game = store.game(game_id);
+    let player_index = game.player();
+    let initial_player: Player = store.player(game, player_index);
+    let supply = initial_player.supply.into();
+    let mut attacker: u8 = 1;
+    loop {
+        let tile: Tile = store.tile(game, attacker.into());
+        if tile.owner == player_index.into() {
+            break;
+        }
+        attacker += 1;
+    };
+
+    // [Supply]
+    set_contract_address(initial_player.address);
+    systems.play.supply(world, game_id, attacker, supply);
+
+    // [Finish]
+    systems.play.finish(world, game_id);
+
+    // [Compute] Defender tile
+    let mut neighbors = config::neighbors(attacker).expect('Defend: invalid tile id');
+    let mut defender = loop {
+        match neighbors.pop_front() {
+            Option::Some(index) => {
+                let tile: Tile = store.tile(game, *index);
+                if tile.owner != player_index.into() {
+                    break tile.index;
+                }
+            },
+            Option::None => { panic(array!['Defend: defender not found']); },
+        };
+    };
+
+    // [Attack]
+    set_transaction_hash('ATTACK');
+    let distpached: u32 = 1;
+    systems.play.attack(world, game_id, attacker, defender, distpached);
+
+    // [Assert] Defender tile
+    let game: Game = store.game(game_id);
+    let tile: Tile = store.tile(game, defender.into());
+    assert(tile.owner != player_index.into(), 'Defend: invalid owner');
+
+    // [Defend]
+    set_transaction_hash('DEFEND');
+    systems.play.defend(world, game_id, attacker, defender);
+
+    // [Assert] Defender tile
+    let game: Game = store.game(game_id);
+    let tile: Tile = store.tile(game, defender.into());
+    assert(tile.owner != player_index.into(), 'Defend: invalid owner');
+
+    // [Finish]
+    systems.play.finish(world, game_id);
+
+    // [Finish]
+    systems.play.finish(world, game_id);
+
+    // [Assert] Player cards
+    let player = store.player(game, player_index);
+    assert(player.cards == 0, 'Defend: invalid player cards');
 }
 
 

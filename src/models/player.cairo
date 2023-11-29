@@ -24,12 +24,14 @@ trait PlayerTrait {
 }
 
 impl PlayerImpl of PlayerTrait {
+    #[inline(always)]
     fn new(game_id: u32, index: u32, address: ContractAddress, name: felt252) -> Player {
         Player { game_id, index, address, name, supply: 0, cards: 0, conqueror: false }
     }
 }
 
 impl DefaultPlayer of Default<Player> {
+    #[inline(always)]
     fn default() -> Player {
         Player {
             game_id: 0,
