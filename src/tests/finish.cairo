@@ -34,7 +34,7 @@ fn test_finish_next_player() {
     // [Setup]
     let (world, systems) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
-    
+
     // [Create]
     let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
     set_contract_address(PLAYER());
