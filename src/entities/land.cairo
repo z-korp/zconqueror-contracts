@@ -119,6 +119,7 @@ trait LandTrait {
 
 /// Implementation of the `LandTrait` for the `Land` struct.
 impl LandImpl of LandTrait {
+    #[inline(always)]
     fn new(id: u8, army: u32, owner: u32) -> Land {
         assert(config::TILE_NUMBER >= id.into() && id > 0, errors::INVALID_ID);
         let faction = config::faction(id).expect(errors::INVALID_ID);
@@ -137,6 +138,7 @@ impl LandImpl of LandTrait {
         }
     }
 
+    #[inline(always)]
     fn try_new(id: u8, army: u32, owner: u32) -> Option<Land> {
         let wrapped_faction = config::faction(id);
         let wrapped_neighbors = config::neighbors(id);
@@ -154,6 +156,7 @@ impl LandImpl of LandTrait {
         }
     }
 
+    #[inline(always)]
     fn load(tile: @Tile) -> Land {
         let id = *tile.index;
         Land {
@@ -170,6 +173,7 @@ impl LandImpl of LandTrait {
         }
     }
 
+    #[inline(always)]
     fn dump(self: @Land, game_id: u32) -> Tile {
         Tile {
             game_id: game_id,
@@ -183,14 +187,17 @@ impl LandImpl of LandTrait {
         }
     }
 
+    #[inline(always)]
     fn check(self: @Land) -> bool {
         config::TILE_NUMBER >= (*self.id).into() && *self.id > 0
     }
 
+    #[inline(always)]
     fn assert(self: @Land) {
         assert(self.check(), errors::INVALID_ID);
     }
 
+    #[inline(always)]
     fn attack(ref self: Land, dispatched: u32, ref defender: Land, order: felt252) {
         // [Check] Land ids
         self.assert();
@@ -217,6 +224,7 @@ impl LandImpl of LandTrait {
         defender.from = self.id;
     }
 
+    #[inline(always)]
     fn defend(ref self: Land, ref attacker: Land, seed: felt252, order: felt252) {
         // [Check] Land ids
         self.assert();
@@ -254,6 +262,7 @@ impl LandImpl of LandTrait {
         self.from = 0;
     }
 
+    #[inline(always)]
     fn supply(ref self: Land, ref player: Player, army: u32) {
         // [Check] Land ids
         self.assert();
@@ -265,6 +274,7 @@ impl LandImpl of LandTrait {
         player.supply -= army;
     }
 
+    #[inline(always)]
     fn transfer(ref self: Land, ref to: Land, army: u32, lands: Span<Land>) {
         // [Check] Land ids
         self.assert();

@@ -32,6 +32,7 @@ mod tests {
     mod attack;
     mod defend;
     mod transfer;
+    // mod discard;
     mod finish;
 }
 

@@ -82,15 +82,18 @@ trait HandTrait {
 
 /// Implementation of the `HandTrait` trait for the `Hand` struct.
 impl HandImpl of HandTrait {
+    #[inline(always)]
     fn new() -> Hand {
         Hand { cards: array![] }
     }
 
+    #[inline(always)]
     fn load(player: @Player) -> Hand {
         let cards: Array<u8> = _unpack(*player.cards);
         Hand { cards }
     }
 
+    #[inline(always)]
     fn dump(self: @Hand) -> u128 {
         _pack(self.cards.span())
     }
@@ -107,6 +110,7 @@ impl HandImpl of HandTrait {
         }
     }
 
+    #[inline(always)]
     fn add(ref self: Hand, card: u8) {
         // [Check] Maximum
         assert(self.cards.len() < HAND_MAX_SIZE.into(), errors::MAX_HAND_SIZE_REACHED);

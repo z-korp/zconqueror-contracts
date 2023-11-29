@@ -198,6 +198,7 @@ impl MapImpl of MapTrait {
         Map { realms }
     }
 
+    #[inline(always)]
     fn player_lands(ref self: Map, player_index: u32) -> Span<Land> {
         match match_nullable(self.realms.get(player_index.into())) {
             FromNullableResult::Null => panic(array![errors::LANDS_UNBOX_ISSUE]),
@@ -293,6 +294,7 @@ impl MapImpl of MapTrait {
 /// * `nonce` - The nonce.
 /// # Returns
 /// * The random number.
+#[inline(always)]
 fn _random(seed: felt252, nonce: u32) -> (u8, u32) {
     let mut state = PoseidonTrait::new();
     state = state.update(seed);

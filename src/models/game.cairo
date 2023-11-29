@@ -67,33 +67,40 @@ trait GameTrait {
 }
 
 impl GameImpl of GameTrait {
+    #[inline(always)]
     fn new(id: u32, host: ContractAddress, player_count: u8) -> Game {
         assert(player_count > 1, errors::GAME_NOT_ENOUGH_PLAYERS);
         Game { id, host, over: false, seed: 0, player_count, slots: player_count, nonce: 0 }
     }
 
+    #[inline(always)]
     fn real_player_count(self: @Game) -> u8 {
         *self.player_count - *self.slots
     }
 
+    #[inline(always)]
     fn player(self: @Game) -> u8 {
         *self.nonce / TURN_COUNT % *self.player_count
     }
 
+    #[inline(always)]
     fn turn(self: @Game) -> Turn {
         let turn_id = *self.nonce % TURN_COUNT;
         turn_id.into()
     }
 
+    #[inline(always)]
     fn next_player(self: @Game) -> u8 {
         (*self.nonce / TURN_COUNT + 1) % *self.player_count
     }
 
+    #[inline(always)]
     fn next_turn(self: @Game) -> Turn {
         let turn_id = (*self.nonce + 1) % TURN_COUNT;
         turn_id.into()
     }
 
+    #[inline(always)]
     fn join(ref self: Game) -> u8 {
         assert(self.player_count > 0, errors::GAME_DOES_NOT_EXSIST);
         assert(!self.over, errors::GAME_IS_OVER);
@@ -104,6 +111,7 @@ impl GameImpl of GameTrait {
         index.into()
     }
 
+    #[inline(always)]
     fn leave(ref self: Game, account: ContractAddress) -> u8 {
         assert(self.player_count > 0, errors::GAME_DOES_NOT_EXSIST);
         assert(!self.over, errors::GAME_IS_OVER);
@@ -133,10 +141,12 @@ impl GameImpl of GameTrait {
         self.seed = state.finalize();
     }
 
+    #[inline(always)]
     fn increment(ref self: Game) {
         self.nonce += 1;
     }
 
+    #[inline(always)]
     fn pass(ref self: Game) {
         let turn = self.nonce % TURN_COUNT;
         self.nonce += TURN_COUNT - turn;
@@ -144,6 +154,7 @@ impl GameImpl of GameTrait {
 }
 
 impl U8IntoTurn of Into<u8, Turn> {
+    #[inline(always)]
     fn into(self: u8) -> Turn {
         assert(self < 3, 'U8IntoTurn: invalid turn');
         if self == 0 {
@@ -157,6 +168,7 @@ impl U8IntoTurn of Into<u8, Turn> {
 }
 
 impl TurnIntoU8 of Into<Turn, u8> {
+    #[inline(always)]
     fn into(self: Turn) -> u8 {
         match self {
             Turn::Supply => 0,
