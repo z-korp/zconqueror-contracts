@@ -8,7 +8,7 @@ export PLAY_ADDRESS="0x361fc51ac38dde141e478a0f2dde0f5a29797b0e1a3fae9ee3dce9fc6
 
 # enable system -> model authorizations
 
-MODELS=("Game" "Player", "Tile")
+MODELS=("Game" "Player" "Tile")
 for model in ${MODELS[@]}; do
     sozo auth writer $model $HOST_ADDRESS --world $WORLD_ADDRESS
     sozo auth writer $model $PLAY_ADDRESS --world $WORLD_ADDRESS
