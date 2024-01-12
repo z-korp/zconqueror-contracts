@@ -9,8 +9,8 @@ sierra-replace-ids = true
 [dependencies]
 starknet = ">=2.2.0"
 alexandria_data_structures = { git = "https://github.com/keep-starknet-strange/alexandria", rev = "d32162a" }
-origami = { git = "https://github.com/dojoengine/origami", rev = "096d28a" }
-dojo = { git = "https://github.com/dojoengine/dojo", tag = "v0.3.14" }
+origami = { git = "https://github.com/dojoengine/origami", rev = "e873a5a" }
+dojo = { git = "https://github.com/dojoengine/dojo", tag = "v0.4.4" }
 
 [[target.dojo]]
 
