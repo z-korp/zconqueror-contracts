@@ -2,9 +2,9 @@
 set -euo pipefail
 pushd $(dirname "$0")/..
 
-export WORLD_ADDRESS="0x45913f69140d1fb00db13514f06cd0503838a75c076637086a25d385e732cbb";
-export HOST_ADDRESS="0x9e296cd237ed0ed2f9d65950c6c708c10c4620fdbd76b1a3c1e014a07391f3"
-export PLAY_ADDRESS="0x361fc51ac38dde141e478a0f2dde0f5a29797b0e1a3fae9ee3dce9fc681b8a8"
+export WORLD_ADDRESS=$(cat ./target/dev/manifest.json | jq -r '.world.address')
+export HOST_ADDRESS=$(cat ./target/dev/manifest.json | jq -r '.contracts[] | select(.name == "zconqueror::systems::host::host" ).address')
+export PLAY_ADDRESS=$(cat ./target/dev/manifest.json | jq -r '.contracts[] | select(.name == "zconqueror::systems::play::play" ).address')
 
 # enable system -> model authorizations
 
