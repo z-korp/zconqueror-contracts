@@ -240,7 +240,7 @@ mod play {
                         store.set_game(game);
                         break;
                     };
-                    
+
                     // [Check] Score 0 means the player is dead, move to next player
                     let score = map.score(next_player.index);
                     if 0 == score.into() {
