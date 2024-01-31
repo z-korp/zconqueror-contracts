@@ -217,7 +217,8 @@ mod play {
             assert(player.supply == 0, errors::FINISH_INVALID_SUPPLY);
 
             // [Command] Update next player supply if next turn is supply
-            if game.next_turn() == Turn::Supply {
+            game.increment();
+            if game.turn() == Turn::Supply {
                 // [Compute] Draw card if conqueror
                 if player.conqueror {
                     let mut players = store.players(game).span();
@@ -229,23 +230,36 @@ mod play {
                 // [Compute] Update player
                 let tiles = store.tiles(game).span();
                 let mut map = MapTrait::from_tiles(game.player_count.into(), tiles);
-                let mut next_player = store.next_player(game);
 
-                // [Compute] Supply, 0 if player is dead
-                let score = map.score(next_player.index);
-                next_player
-                    .supply = if 0 == score.into() {
-                        0
-                    } else if score < 3 {
-                        3
-                    } else {
-                        score
+                // [Compute] Update next player to not dead player
+                loop {
+                    let mut next_player = store.current_player(game);
+                    // [Check] Next player is the current player means game is over
+                    if next_player.address == caller {
+                        game.over = true;
+                        store.set_game(game);
+                        break;
                     };
-                store.set_player(next_player);
-            }
+                    
+                    // [Check] Score 0 means the player is dead, move to next player
+                    let score = map.score(next_player.index);
+                    if 0 == score.into() {
+                        game.pass();
+                        continue;
+                    // [Effect] Update next player supply and leave the loop
+                    } else {
+                        next_player.supply = if score < 3 {
+                            3
+                        } else {
+                            score
+                        };
+                        store.set_player(next_player);
+                        break;
+                    };
+                };
+            };
 
             // [Effect] Update game
-            game.increment();
             store.set_game(game);
         }
 
