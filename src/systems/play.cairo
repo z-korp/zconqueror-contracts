@@ -15,7 +15,7 @@ trait IPlay<TContractState> {
         dispatched: u32
     );
     fn defend(
-        self: @TContractState,
+        ref self: TContractState,
         world: IWorldDispatcher,
         game_id: u32,
         attacker_index: u8,
@@ -31,10 +31,10 @@ trait IPlay<TContractState> {
     );
     fn finish(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn supply(
-        self: @TContractState, world: IWorldDispatcher, game_id: u32, tile_index: u8, supply: u32
+        ref self: TContractState, world: IWorldDispatcher, game_id: u32, tile_index: u8, supply: u32
     );
     fn transfer(
-        self: @TContractState,
+        ref self: TContractState,
         world: IWorldDispatcher,
         game_id: u32,
         from_index: u8,
@@ -101,6 +101,41 @@ mod play {
     #[storage]
     struct Storage {}
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        Supply: Supply,
+        Defend: Defend,
+        Fortify: Fortify,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct Supply {
+        #[key]
+        player_name: felt252,
+        troops: u32,
+        region: u8,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct Defend {
+        #[key]
+        attacker_name: felt252,
+        #[key]
+        defender_name: felt252,
+        target_tile: u8,
+        result: bool,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct Fortify {
+        #[key]
+        player_name: felt252,
+        from_tile: u8,
+        to_tile: u8,
+        troops: u32,
+    }
+
     #[external(v0)]
     impl Play of IPlay<ContractState> {
         fn attack(
@@ -137,7 +172,7 @@ mod play {
         }
 
         fn defend(
-            self: @ContractState,
+            ref self: ContractState,
             world: IWorldDispatcher,
             game_id: u32,
             attacker_index: u8,
@@ -161,6 +196,7 @@ mod play {
             assert(attacker.owner == player.index.into(), errors::DEFEND_INVALID_OWNER);
 
             // [Compute] Defend
+            let defender_player = store.player(game, defender.owner.try_into().unwrap());
             let order = get_tx_info().unbox().transaction_hash;
             player.conqueror = defender.defend(ref attacker, game.seed, order);
 
@@ -169,6 +205,15 @@ mod play {
 
             // [Effect] Update player
             store.set_player(player);
+
+            // [Event] Defend
+            let event = Defend {
+                attacker_name: player.name,
+                defender_name: defender_player.name,
+                target_tile: defender_index,
+                result: player.conqueror,
+            };
+            self.emit(event);
         }
 
         fn discard(
@@ -264,7 +309,11 @@ mod play {
         }
 
         fn supply(
-            self: @ContractState, world: IWorldDispatcher, game_id: u32, tile_index: u8, supply: u32
+            ref self: ContractState,
+            world: IWorldDispatcher,
+            game_id: u32,
+            tile_index: u8,
+            supply: u32
         ) {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
@@ -290,10 +339,14 @@ mod play {
 
             // [Effect] Update player
             store.set_player(player);
+
+            // [Event] Supply
+            let event = Supply { player_name: player.name, troops: supply, region: tile_index, };
+            self.emit(event);
         }
 
         fn transfer(
-            self: @ContractState,
+            ref self: ContractState,
             world: IWorldDispatcher,
             game_id: u32,
             from_index: u8,
@@ -324,6 +377,12 @@ mod play {
             // [Effect] Update tiles
             store.set_tile(from);
             store.set_tile(to);
+
+            // [Event] Fortify
+            let event = Fortify {
+                player_name: player.name, from_tile: from_index, to_tile: to_index, troops: army,
+            };
+            self.emit(event);
         }
     }
 
