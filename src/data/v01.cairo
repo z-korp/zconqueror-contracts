@@ -2,6 +2,8 @@
 
 // Constants
 
+const MINIMUM_MAX_PLAYERS: u8 = 2;
+
 const TILE_NUMBER: u32 = 50;
 const ARMY_NUMBER: u32 = 30;
 const FACTION_01: felt252 = 'GREEN';
