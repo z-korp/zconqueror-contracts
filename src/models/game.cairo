@@ -9,6 +9,7 @@ use starknet::ContractAddress;
 
 // Constants
 
+const DEFAULT_PLAYER_COUNT: u8 = 4;
 const TURN_COUNT: u8 = 3;
 
 #[derive(Model, Copy, Drop, Serde)]
@@ -42,7 +43,7 @@ mod errors {
 }
 
 trait GameTrait {
-    fn new(id: u32, host: ContractAddress, player_count: u8) -> Game;
+    fn new(id: u32, host: ContractAddress) -> Game;
     fn real_player_count(self: @Game) -> u8;
     fn player(self: @Game) -> u8;
     fn turn(self: @Game) -> Turn;
@@ -64,12 +65,13 @@ trait GameTrait {
     fn start(ref self: Game, players: Span<ContractAddress>);
     fn increment(ref self: Game);
     fn pass(ref self: Game);
+    fn set_max_players(ref self: Game, player_count: u8, players: Span<ContractAddress>);
 }
 
 impl GameImpl of GameTrait {
     #[inline(always)]
-    fn new(id: u32, host: ContractAddress, player_count: u8) -> Game {
-        assert(player_count > 1, errors::GAME_NOT_ENOUGH_PLAYERS);
+    fn new(id: u32, host: ContractAddress) -> Game {
+        let player_count = DEFAULT_PLAYER_COUNT;
         Game { id, host, over: false, seed: 0, player_count, slots: player_count, nonce: 0 }
     }
 
@@ -150,6 +152,35 @@ impl GameImpl of GameTrait {
     fn pass(ref self: Game) {
         let turn = self.nonce % TURN_COUNT;
         self.nonce += TURN_COUNT - turn;
+    }
+
+    fn set_max_players(ref self: Game, player_count: u8, mut players: Span<ContractAddress>) {
+        if player_count == self.player_count {
+            return;
+        }
+
+        // Add more slots, no need to change current players
+        if player_count > self.player_count {
+            self.slots += (player_count - self.player_count);
+        // Reduce player_count
+        } else {
+            let mut nb_players = self.player_count - self.slots;
+            // If there are more players than the new max player_count, kick players
+            loop {
+                if nb_players <= player_count {
+                    break;
+                }
+
+                match players.pop_back() {
+                    Option::Some(player) => { self.leave((*player).into()) },
+                    Option::None => { break; },
+                };
+                //TODO: Send event kick to leave lobby in frontend?
+                nb_players -= 1;
+            };
+            self.slots = player_count
+        }
+        self.player_count = player_count;
     }
 }
 
