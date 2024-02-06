@@ -207,13 +207,15 @@ mod play {
             store.set_player(player);
 
             // [Event] Defend
-            let event = Defend {
-                attacker_name: player.name,
-                defender_name: defender_player.name,
-                target_tile: defender_index,
-                result: player.conqueror,
-            };
-            self.emit(event);
+            emit!(
+                world,
+                Defend {
+                    attacker_name: player.name,
+                    defender_name: defender_player.name,
+                    target_tile: defender_index,
+                    result: player.conqueror,
+                }
+            );
         }
 
         fn discard(
@@ -341,8 +343,7 @@ mod play {
             store.set_player(player);
 
             // [Event] Supply
-            let event = Supply { player_name: player.name, troops: supply, region: tile_index, };
-            self.emit(event);
+            emit!(world, Supply { player_name: player.name, troops: supply, region: tile_index, });
         }
 
         fn transfer(
@@ -379,10 +380,15 @@ mod play {
             store.set_tile(to);
 
             // [Event] Fortify
-            let event = Fortify {
-                player_name: player.name, from_tile: from_index, to_tile: to_index, troops: army,
-            };
-            self.emit(event);
+            emit!(
+                world,
+                Fortify {
+                    player_name: player.name,
+                    from_tile: from_index,
+                    to_tile: to_index,
+                    troops: army,
+                }
+            );
         }
     }
 
@@ -400,7 +406,9 @@ mod play {
                         let hand = HandTrait::load(player);
                         deck.remove(hand.cards.span());
                     },
-                    Option::None => { break; },
+                    Option::None => {
+                        break;
+                    },
                 };
             };
 
@@ -439,8 +447,12 @@ mod play {
             let mut tiles: Array<Tile> = array![];
             loop {
                 match player_tiles.pop_front() {
-                    Option::Some(tile) => { tiles.append(*tile); },
-                    Option::None => { break; },
+                    Option::Some(tile) => {
+                        tiles.append(*tile);
+                    },
+                    Option::None => {
+                        break;
+                    },
                 };
             };
             tiles.span()

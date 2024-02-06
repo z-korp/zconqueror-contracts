@@ -11,7 +11,9 @@ export PLAY_ADDRESS=$(cat ./target/dev/manifest.json | jq -r '.contracts[] | sel
 MODELS=("Game" "Player" "Tile")
 for model in ${MODELS[@]}; do
     sozo auth writer $model $HOST_ADDRESS --world $WORLD_ADDRESS
+    sleep 1
     sozo auth writer $model $PLAY_ADDRESS --world $WORLD_ADDRESS
+    sleep 1
 done
 
 echo "Default authorizations have been successfully set."
