@@ -112,6 +112,8 @@ mod play {
     #[derive(Drop, starknet::Event)]
     struct Supply {
         #[key]
+        game_id: u32,
+        #[key]
         player_name: felt252,
         troops: u32,
         region: u8,
@@ -119,6 +121,8 @@ mod play {
 
     #[derive(Drop, starknet::Event)]
     struct Defend {
+        #[key]
+        game_id: u32,
         #[key]
         attacker_name: felt252,
         #[key]
@@ -129,6 +133,8 @@ mod play {
 
     #[derive(Drop, starknet::Event)]
     struct Fortify {
+        #[key]
+        game_id: u32,
         #[key]
         player_name: felt252,
         from_tile: u8,
@@ -210,6 +216,7 @@ mod play {
             emit!(
                 world,
                 Defend {
+                    game_id: game_id,
                     attacker_name: player.name,
                     defender_name: defender_player.name,
                     target_tile: defender_index,
@@ -343,7 +350,12 @@ mod play {
             store.set_player(player);
 
             // [Event] Supply
-            emit!(world, Supply { player_name: player.name, troops: supply, region: tile_index, });
+            emit!(
+                world,
+                Supply {
+                    game_id: game_id, player_name: player.name, troops: supply, region: tile_index,
+                }
+            );
         }
 
         fn transfer(
@@ -383,6 +395,7 @@ mod play {
             emit!(
                 world,
                 Fortify {
+                    game_id: game_id,
                     player_name: player.name,
                     from_tile: from_index,
                     to_tile: to_index,
