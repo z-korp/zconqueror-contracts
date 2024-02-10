@@ -9,7 +9,7 @@ use starknet::ContractAddress;
 
 // Constants
 
-const DEFAULT_PLAYER_COUNT: u8 = 4;
+const DEFAULT_PLAYER_COUNT: u8 = 6;
 const TURN_COUNT: u8 = 3;
 
 #[derive(Model, Copy, Drop, Serde)]
@@ -131,7 +131,6 @@ impl GameImpl of GameTrait {
         assert(self.player_count > 0, errors::GAME_DOES_NOT_EXSIST);
         assert(!self.over, errors::GAME_IS_OVER);
         assert(self.seed == 0, errors::GAME_HAS_STARTED);
-        assert(self.slots == 0, errors::GAME_IS_NOT_FULL);
         let mut state = PoseidonTrait::new();
         state = state.update(self.id.into());
         loop {
@@ -141,6 +140,7 @@ impl GameImpl of GameTrait {
             };
         };
         self.seed = state.finalize();
+        self.player_count = self.player_count - self.slots;
     }
 
     #[inline(always)]

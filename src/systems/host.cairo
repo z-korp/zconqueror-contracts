@@ -104,7 +104,6 @@ mod host {
                     Option::None => { break; },
                 };
             };
-            game.start(addresses.span());
             game.set_max_players(player_count, addresses.span());
 
             store.set_game(game);
