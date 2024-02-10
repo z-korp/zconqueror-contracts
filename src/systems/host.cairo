@@ -6,12 +6,12 @@ use dojo::world::IWorldDispatcher;
 
 #[starknet::interface]
 trait IHost<TContractState> {
-    fn create(self: @TContractState, world: IWorldDispatcher) -> u32;
+    fn create(self: @TContractState, world: IWorldDispatcher, player_name: felt252) -> u32;
     fn set_max_players(
         self: @TContractState, world: IWorldDispatcher, game_id: u32, player_count: u8
     );
     fn set_username(self: @TContractState, world: IWorldDispatcher, player_name: felt252);
-    fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32);
+    fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252);
     fn leave(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32);
 }
@@ -62,7 +62,7 @@ mod host {
 
     #[external(v0)]
     impl Host of IHost<ContractState> {
-        fn create(self: @ContractState, world: IWorldDispatcher) -> u32 {
+        fn create(self: @ContractState, world: IWorldDispatcher, player_name: felt252) -> u32 {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
@@ -75,7 +75,7 @@ mod host {
 
             // [Effect] Player
             let player = PlayerTrait::new(
-                game_id, index: player_index, address: player_address, name: 'guest#1234'
+                game_id, index: player_index, address: player_address, name: player_name
             );
             store.set_player(player);
 
@@ -114,7 +114,7 @@ mod host {
         ) { //TODO: find a way to get player from address without game_id
         }
 
-        fn join(self: @ContractState, world: IWorldDispatcher, game_id: u32) {
+        fn join(self: @ContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252) {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
@@ -132,7 +132,7 @@ mod host {
 
             // [Effect] Player
             let player = PlayerTrait::new(
-                game_id, index: player_index, address: player_address, name: ''
+                game_id, index: player_index, address: player_address, name: player_name
             );
             store.set_player(player);
         }
