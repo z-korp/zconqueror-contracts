@@ -141,6 +141,7 @@ impl GameImpl of GameTrait {
         };
         self.seed = state.finalize();
         self.player_count = self.player_count - self.slots;
+        self.slots = 0;
     }
 
     #[inline(always)]
