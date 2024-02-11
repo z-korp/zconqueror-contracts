@@ -36,7 +36,7 @@ fn test_attack() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -91,7 +91,7 @@ fn test_attack_revert_invalid_player() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -132,7 +132,7 @@ fn test_attack_revert_invalid_owner() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());

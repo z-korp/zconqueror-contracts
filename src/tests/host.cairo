@@ -14,7 +14,7 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
 use zconqueror::config::TILE_NUMBER;
 use zconqueror::store::{Store, StoreTrait};
-use zconqueror::models::game::{Game, GameTrait};
+use zconqueror::models::game::{Game, GameTrait, DEFAULT_PLAYER_COUNT};
 use zconqueror::models::player::Player;
 use zconqueror::models::tile::Tile;
 use zconqueror::systems::host::IHostDispatcherTrait;
@@ -36,7 +36,7 @@ fn test_host_create_and_join() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -97,12 +97,12 @@ fn test_host_create_and_host_leaves() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME);
     systems.host.leave(world, game_id);
 
     // [Assert] Game
     let game: Game = store.game(game_id);
-    assert(game.slots == PLAYER_COUNT, 'Game: wrong slots');
+    assert(game.slots == DEFAULT_PLAYER_COUNT, 'Game: wrong slots');
 }
 
 #[test]
@@ -113,14 +113,14 @@ fn test_host_create_and_player_leaves() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     systems.host.leave(world, game_id);
 
     // [Assert] Game
     let game: Game = store.game(game_id);
-    assert(game.slots == PLAYER_COUNT - 1, 'Game: wrong slots');
+    assert(game.slots == DEFAULT_PLAYER_COUNT - 1, 'Game: wrong slots');
 }
 
 #[test]
@@ -132,7 +132,7 @@ fn test_host_start_then_join_revert_started() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -152,7 +152,7 @@ fn test_host_start_then_leave_revert_started() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, PLAYER_COUNT, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
