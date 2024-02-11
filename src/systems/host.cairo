@@ -10,7 +10,6 @@ trait IHost<TContractState> {
     fn set_max_players(
         self: @TContractState, world: IWorldDispatcher, game_id: u32, player_count: u8
     );
-    fn set_username(self: @TContractState, world: IWorldDispatcher, player_name: felt252);
     fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252);
     fn leave(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32);
@@ -107,11 +106,6 @@ mod host {
             game.set_max_players(player_count, addresses.span());
 
             store.set_game(game);
-        }
-
-        fn set_username(
-            self: @ContractState, world: IWorldDispatcher, player_name: felt252
-        ) { //TODO: find a way to get player from address without game_id
         }
 
         fn join(self: @ContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252) {
