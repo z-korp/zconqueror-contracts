@@ -7,9 +7,6 @@ use dojo::world::IWorldDispatcher;
 #[starknet::interface]
 trait IHost<TContractState> {
     fn create(self: @TContractState, world: IWorldDispatcher, player_name: felt252) -> u32;
-    fn set_max_players(
-        self: @TContractState, world: IWorldDispatcher, game_id: u32, player_count: u8
-    );
     fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252);
     fn leave(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32);
@@ -40,7 +37,7 @@ mod host {
 
     // Internal imports
 
-    use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER, MINIMUM_MAX_PLAYERS};
+    use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
     use zconqueror::store::{Store, StoreTrait};
 
     // Local imports
@@ -80,32 +77,6 @@ mod host {
 
             // [Return] Game id
             game_id
-        }
-
-        fn set_max_players(
-            self: @ContractState, world: IWorldDispatcher, game_id: u32, player_count: u8
-        ) {
-            // [Setup] Datastore
-            let mut store: Store = StoreTrait::new(world);
-
-            // [Check] Caller is the host
-            let mut game = store.game(game_id);
-            let caller = get_caller_address();
-            assert(caller == game.host, errors::HOST_CALLER_IS_NOT_THE_HOST);
-
-            assert(player_count >= MINIMUM_MAX_PLAYERS, errors::HOST_MAX_NB_PLAYERS_IS_TOO_LOW);
-
-            let mut addresses = array![];
-            let mut players = store.players(game);
-            loop {
-                match players.pop_front() {
-                    Option::Some(player) => { addresses.append(player.address); },
-                    Option::None => { break; },
-                };
-            };
-            game.set_max_players(player_count, addresses.span());
-
-            store.set_game(game);
         }
 
         fn join(self: @ContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252) {

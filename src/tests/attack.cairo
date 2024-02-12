@@ -46,7 +46,7 @@ fn test_attack() {
     let game: Game = store.game(game_id);
     let initial_player: Player = store.player(game, PLAYER_INDEX);
     let supply = initial_player.supply.into();
-    let mut attacker: u8 = 1;
+    let mut attacker: u8 = 3;
     let army = loop {
         let tile: Tile = store.tile(game, attacker.into());
         if tile.owner == PLAYER_INDEX.into() {

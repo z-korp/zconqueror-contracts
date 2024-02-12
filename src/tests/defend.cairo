@@ -47,7 +47,7 @@ fn test_defend_win() {
     let player_index = game.player();
     let initial_player: Player = store.player(game, player_index);
     let supply = initial_player.supply.into();
-    let mut attacker: u8 = 1;
+    let mut attacker: u8 = 3;
     let army = loop {
         let tile: Tile = store.tile(game, attacker.into());
         if tile.owner == player_index.into() {
@@ -126,7 +126,7 @@ fn test_defend_lose() {
     let player_index = game.player();
     let initial_player: Player = store.player(game, player_index);
     let supply = initial_player.supply.into();
-    let mut attacker: u8 = 1;
+    let mut attacker: u8 = 3;
     loop {
         let tile: Tile = store.tile(game, attacker.into());
         if tile.owner == player_index.into() {
@@ -206,7 +206,7 @@ fn test_defend_revert_invalid_order() {
     let game: Game = store.game(game_id);
     let initial_player: Player = store.player(game, PLAYER_INDEX);
     let supply = initial_player.supply.into();
-    let mut attacker: u8 = 1;
+    let mut attacker: u8 = 3;
     let army = loop {
         let tile: Tile = store.tile(game, attacker.into());
         if tile.owner == PLAYER_INDEX.into() {
