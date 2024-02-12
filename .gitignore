@@ -1,1 +1,4 @@
-target
+target/CACHEDIR.TAG
+target/dev/*
+!target/dev/manifest.json
+*.log
