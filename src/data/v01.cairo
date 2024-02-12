@@ -1,6 +1,6 @@
 //! This file is generated automatically by `scripts/generate.sh`. Please, don't change it.
 
-// constants
+// Constants
 
 const TILE_NUMBER: u32 = 50;
 const ARMY_NUMBER: u32 = 30;
