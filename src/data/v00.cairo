@@ -2,8 +2,6 @@
 
 // Constants
 
-const MINIMUM_MAX_PLAYERS: u8 = 2;
-
 const TILE_NUMBER: u32 = 5;
 const ARMY_NUMBER: u32 = 5;
 
