@@ -1,8 +1,12 @@
+// Starknet imports
+
+use starknet::ContractAddress;
+
 // Dojo imports
 
 use dojo::world::IWorldDispatcher;
 
-// System trait
+// Interfaces
 
 #[starknet::interface]
 trait IHost<TContractState> {
@@ -14,13 +18,21 @@ trait IHost<TContractState> {
     fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32);
 }
 
+#[starknet::interface]
+trait IERC20<TContractState> {
+    fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
+    fn transfer_from(
+        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
+    ) -> bool;
+}
+
 // System implementation
 
 #[starknet::contract]
 mod host {
     // Starknet imports
 
-    use starknet::get_caller_address;
+    use starknet::{ContractAddress, get_caller_address, get_contract_address};
 
     // Dojo imports
 
@@ -36,19 +48,19 @@ mod host {
     use zconqueror::models::player::{Player, PlayerTrait};
     use zconqueror::models::tile::{Tile, TileTrait};
     use zconqueror::types::map::{Map, MapTrait};
-
-    // Internal imports
-
     use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
     use zconqueror::store::{Store, StoreTrait};
+    use zconqueror::constants;
 
     // Local imports
 
-    use super::IHost;
+    use super::{IHost, IERC20Dispatcher, IERC20DispatcherTrait};
 
     // Errors
 
     mod errors {
+        const ERC20_PAY_FAILED: felt252 = 'ERC20: pay failed';
+        const ERC20_REFUND_FAILED: felt252 = 'ERC20: refund failed';
         const HOST_PLAYER_ALREADY_IN_LOBBY: felt252 = 'Host: player already in lobby';
         const HOST_PLAYER_NOT_IN_LOBBY: felt252 = 'Host: player not in lobby';
         const HOST_CALLER_IS_NOT_THE_HOST: felt252 = 'Host: caller is not the host';
@@ -66,9 +78,12 @@ mod host {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
+            // [Interaction] Pay
+            let player_address = get_caller_address();
+            self._pay(world, player_address, price);
+
             // [Effect] Game
             let game_id = world.uuid();
-            let player_address = get_caller_address();
             let mut game = GameTrait::new(id: game_id, host: player_address, price: price);
             let player_index: u32 = game.join().into();
             store.set_game(game);
@@ -94,6 +109,9 @@ mod host {
                 Option::Some(_) => panic(array![errors::HOST_PLAYER_ALREADY_IN_LOBBY]),
                 Option::None => (),
             };
+
+            // [Interaction] Pay
+            self._pay(world, player_address, game.price);
 
             // [Effect] Game
             let player_index: u32 = game.join().into();
@@ -128,6 +146,9 @@ mod host {
                 last_player.index = player.index;
                 store.set_player(last_player);
             }
+
+            // [Interaction] Refund
+            self._refund(world, player_address, game.price);
         }
 
         fn start(self: @ContractState, world: IWorldDispatcher, game_id: u32,) {
@@ -205,6 +226,43 @@ mod host {
                     Option::None => { break; },
                 };
             };
+        }
+    }
+
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        fn _pay(
+            self: @ContractState, world: IWorldDispatcher, caller: ContractAddress, amount: u256
+        ) {
+            // [Check] Amount is not null, otherwise return
+            if amount == 0 {
+                return;
+            }
+
+            // [Interaction] Transfer
+            let contract = get_contract_address();
+            let erc20 = IERC20Dispatcher { contract_address: constants::ERC20_ADDRESS() };
+            let status = erc20.transfer_from(caller, contract, amount);
+
+            // [Check] Status
+            assert(status, errors::ERC20_PAY_FAILED);
+        }
+
+        fn _refund(
+            self: @ContractState, world: IWorldDispatcher, caller: ContractAddress, amount: u256
+        ) {
+            // [Check] Amount is not null, otherwise return
+            if amount == 0 {
+                return;
+            }
+
+            // [Interaction] Transfer
+            let contract = get_contract_address();
+            let erc20 = IERC20Dispatcher { contract_address: constants::ERC20_ADDRESS() };
+            let status = erc20.transfer(caller, amount);
+
+            // [Check] Status
+            assert(status, errors::ERC20_REFUND_FAILED);
         }
     }
 }

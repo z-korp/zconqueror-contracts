@@ -1,8 +1,12 @@
+// Starknet imports
+
+use starknet::ContractAddress;
+
 // Dojo imports
 
 use dojo::world::IWorldDispatcher;
 
-// System trait
+// Interfaces
 
 #[starknet::interface]
 trait IPlay<TContractState> {
@@ -43,6 +47,14 @@ trait IPlay<TContractState> {
     );
 }
 
+#[starknet::interface]
+trait IERC20<TContractState> {
+    fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
+    fn transfer_from(
+        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
+    ) -> bool;
+}
+
 // System implementation
 
 #[starknet::contract]
@@ -59,7 +71,7 @@ mod play {
 
     use origami::random::deck::{Deck, DeckTrait};
 
-    // Models imports
+    // Internal imports
 
     use zconqueror::models::game::{Game, GameTrait, Turn};
     use zconqueror::models::player::{Player, PlayerTrait};
@@ -67,19 +79,19 @@ mod play {
     use zconqueror::types::hand::HandTrait;
     use zconqueror::types::map::{Map, MapTrait};
     use zconqueror::types::set::SetTrait;
-
-    // Internal imports
-
+    use zconqueror::types::reward::{Reward, RewardTrait};
     use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
     use zconqueror::store::{Store, StoreTrait};
+    use zconqueror::constants;
 
     // Local imports
 
-    use super::IPlay;
+    use super::{IPlay, IERC20Dispatcher, IERC20DispatcherTrait};
 
     // Errors
 
     mod errors {
+        const ERC20_REWARD_FAILED: felt252 = 'ERC20: reward failed';
         const ATTACK_INVALID_TURN: felt252 = 'Attack: invalid turn';
         const ATTACK_INVALID_PLAYER: felt252 = 'Attack: invalid player';
         const ATTACK_INVALID_OWNER: felt252 = 'Attack: invalid owner';
@@ -290,18 +302,34 @@ mod play {
                     let mut next_player = store.current_player(game);
                     // [Check] Next player is the current player means game is over
                     if next_player.address == caller {
+                        // [Effect] Update player
+                        next_player.rank(store.get_next_rank(game));
+                        store.set_player(next_player);
+                        // [Effect] Update game
                         game.over = true;
-                        store.set_game(game);
+                        // [Interaction] Reward players
+                        self._reward(game, game.reward(), ref store);
                         break;
                     };
 
-                    // [Check] Score 0 means the player is dead, move to next player
-                    let score = map.score(next_player.index);
-                    if 0 == score.into() {
+                    // [Check] Player rank is not 0 means the player is dead, move to next player
+                    if next_player.rank > 0 {
+                        // [Effect] Move to next player
                         game.pass();
                         continue;
-                    // [Effect] Update next player supply and leave the loop
+                    }
+
+                    // [Check] Player score is 0 means the player is dead but not yet ranked, rank then move to next player
+                    let score = map.score(next_player.index);
+                    if 0 == score.into() {
+                        // [Effect] Update player
+                        next_player.rank(store.get_next_rank(game));
+                        store.set_player(next_player);
+                        // [Effect] Move to next player
+                        game.pass();
+                        continue;
                     } else {
+                        // [Effect] Update next player supply and leave the loop
                         next_player.supply = if score < 3 {
                             3
                         } else {
@@ -463,6 +491,47 @@ mod play {
                 };
             };
             tiles.span()
+        }
+
+        fn _reward(self: @ContractState, game: Game, amount: u256, ref store: Store,) {
+            // [Check] Amount is not null, otherwise return
+            if amount == 0 {
+                return;
+            }
+
+            // [Setup] Top players
+            let first = store.find_ranked_player(game, 1);
+            let first_address = match first {
+                Option::Some(player) => { player.address },
+                Option::None => { constants::ZERO() },
+            };
+
+            let second = store.find_ranked_player(game, 2);
+            let second_address = match second {
+                Option::Some(player) => { player.address },
+                Option::None => { constants::ZERO() },
+            };
+
+            let third = store.find_ranked_player(game, 3);
+            let third_address = match third {
+                Option::Some(player) => { player.address },
+                Option::None => { constants::ZERO() },
+            };
+
+            // [Interaction] Transfers
+            let erc20 = IERC20Dispatcher { contract_address: constants::ERC20_ADDRESS() };
+            let mut rewards: Span<Reward> = RewardTrait::rewards(
+                game.player_count, amount, first_address, second_address, third_address
+            );
+            loop {
+                match rewards.pop_front() {
+                    Option::Some(reward) => {
+                        let status = erc20.transfer(*reward.recipient, *reward.amount);
+                        assert(status, errors::ERC20_REWARD_FAILED);
+                    },
+                    Option::None => { break; },
+                };
+            }
         }
     }
 }

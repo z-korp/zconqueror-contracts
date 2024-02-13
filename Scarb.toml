@@ -1,5 +1,4 @@
 [package]
-cairo-version = "2.4.0"
 name = "zconqueror"
 version = "0.0.0"
 
@@ -8,8 +7,8 @@ sierra-replace-ids = true
 
 [dependencies]
 alexandria_data_structures = { git = "https://github.com/keep-starknet-strange/alexandria", rev = "3d6d49d" }
-origami = { git = "https://github.com/dojoengine/origami", rev = "daa1646" }
-dojo = { git = "https://github.com/dojoengine/dojo", tag = "v0.5.0" }
+origami = { git = "https://github.com/dojoengine/origami", tag = "v0.5.1" }
+dojo = { git = "https://github.com/dojoengine/dojo", tag = "v0.5.1" }
 
 [[target.dojo]]
 
@@ -17,6 +16,11 @@ dojo = { git = "https://github.com/dojoengine/dojo", tag = "v0.5.0" }
 initializer_class_hash = "0xbeef"
 
 [tool.dojo.env]
+# Devnet
 rpc_url = "http://localhost:5050/"
 account_address = "0x6162896d1d7ab204c7ccac6dd5f8e9e7c25ecd5ae4fcb4ad32e57786bb46e03"
 private_key = "0x1800000000300000180000000000030000000000003006001800006600"
+# Slot
+# rpc_url = "https://api.cartridge.gg/x/zconqueror/katana"
+# account_address = "0x7790adbbfb0fd9c4ec4c0e31c71615d6c3aaac9369dbb0adc5b11ed85631478"
+# private_key = "0x35dd7dfd8a2602b23cda569f0b0793f7268ca99513c76bc88ba11a35eb2a66e"
