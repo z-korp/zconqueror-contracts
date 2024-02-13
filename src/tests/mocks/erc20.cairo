@@ -10,10 +10,18 @@
 mod interface;
 mod erc20;
 
+use interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+
+#[starknet::interface]
+trait IERC20Faucet<TState> {
+    fn mint(ref self: TState);
+}
+
 #[starknet::contract]
 mod ERC20 {
     use zconqueror::tests::mocks::erc20::erc20::ERC20Component;
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, get_caller_address};
+    const FAUCET_AMOUNT: u256 = 1_000_000_000_000_000_000_000_000; // 1E6 * 1E18
 
     component!(path: ERC20Component, storage: erc20, event: ERC20Event);
 
@@ -41,14 +49,10 @@ mod ERC20 {
     /// Sets the token `name` and `symbol`.
     /// Mints `fixed_supply` tokens to `recipient`.
     #[constructor]
-    fn constructor(
-        ref self: ContractState,
-        name: felt252,
-        symbol: felt252,
-        fixed_supply: u256,
-        recipient: ContractAddress
-    ) {
-        self.erc20.initializer(name, symbol);
-        self.erc20._mint(recipient, fixed_supply);
+    fn constructor(ref self: ContractState) {}
+
+    #[external(v0)]
+    fn mint(ref self: ContractState) {
+        self.erc20._mint(get_caller_address(), FAUCET_AMOUNT);
     }
 }
