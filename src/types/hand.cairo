@@ -17,7 +17,7 @@ use alexandria_data_structures::array_ext::{SpanTraitExt, ArrayTraitExt};
 use zconqueror::constants::HAND_MAX_SIZE;
 use zconqueror::config::{INFANTRY, CAVALRY, ARTILLERY, JOCKER, card as config_card};
 use zconqueror::models::player::Player;
-use zconqueror::models::set::{Set, SetTrait};
+use zconqueror::types::set::{Set, SetTrait};
 
 // Constants
 
@@ -200,7 +200,7 @@ mod tests {
     // Internal imports
 
     use zconqueror::models::player::Player;
-    use zconqueror::models::set::{Set, SetTrait};
+    use zconqueror::types::set::{Set, SetTrait};
 
     // Local imports
 

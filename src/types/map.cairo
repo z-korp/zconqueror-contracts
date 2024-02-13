@@ -17,7 +17,7 @@ use origami::random::deck::{Deck, DeckTrait};
 
 use zconqueror::config;
 use zconqueror::models::tile::{Tile, TileTrait};
-use zconqueror::models::set::{Set, SetTrait};
+use zconqueror::types::set::{Set, SetTrait};
 
 // Constants
 
@@ -284,7 +284,7 @@ mod tests {
 
     use zconqueror::config;
     use zconqueror::models::tile::{Tile, TileTrait};
-    use zconqueror::models::set::{Set, SetTrait};
+    use zconqueror::types::set::{Set, SetTrait};
 
     // Local imports
 

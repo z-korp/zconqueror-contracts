@@ -10,6 +10,9 @@ mod models {
     mod game;
     mod player;
     mod tile;
+}
+
+mod types {
     mod hand;
     mod map;
     mod set;
