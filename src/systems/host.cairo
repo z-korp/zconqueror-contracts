@@ -21,7 +21,7 @@ trait IHost<TContractState> {
 #[starknet::interface]
 trait IERC20<TContractState> {
     fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
-    fn transfer_from(
+    fn transferFrom(
         ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
     ) -> bool;
 }
@@ -242,7 +242,7 @@ mod host {
             // [Interaction] Transfer
             let contract = get_contract_address();
             let erc20 = IERC20Dispatcher { contract_address: constants::ERC20_ADDRESS() };
-            let status = erc20.transfer_from(caller, contract, amount);
+            let status = erc20.transferFrom(caller, contract, amount);
 
             // [Check] Status
             assert(status, errors::ERC20_PAY_FAILED);

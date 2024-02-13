@@ -12,12 +12,16 @@ fn ERC20_ADDRESS() -> starknet::ContractAddress {
 
 #[inline(always)]
 fn DEV_ADDRESS() -> starknet::ContractAddress {
-    starknet::contract_address_const::<'DEV'>()
+    starknet::contract_address_const::<
+        0x6162896d1d7ab204c7ccac6dd5f8e9e7c25ecd5ae4fcb4ad32e57786bb46e03
+    >()
 }
 
 #[inline(always)]
 fn DAO_ADDRESS() -> starknet::ContractAddress {
-    starknet::contract_address_const::<'DAO'>()
+    starknet::contract_address_const::<
+        0x6162896d1d7ab204c7ccac6dd5f8e9e7c25ecd5ae4fcb4ad32e57786bb46e03
+    >()
 }
 
 // Powers
