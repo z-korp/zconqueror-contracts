@@ -76,7 +76,6 @@ mod play {
     use zconqueror::types::hand::HandTrait;
     use zconqueror::types::map::{Map, MapTrait};
     use zconqueror::types::set::SetTrait;
-    use zconqueror::types::reward::{Reward, RewardTrait};
     use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
     use zconqueror::store::{Store, StoreTrait};
     use zconqueror::constants;
@@ -88,7 +87,6 @@ mod play {
     // Errors
 
     mod errors {
-        const ERC20_REWARD_FAILED: felt252 = 'ERC20: reward failed';
         const ATTACK_INVALID_TURN: felt252 = 'Attack: invalid turn';
         const ATTACK_INVALID_PLAYER: felt252 = 'Attack: invalid player';
         const ATTACK_INVALID_OWNER: felt252 = 'Attack: invalid owner';
@@ -304,8 +302,6 @@ mod play {
                         store.set_player(next_player);
                         // [Effect] Update game
                         game.over = true;
-                        // [Interaction] Reward players
-                        self._reward(game, game.reward(), ref store);
                         break;
                     };
 
@@ -488,47 +484,6 @@ mod play {
                 };
             };
             tiles.span()
-        }
-
-        fn _reward(self: @ContractState, game: Game, amount: u256, ref store: Store,) {
-            // [Check] Amount is not null, otherwise return
-            if amount == 0 {
-                return;
-            }
-
-            // [Setup] Top players
-            let first = store.find_ranked_player(game, 1);
-            let first_address = match first {
-                Option::Some(player) => { player.address },
-                Option::None => { constants::ZERO() },
-            };
-
-            let second = store.find_ranked_player(game, 2);
-            let second_address = match second {
-                Option::Some(player) => { player.address },
-                Option::None => { constants::ZERO() },
-            };
-
-            let third = store.find_ranked_player(game, 3);
-            let third_address = match third {
-                Option::Some(player) => { player.address },
-                Option::None => { constants::ZERO() },
-            };
-
-            // [Interaction] Transfers
-            let erc20 = IERC20Dispatcher { contract_address: constants::ERC20_ADDRESS() };
-            let mut rewards: Span<Reward> = RewardTrait::rewards(
-                game.player_count, amount, first_address, second_address, third_address
-            );
-            loop {
-                match rewards.pop_front() {
-                    Option::Some(reward) => {
-                        let status = erc20.transfer(*reward.recipient, *reward.amount);
-                        assert(status, errors::ERC20_REWARD_FAILED);
-                    },
-                    Option::None => { break; },
-                };
-            }
         }
     }
 }

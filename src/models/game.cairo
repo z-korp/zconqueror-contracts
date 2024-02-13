@@ -40,6 +40,7 @@ mod errors {
     const GAME_IS_NOT_FULL: felt252 = 'Game: is not full';
     const GAME_IS_EMPTY: felt252 = 'Game: is empty';
     const GAME_IS_OVER: felt252 = 'Game: is over';
+    const GAME_NOT_OVER: felt252 = 'Game: not over';
     const GAME_HAS_STARTED: felt252 = 'Game: has started';
     const GAME_DOES_NOT_EXSIST: felt252 = 'Game: does not exsist';
 }
@@ -54,6 +55,8 @@ impl GameImpl of GameTrait {
 
     #[inline(always)]
     fn reward(self: @Game) -> u256 {
+        // [Check] Game is over
+        assert(*self.over, errors::GAME_NOT_OVER);
         *self.price * (*self.player_count).into()
     }
 

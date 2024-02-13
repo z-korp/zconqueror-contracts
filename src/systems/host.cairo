@@ -16,6 +16,7 @@ trait IHost<TContractState> {
     fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252);
     fn leave(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32);
+    fn claim(self: @TContractState, world: IWorldDispatcher, game_id: u32);
 }
 
 #[starknet::interface]
@@ -48,6 +49,7 @@ mod host {
     use zconqueror::models::player::{Player, PlayerTrait};
     use zconqueror::models::tile::{Tile, TileTrait};
     use zconqueror::types::map::{Map, MapTrait};
+    use zconqueror::types::reward::{Reward, RewardTrait};
     use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
     use zconqueror::store::{Store, StoreTrait};
     use zconqueror::constants;
@@ -59,12 +61,14 @@ mod host {
     // Errors
 
     mod errors {
+        const ERC20_REWARD_FAILED: felt252 = 'ERC20: reward failed';
         const ERC20_PAY_FAILED: felt252 = 'ERC20: pay failed';
         const ERC20_REFUND_FAILED: felt252 = 'ERC20: refund failed';
         const HOST_PLAYER_ALREADY_IN_LOBBY: felt252 = 'Host: player already in lobby';
         const HOST_PLAYER_NOT_IN_LOBBY: felt252 = 'Host: player not in lobby';
         const HOST_CALLER_IS_NOT_THE_HOST: felt252 = 'Host: caller is not the host';
         const HOST_MAX_NB_PLAYERS_IS_TOO_LOW: felt252 = 'Host: max player numbers is < 2';
+        const HOST_GAME_NOT_OVER: felt252 = 'Host: game not over';
     }
 
     #[storage]
@@ -227,6 +231,15 @@ mod host {
                 };
             };
         }
+
+        fn claim(self: @ContractState, world: IWorldDispatcher, game_id: u32,) {
+            // [Setup] Datastore
+            let mut store: Store = StoreTrait::new(world);
+
+            // [Interaction] Distribute rewards
+            let game = store.game(game_id);
+            self._reward(game, game.reward(), ref store);
+        }
     }
 
     #[generate_trait]
@@ -263,6 +276,47 @@ mod host {
 
             // [Check] Status
             assert(status, errors::ERC20_REFUND_FAILED);
+        }
+
+        fn _reward(self: @ContractState, game: Game, amount: u256, ref store: Store,) {
+            // [Check] Amount is not null, otherwise return
+            if amount == 0 {
+                return;
+            }
+
+            // [Setup] Top players
+            let first = store.find_ranked_player(game, 1);
+            let first_address = match first {
+                Option::Some(player) => { player.address },
+                Option::None => { constants::ZERO() },
+            };
+
+            let second = store.find_ranked_player(game, 2);
+            let second_address = match second {
+                Option::Some(player) => { player.address },
+                Option::None => { constants::ZERO() },
+            };
+
+            let third = store.find_ranked_player(game, 3);
+            let third_address = match third {
+                Option::Some(player) => { player.address },
+                Option::None => { constants::ZERO() },
+            };
+
+            // [Interaction] Transfers
+            let erc20 = IERC20Dispatcher { contract_address: constants::ERC20_ADDRESS() };
+            let mut rewards: Span<Reward> = RewardTrait::rewards(
+                game.player_count, amount, first_address, second_address, third_address
+            );
+            loop {
+                match rewards.pop_front() {
+                    Option::Some(reward) => {
+                        let status = erc20.transfer(*reward.recipient, *reward.amount);
+                        assert(status, errors::ERC20_REWARD_FAILED);
+                    },
+                    Option::None => { break; },
+                };
+            }
         }
     }
 }
