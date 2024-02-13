@@ -33,7 +33,7 @@ const PLAYER_COUNT: u8 = 2;
 #[available_gas(1_000_000_000)]
 fn test_host_create_and_join() {
     // [Setup]
-    let (world, systems) = setup::spawn_game();
+    let (world, systems, context) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -94,7 +94,7 @@ fn test_host_create_and_join() {
 #[available_gas(1_000_000_000)]
 fn test_host_create_and_host_leaves() {
     // [Setup]
-    let (world, systems) = setup::spawn_game();
+    let (world, systems, context) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -110,7 +110,7 @@ fn test_host_create_and_host_leaves() {
 #[available_gas(1_000_000_000)]
 fn test_host_create_and_player_leaves() {
     // [Setup]
-    let (world, systems) = setup::spawn_game();
+    let (world, systems, context) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -129,7 +129,7 @@ fn test_host_create_and_player_leaves() {
 #[should_panic(expected: ('Game: has started', 'ENTRYPOINT_FAILED',))]
 fn test_host_start_then_join_revert_started() {
     // [Setup]
-    let (world, systems) = setup::spawn_game();
+    let (world, systems, context) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -149,7 +149,7 @@ fn test_host_start_then_join_revert_started() {
 #[should_panic(expected: ('Game: has started', 'ENTRYPOINT_FAILED',))]
 fn test_host_start_then_leave_revert_started() {
     // [Setup]
-    let (world, systems) = setup::spawn_game();
+    let (world, systems, context) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
