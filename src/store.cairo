@@ -24,25 +24,8 @@ struct Store {
     world: IWorldDispatcher
 }
 
-/// Trait to initialize, get and set models from the Store.
-trait StoreTrait {
-    fn new(world: IWorldDispatcher) -> Store;
-    fn game(ref self: Store, id: u32) -> Game;
-    fn player(ref self: Store, game: Game, index: u8) -> Player;
-    fn players(ref self: Store, game: Game) -> Array<Player>;
-    fn current_player(ref self: Store, game: Game) -> Player;
-    fn next_player(ref self: Store, game: Game) -> Player;
-    fn find_player(ref self: Store, game: Game, account: ContractAddress) -> Option<Player>;
-    fn tile(ref self: Store, game: Game, id: u8) -> Tile;
-    fn tiles(ref self: Store, game: Game) -> Array<Tile>;
-    fn set_game(ref self: Store, game: Game);
-    fn set_player(ref self: Store, player: Player);
-    fn set_players(ref self: Store, players: Span<Player>);
-    fn set_tile(ref self: Store, tile: Tile);
-    fn set_tiles(ref self: Store, tiles: Span<Tile>);
-}
-
 /// Implementation of the `StoreTrait` trait for the `Store` struct.
+#[generate_trait]
 impl StoreImpl of StoreTrait {
     fn new(world: IWorldDispatcher) -> Store {
         Store { world: world }
@@ -92,6 +75,37 @@ impl StoreImpl of StoreTrait {
                 break Option::None;
             };
         }
+    }
+
+    fn find_ranked_player(ref self: Store, game: Game, rank: u8) -> Option<Player> {
+        let mut index: u32 = game.real_player_count().into();
+        loop {
+            index -= 1;
+            let player_key = (game.id, index);
+            let player = get!(self.world, player_key.into(), (Player));
+            if player.rank == rank {
+                break Option::Some(player);
+            }
+            if index == 0 {
+                break Option::None;
+            };
+        }
+    }
+
+    fn get_next_rank(ref self: Store, game: Game) -> u8 {
+        let mut index = game.player_count;
+        let mut rank: u8 = game.player_count + 1;
+        loop {
+            if index == 0 {
+                break;
+            };
+            index -= 1;
+            let player = self.player(game, index.into());
+            if player.rank > 0 && player.rank < rank {
+                rank = player.rank;
+            };
+        };
+        rank - 1
     }
 
     fn tile(ref self: Store, game: Game, id: u8) -> Tile {

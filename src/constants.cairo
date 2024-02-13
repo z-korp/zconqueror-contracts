@@ -5,6 +5,21 @@ fn ZERO() -> starknet::ContractAddress {
     starknet::contract_address_const::<0>()
 }
 
+#[inline(always)]
+fn ERC20_ADDRESS() -> starknet::ContractAddress {
+    starknet::contract_address_const::<'TOKEN'>()
+}
+
+#[inline(always)]
+fn DEV_ADDRESS() -> starknet::ContractAddress {
+    starknet::contract_address_const::<'DEV'>()
+}
+
+#[inline(always)]
+fn DAO_ADDRESS() -> starknet::ContractAddress {
+    starknet::contract_address_const::<'DAO'>()
+}
+
 // Powers
 
 const TWO_POW_32: u128 = 4294967296;

@@ -44,36 +44,17 @@ mod errors {
     const GAME_DOES_NOT_EXSIST: felt252 = 'Game: does not exsist';
 }
 
-trait GameTrait {
-    fn new(id: u32, host: ContractAddress, price: u256) -> Game;
-    fn real_player_count(self: @Game) -> u8;
-    fn player(self: @Game) -> u8;
-    fn turn(self: @Game) -> Turn;
-    fn next_player(self: @Game) -> u8;
-    fn next_turn(self: @Game) -> Turn;
-    /// Joins a game and returns the player index.
-    /// # Arguments
-    /// * `self` - The Game.
-    /// # Returns
-    /// * The new index of the player.
-    fn join(ref self: Game) -> u8;
-    /// Leaves a game and returns the last player index.
-    /// # Arguments
-    /// * `self` - The Game.
-    /// * `account` - The player address.
-    /// # Returns
-    /// * The last index of the last registered player.
-    fn leave(ref self: Game, account: ContractAddress) -> u8;
-    fn start(ref self: Game, players: Span<ContractAddress>);
-    fn increment(ref self: Game);
-    fn pass(ref self: Game);
-}
-
+#[generate_trait]
 impl GameImpl of GameTrait {
     #[inline(always)]
     fn new(id: u32, host: ContractAddress, price: u256) -> Game {
         let player_count = DEFAULT_PLAYER_COUNT;
         Game { id, host, over: false, seed: 0, player_count, slots: player_count, nonce: 0, price }
+    }
+
+    #[inline(always)]
+    fn reward(self: @Game) -> u256 {
+        *self.price * (*self.player_count).into()
     }
 
     #[inline(always)]
@@ -103,6 +84,11 @@ impl GameImpl of GameTrait {
         turn_id.into()
     }
 
+    /// Joins a game and returns the player index.
+    /// # Arguments
+    /// * `self` - The Game.
+    /// # Returns
+    /// * The new index of the player.
     #[inline(always)]
     fn join(ref self: Game) -> u8 {
         assert(self.player_count > 0, errors::GAME_DOES_NOT_EXSIST);
@@ -114,6 +100,12 @@ impl GameImpl of GameTrait {
         index.into()
     }
 
+    /// Leaves a game and returns the last player index.
+    /// # Arguments
+    /// * `self` - The Game.
+    /// * `account` - The player address.
+    /// # Returns
+    /// * The last index of the last registered player.
     #[inline(always)]
     fn leave(ref self: Game, account: ContractAddress) -> u8 {
         assert(self.player_count > 0, errors::GAME_DOES_NOT_EXSIST);

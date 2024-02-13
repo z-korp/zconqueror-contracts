@@ -16,6 +16,7 @@ mod types {
     mod hand;
     mod map;
     mod set;
+    mod reward;
 }
 
 mod systems {
@@ -31,8 +32,11 @@ mod tests {
     mod attack;
     mod defend;
     mod transfer;
-    // mod discard;
     mod finish;
+
+    mod mocks {
+        mod erc20;
+    }
 }
 
 use zconqueror::data::v00 as config;
