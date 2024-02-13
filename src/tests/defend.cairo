@@ -25,6 +25,7 @@ use zconqueror::tests::setup::{setup, setup::{Systems, HOST, PLAYER}};
 
 const HOST_NAME: felt252 = 'HOST';
 const PLAYER_NAME: felt252 = 'PLAYER';
+const PRICE: u256 = 1_000_000_000_000_000_000;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u8 = 0;
 
@@ -36,7 +37,7 @@ fn test_defend_win() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -115,7 +116,7 @@ fn test_defend_lose() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -196,7 +197,7 @@ fn test_defend_revert_invalid_order() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -256,7 +257,7 @@ fn test_defend_revert_invalid_player() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -297,7 +298,7 @@ fn test_defend_revert_invalid_owner() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());

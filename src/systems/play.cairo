@@ -64,9 +64,9 @@ mod play {
     use zconqueror::models::game::{Game, GameTrait, Turn};
     use zconqueror::models::player::{Player, PlayerTrait};
     use zconqueror::models::tile::{Tile, TileTrait};
-    use zconqueror::models::hand::HandTrait;
-    use zconqueror::models::map::{Map, MapTrait};
-    use zconqueror::models::set::SetTrait;
+    use zconqueror::types::hand::HandTrait;
+    use zconqueror::types::map::{Map, MapTrait};
+    use zconqueror::types::set::SetTrait;
 
     // Internal imports
 

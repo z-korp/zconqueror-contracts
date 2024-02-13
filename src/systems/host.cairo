@@ -6,7 +6,9 @@ use dojo::world::IWorldDispatcher;
 
 #[starknet::interface]
 trait IHost<TContractState> {
-    fn create(self: @TContractState, world: IWorldDispatcher, player_name: felt252) -> u32;
+    fn create(
+        self: @TContractState, world: IWorldDispatcher, player_name: felt252, price: u256
+    ) -> u32;
     fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252);
     fn leave(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32);
@@ -33,7 +35,7 @@ mod host {
     use zconqueror::models::game::{Game, GameTrait};
     use zconqueror::models::player::{Player, PlayerTrait};
     use zconqueror::models::tile::{Tile, TileTrait};
-    use zconqueror::models::map::{Map, MapTrait};
+    use zconqueror::types::map::{Map, MapTrait};
 
     // Internal imports
 
@@ -58,14 +60,16 @@ mod host {
 
     #[external(v0)]
     impl Host of IHost<ContractState> {
-        fn create(self: @ContractState, world: IWorldDispatcher, player_name: felt252) -> u32 {
+        fn create(
+            self: @ContractState, world: IWorldDispatcher, player_name: felt252, price: u256
+        ) -> u32 {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
             // [Effect] Game
             let game_id = world.uuid();
             let player_address = get_caller_address();
-            let mut game = GameTrait::new(id: game_id, host: player_address);
+            let mut game = GameTrait::new(id: game_id, host: player_address, price: price);
             let player_index: u32 = game.join().into();
             store.set_game(game);
 

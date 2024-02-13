@@ -23,6 +23,7 @@ struct Game {
     player_count: u8,
     slots: u8,
     nonce: u8,
+    price: u256,
 }
 
 #[derive(Drop, PartialEq)]
@@ -44,7 +45,7 @@ mod errors {
 }
 
 trait GameTrait {
-    fn new(id: u32, host: ContractAddress) -> Game;
+    fn new(id: u32, host: ContractAddress, price: u256) -> Game;
     fn real_player_count(self: @Game) -> u8;
     fn player(self: @Game) -> u8;
     fn turn(self: @Game) -> Turn;
@@ -70,9 +71,9 @@ trait GameTrait {
 
 impl GameImpl of GameTrait {
     #[inline(always)]
-    fn new(id: u32, host: ContractAddress) -> Game {
+    fn new(id: u32, host: ContractAddress, price: u256) -> Game {
         let player_count = DEFAULT_PLAYER_COUNT;
-        Game { id, host, over: false, seed: 0, player_count, slots: player_count, nonce: 0 }
+        Game { id, host, over: false, seed: 0, player_count, slots: player_count, nonce: 0, price }
     }
 
     #[inline(always)]
@@ -191,6 +192,7 @@ mod tests {
     // Constants
 
     const ID: u32 = 0;
+    const PRICE: u256 = 1_000_000_000_000_000_000;
     const SEED: felt252 = 'SEED';
     const PLAYER_COUNT: u8 = 4;
 
@@ -209,7 +211,7 @@ mod tests {
     #[test]
     #[available_gas(100_000)]
     fn test_game_new() {
-        let game = GameTrait::new(ID, HOST());
+        let game = GameTrait::new(ID, HOST(), PRICE);
         assert(game.host == HOST(), 'Game: wrong account');
         assert(game.id == ID, 'Game: wrong id');
         assert(game.over == false, 'Game: wrong over');
@@ -222,7 +224,7 @@ mod tests {
     #[test]
     #[available_gas(100_000)]
     fn test_game_join() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.join();
         let index = game.join();
         assert(game.real_player_count() == 2, 'Game: wrong count');
@@ -234,7 +236,14 @@ mod tests {
     #[should_panic(expected: ('Game: does not exsist',))]
     fn test_game_join_revert_does_not_exist() {
         let mut game = Game {
-            id: 0, host: ZERO(), over: false, seed: 0, player_count: 0, slots: 0, nonce: 0
+            id: 0,
+            host: ZERO(),
+            over: false,
+            seed: 0,
+            player_count: 0,
+            slots: 0,
+            nonce: 0,
+            price: 0,
         };
         game.join();
     }
@@ -243,7 +252,7 @@ mod tests {
     #[available_gas(100_000)]
     #[should_panic(expected: ('Game: is over',))]
     fn test_game_join_revert_is_over() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.over = true;
         game.join();
     }
@@ -252,25 +261,16 @@ mod tests {
     #[available_gas(100_000)]
     #[should_panic(expected: ('Game: has started',))]
     fn test_game_join_revert_has_started() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.seed = 1;
         game.join();
     }
 
     #[test]
-    #[available_gas(1_000_000)]
+    #[available_gas(150_000)]
     #[should_panic(expected: ('Game: is full',))]
     fn test_game_join_revert_no_remaining_slots() {
-        let mut game = GameTrait::new(ID, HOST());
-        let mut i = 0;
-        // fill game
-        loop {
-            if i >= DEFAULT_PLAYER_COUNT {
-                break;
-            }
-            game.join();
-            i += 1;
-        };
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         let mut index = DEFAULT_PLAYER_COUNT + 1;
         loop {
             if index == 0 {
@@ -284,7 +284,7 @@ mod tests {
     #[test]
     #[available_gas(100_000)]
     fn test_game_leave() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.join();
         let index = game.leave(PLAYER());
         assert(game.real_player_count() == 0, 'Game: wrong count');
@@ -294,7 +294,7 @@ mod tests {
     #[test]
     #[available_gas(100_000)]
     fn test_game_leave_host() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.join();
         game.leave(HOST());
         assert(game.over, 'Game: wrong status');
@@ -304,7 +304,7 @@ mod tests {
     #[available_gas(100_000)]
     #[should_panic(expected: ('Game: does not exsist',))]
     fn test_game_leave_revert_does_not_exist() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.join();
         game.player_count = 0;
         game.leave(PLAYER());
@@ -314,7 +314,7 @@ mod tests {
     #[available_gas(100_000)]
     #[should_panic(expected: ('Game: is over',))]
     fn test_game_leave_revert_over() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.join();
         game.join();
         game.leave(HOST());
@@ -325,7 +325,7 @@ mod tests {
     #[available_gas(100_000)]
     #[should_panic(expected: ('Game: has started',))]
     fn test_game_leave_revert_has_started() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.seed = 1;
         game.join();
         game.leave(PLAYER());
@@ -335,7 +335,7 @@ mod tests {
     #[available_gas(100_000)]
     #[should_panic(expected: ('Game: is empty',))]
     fn test_game_leave_revert_is_empty() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.join();
         game.leave(PLAYER());
         game.leave(PLAYER());
@@ -344,7 +344,7 @@ mod tests {
     #[test]
     #[available_gas(200_000)]
     fn test_game_start() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         let mut index = PLAYER_COUNT;
         loop {
             if index == 0 {
@@ -362,7 +362,7 @@ mod tests {
     #[available_gas(200_000)]
     #[should_panic(expected: ('Game: does not exsist',))]
     fn test_game_start_revert_does_not_exist() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.player_count = 0;
         let players = array![HOST(), PLAYER()];
         game.start(players.span());
@@ -372,7 +372,7 @@ mod tests {
     #[available_gas(200_000)]
     #[should_panic(expected: ('Game: is over',))]
     fn test_game_start_revert_is_over() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.over = true;
         let players = array![HOST(), PLAYER()];
         game.start(players.span());
@@ -382,7 +382,7 @@ mod tests {
     #[available_gas(200_000)]
     #[should_panic(expected: ('Game: has started',))]
     fn test_game_start_revert_has_started() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.seed = 1;
         let players = array![HOST(), PLAYER()];
         game.start(players.span());
@@ -391,7 +391,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_game_get_player_index() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         assert(game.player() == 0, 'Game: wrong player index 0+0');
         game.nonce += 1;
         assert(game.player() == 0, 'Game: wrong player index 1+0');
@@ -413,7 +413,7 @@ mod tests {
     #[test]
     #[available_gas(100_000)]
     fn test_game_get_next_player_index() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         assert(game.player() == 0, 'Game: wrong player index 0+0');
         assert(game.next_player() == 1, 'Game: wrong next player 0+0');
         game.nonce += TURN_COUNT;
@@ -424,7 +424,7 @@ mod tests {
     #[test]
     #[available_gas(100_000)]
     fn test_game_get_turn_index() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         assert(game.turn().into() == 0_u8, 'Game: wrong turn index 0');
         game.nonce += 1;
         assert(game.turn().into() == 1_u8, 'Game: wrong turn index 1');
@@ -438,7 +438,7 @@ mod tests {
     #[test]
     #[available_gas(100_000)]
     fn test_game_pass() {
-        let mut game = GameTrait::new(ID, HOST());
+        let mut game = GameTrait::new(ID, HOST(), PRICE);
         game.pass();
         assert(game.player() == 1, 'Game: wrong player');
         game.nonce += 1;
