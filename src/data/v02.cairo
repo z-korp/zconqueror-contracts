@@ -120,13 +120,13 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
     if id == 1 {
         return Option::Some(array![2].span());
     } else if id == 2 {
-        return Option::Some(array![3,1].span());
+        return Option::Some(array![3, 1].span());
     } else if id == 3 {
         return Option::Some(array![4, 5, 2].span());
     } else if id == 4 {
-        return Option::Some(array![3,5].span());
+        return Option::Some(array![3, 5].span());
     } else if id == 5 {
-        return Option::Some(array![4,3].span());
+        return Option::Some(array![4, 3].span());
     } else {
         return Option::None;
     }
