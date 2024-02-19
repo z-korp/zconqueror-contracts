@@ -4,6 +4,7 @@ mod store;
 mod data {
     mod v00;
     mod v01;
+    mod v02;
 }
 
 mod models {
@@ -39,4 +40,4 @@ mod tests {
     }
 }
 
-use zconqueror::data::v00 as config;
+use zconqueror::data::v01 as config;
