@@ -40,4 +40,4 @@ mod tests {
     }
 }
 
-use zconqueror::data::v01 as config;
+use zconqueror::data::v00 as config;
