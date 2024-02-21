@@ -149,7 +149,7 @@ mod play {
         troops: u32,
     }
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl Play of IPlay<ContractState> {
         fn attack(
             self: @ContractState,
@@ -169,7 +169,7 @@ mod play {
             // [Check] Caller is player
             let caller = get_caller_address();
             let mut player = store.current_player(game);
-            assert(caller == player.address, errors::ATTACK_INVALID_PLAYER);
+            assert(player.address == caller.into(), errors::ATTACK_INVALID_PLAYER);
 
             // [Check] Tiles owner
             let mut attacker = store.tile(game, attacker_index);
@@ -201,7 +201,7 @@ mod play {
             // [Check] Caller is player
             let caller = get_caller_address();
             let mut player = store.current_player(game);
-            assert(caller == player.address, errors::DEFEND_INVALID_PLAYER);
+            assert(player.address == caller.into(), errors::DEFEND_INVALID_PLAYER);
 
             // [Check] Tiles owner
             let mut attacker = store.tile(game, attacker_index);
@@ -250,7 +250,7 @@ mod play {
             // [Check] Caller is player
             let caller = get_caller_address();
             let mut player = store.current_player(game);
-            assert(caller == player.address, errors::DISCARD_INVALID_PLAYER);
+            assert(player.address == caller.into(), errors::DISCARD_INVALID_PLAYER);
 
             // [Compute] Discard
             let tiles = store.tiles(game).span();
@@ -271,7 +271,7 @@ mod play {
             let caller = get_caller_address();
             let mut game: Game = store.game(game_id);
             let mut player = store.current_player(game);
-            assert(caller == player.address, errors::FINISH_INVALID_PLAYER);
+            assert(player.address == caller.into(), errors::FINISH_INVALID_PLAYER);
 
             // [Check] Player supply is empty
             let mut player = store.current_player(game);
@@ -296,7 +296,7 @@ mod play {
                 loop {
                     let mut next_player = store.current_player(game);
                     // [Check] Next player is the current player means game is over
-                    if next_player.address == caller {
+                    if next_player.address == caller.into() {
                         // [Effect] Update player
                         next_player.rank(store.get_next_rank(game));
                         store.set_player(next_player);
@@ -355,7 +355,7 @@ mod play {
             // [Check] Caller is player
             let caller = get_caller_address();
             let mut player = store.current_player(game);
-            assert(caller == player.address, errors::SUPPLY_INVALID_PLAYER);
+            assert(player.address == caller.into(), errors::SUPPLY_INVALID_PLAYER);
 
             // [Check] Tile owner
             let mut tile = store.tile(game, tile_index.into());
@@ -397,7 +397,7 @@ mod play {
             // [Check] Caller is player
             let caller = get_caller_address();
             let mut player = store.current_player(game);
-            assert(caller == player.address, errors::TRANSFER_INVALID_PLAYER);
+            assert(player.address == caller.into(), errors::TRANSFER_INVALID_PLAYER);
 
             // [Check] Tiles owner
             let mut from = store.tile(game, from_index);

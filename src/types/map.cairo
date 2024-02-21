@@ -89,8 +89,6 @@ impl MapImpl of MapTrait {
     ) -> Map {
         // [Check] There is enough army to supply at least 1 unit per tile
         assert(player_count * army_count >= tile_count, errors::INVALID_ARMY_COUNT);
-        // [Compute] Seed in u256 for futher operations
-        let base_seed: u256 = seed.into();
         // Use the deck mechanism to shuffle the tiles
         let mut deck = DeckTrait::new(seed, tile_count);
         // Each player draw R/N where R is the remaining cards and N the number of players left

@@ -27,13 +27,13 @@ const HOST_NAME: felt252 = 'HOST';
 const PLAYER_NAME: felt252 = 'PLAYER';
 const PRICE: u256 = 1_000_000_000_000_000_000;
 const PLAYER_COUNT: u8 = 2;
-const PLAYER_INDEX: u8 = 0;
+const PLAYER_INDEX: u32 = 0;
 
 #[test]
 #[available_gas(1_000_000_000)]
 fn test_attack() {
     // [Setup]
-    let (world, systems, context) = setup::spawn_game();
+    let (world, systems, _) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -57,7 +57,8 @@ fn test_attack() {
     };
 
     // [Supply]
-    set_contract_address(initial_player.address);
+    let contract_address = starknet::contract_address_try_from_felt252(initial_player.address);
+    set_contract_address(contract_address.unwrap());
     systems.play.supply(world, game_id, attacker, supply);
 
     // [Finish]
@@ -88,7 +89,7 @@ fn test_attack() {
 #[should_panic(expected: ('Attack: invalid player', 'ENTRYPOINT_FAILED',))]
 fn test_attack_revert_invalid_player() {
     // [Setup]
-    let (world, systems, context) = setup::spawn_game();
+    let (world, systems, _) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -112,7 +113,8 @@ fn test_attack_revert_invalid_player() {
     };
 
     // [Supply]
-    set_contract_address(initial_player.address);
+    let contract_address = starknet::contract_address_try_from_felt252(initial_player.address);
+    set_contract_address(contract_address.unwrap());
     systems.play.supply(world, game_id, tile_index, supply);
 
     // [Finish]
@@ -129,7 +131,7 @@ fn test_attack_revert_invalid_player() {
 #[should_panic(expected: ('Attack: invalid owner', 'ENTRYPOINT_FAILED',))]
 fn test_attack_revert_invalid_owner() {
     // [Setup]
-    let (world, systems, context) = setup::spawn_game();
+    let (world, systems, _) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -153,7 +155,8 @@ fn test_attack_revert_invalid_owner() {
     };
 
     // [Supply]
-    set_contract_address(initial_player.address);
+    let contract_address = starknet::contract_address_try_from_felt252(initial_player.address);
+    set_contract_address(contract_address.unwrap());
     systems.play.supply(world, game_id, tile_index, supply);
 
     // [Finish]

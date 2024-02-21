@@ -14,7 +14,7 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 
 use zconqueror::config::TILE_NUMBER;
 use zconqueror::store::{Store, StoreTrait};
-use zconqueror::models::game::{Game, GameTrait, DEFAULT_PLAYER_COUNT};
+use zconqueror::models::game::{Game, GameTrait};
 use zconqueror::models::player::Player;
 use zconqueror::models::tile::Tile;
 use zconqueror::systems::host::IHostDispatcherTrait;
@@ -33,7 +33,7 @@ const PLAYER_COUNT: u8 = 2;
 #[available_gas(1_000_000_000)]
 fn test_host_create_and_join() {
     // [Setup]
-    let (world, systems, context) = setup::spawn_game();
+    let (world, systems, _) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -60,10 +60,12 @@ fn test_host_create_and_join() {
             break;
         }
         let player: Player = store.player(game, player_index.into());
-        let player_name: u256 = player.name.into();
         assert(player.game_id == game.id, 'Player: wrong game id');
         assert(player.index == player_index.into(), 'Player: wrong order');
-        assert(player.address == HOST() || player.address == PLAYER(), 'Player: wrong address');
+        assert(
+            player.address == HOST().into() || player.address == PLAYER().into(),
+            'Player: wrong address'
+        );
         assert(player.name == HOST_NAME || player.name == PLAYER_NAME, 'Player: wrong name');
         assert(
             player.supply == 0 || (game.player().into() == player.index && player.supply > 0),
@@ -92,25 +94,25 @@ fn test_host_create_and_join() {
 
 #[test]
 #[available_gas(1_000_000_000)]
-fn test_host_create_and_host_leaves() {
+fn test_host_create_and_host_deletes() {
     // [Setup]
-    let (world, systems, context) = setup::spawn_game();
+    let (world, systems, _) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
     let game_id = systems.host.create(world, HOST_NAME, PRICE);
-    systems.host.leave(world, game_id);
+    systems.host.delete(world, game_id);
 
     // [Assert] Game
     let game: Game = store.game(game_id);
-    assert(game.slots == DEFAULT_PLAYER_COUNT, 'Game: wrong slots');
+    assert(game.player_count == 0, 'Game: wrong player count');
 }
 
 #[test]
 #[available_gas(1_000_000_000)]
 fn test_host_create_and_player_leaves() {
     // [Setup]
-    let (world, systems, context) = setup::spawn_game();
+    let (world, systems, _) = setup::spawn_game();
     let mut store = StoreTrait::new(world);
 
     // [Create]
@@ -121,7 +123,53 @@ fn test_host_create_and_player_leaves() {
 
     // [Assert] Game
     let game: Game = store.game(game_id);
-    assert(game.slots == DEFAULT_PLAYER_COUNT - 1, 'Game: wrong slots');
+    assert(game.player_count == 1, 'Game: wrong player count');
+}
+
+#[test]
+#[available_gas(1_000_000_000)]
+fn test_host_create_and_tranfer_and_host_leaves() {
+    // [Setup]
+    let (world, systems, _) = setup::spawn_game();
+    let mut store = StoreTrait::new(world);
+
+    // [Create]
+    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    let game = store.game(game_id);
+    let player = store.find_player(game, PLAYER()).unwrap();
+    systems.host.transfer(world, game_id, player.index);
+    systems.host.leave(world, game_id);
+
+    // [Assert] Game
+    let game: Game = store.game(game_id);
+    assert(game.player_count == 1, 'Game: wrong player count');
+}
+
+#[test]
+#[available_gas(1_000_000_000)]
+fn test_host_create_and_tranfer_and_kick_host() {
+    // [Setup]
+    let (world, systems, _) = setup::spawn_game();
+    let mut store = StoreTrait::new(world);
+
+    // [Create]
+    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    let game = store.game(game_id);
+    let player = store.find_player(game, PLAYER()).unwrap();
+    systems.host.transfer(world, game_id, player.index);
+    set_contract_address(PLAYER());
+    let player = store.find_player(game, HOST()).unwrap();
+    systems.host.kick(world, game_id, player.index);
+
+    // [Assert] Game
+    let game: Game = store.game(game_id);
+    assert(game.player_count == 1, 'Game: wrong player count');
 }
 
 #[test]
@@ -129,8 +177,7 @@ fn test_host_create_and_player_leaves() {
 #[should_panic(expected: ('Game: has started', 'ENTRYPOINT_FAILED',))]
 fn test_host_start_then_join_revert_started() {
     // [Setup]
-    let (world, systems, context) = setup::spawn_game();
-    let mut store = StoreTrait::new(world);
+    let (world, systems, _) = setup::spawn_game();
 
     // [Create]
     let game_id = systems.host.create(world, HOST_NAME, PRICE);
@@ -149,8 +196,7 @@ fn test_host_start_then_join_revert_started() {
 #[should_panic(expected: ('Game: has started', 'ENTRYPOINT_FAILED',))]
 fn test_host_start_then_leave_revert_started() {
     // [Setup]
-    let (world, systems, context) = setup::spawn_game();
-    let mut store = StoreTrait::new(world);
+    let (world, systems, _) = setup::spawn_game();
 
     // [Create]
     let game_id = systems.host.create(world, HOST_NAME, PRICE);
