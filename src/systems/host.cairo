@@ -15,6 +15,9 @@ trait IHost<TContractState> {
     ) -> u32;
     fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252);
     fn leave(self: @TContractState, world: IWorldDispatcher, game_id: u32);
+    fn delete(self: @TContractState, world: IWorldDispatcher, game_id: u32);
+    fn kick(self: @TContractState, world: IWorldDispatcher, game_id: u32, index: u32);
+    fn transfer(self: @TContractState, world: IWorldDispatcher, game_id: u32, index: u32);
     fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn claim(self: @TContractState, world: IWorldDispatcher, game_id: u32);
 }
@@ -33,7 +36,9 @@ trait IERC20<TContractState> {
 mod host {
     // Starknet imports
 
-    use starknet::{ContractAddress, get_caller_address, get_contract_address};
+    use starknet::{
+        ContractAddress, get_caller_address, get_contract_address, contract_address_try_from_felt252
+    };
 
     // Dojo imports
 
@@ -45,8 +50,8 @@ mod host {
 
     // Models imports
 
-    use zconqueror::models::game::{Game, GameTrait};
-    use zconqueror::models::player::{Player, PlayerTrait};
+    use zconqueror::models::game::{Game, GameTrait, GameAssert};
+    use zconqueror::models::player::{Player, PlayerTrait, PlayerAssert};
     use zconqueror::models::tile::{Tile, TileTrait};
     use zconqueror::types::map::{Map, MapTrait};
     use zconqueror::types::reward::{Reward, RewardTrait};
@@ -74,7 +79,7 @@ mod host {
     #[storage]
     struct Storage {}
 
-    #[external(v0)]
+    #[abi(embed_v0)]
     impl Host of IHost<ContractState> {
         fn create(
             self: @ContractState, world: IWorldDispatcher, player_name: felt252, price: u256
@@ -83,18 +88,18 @@ mod host {
             let mut store: Store = StoreTrait::new(world);
 
             // [Interaction] Pay
-            let player_address = get_caller_address();
-            self._pay(world, player_address, price);
+            let caller = get_caller_address();
+            self._pay(world, caller, price);
 
             // [Effect] Game
             let game_id = world.uuid();
-            let mut game = GameTrait::new(id: game_id, host: player_address, price: price);
+            let mut game = GameTrait::new(id: game_id, host: caller.into(), price: price);
             let player_index: u32 = game.join().into();
             store.set_game(game);
 
             // [Effect] Player
             let player = PlayerTrait::new(
-                game_id, index: player_index, address: player_address, name: player_name
+                game_id, index: player_index, address: caller.into(), name: player_name
             );
             store.set_player(player);
 
@@ -108,14 +113,14 @@ mod host {
 
             // [Check] Player not in lobby
             let mut game = store.game(game_id);
-            let player_address = get_caller_address();
-            match store.find_player(game, player_address) {
+            let caller = get_caller_address();
+            match store.find_player(game, caller) {
                 Option::Some(_) => panic(array![errors::HOST_PLAYER_ALREADY_IN_LOBBY]),
                 Option::None => (),
             };
 
             // [Interaction] Pay
-            self._pay(world, player_address, game.price);
+            self._pay(world, caller, game.price);
 
             // [Effect] Game
             let player_index: u32 = game.join().into();
@@ -123,9 +128,27 @@ mod host {
 
             // [Effect] Player
             let player = PlayerTrait::new(
-                game_id, index: player_index, address: player_address, name: player_name
+                game_id, index: player_index, address: caller.into(), name: player_name
             );
             store.set_player(player);
+        }
+
+        fn transfer(self: @ContractState, world: IWorldDispatcher, game_id: u32, index: u32) {
+            // [Setup] Datastore
+            let mut store: Store = StoreTrait::new(world);
+
+            // [Check] Caller is the host
+            let mut game = store.game(game_id);
+            let caller = get_caller_address();
+            game.assert_is_host(caller.into());
+
+            // [Check] Player exists
+            let mut player = store.player(game, index);
+            player.assert_exists();
+
+            // [Effect] Update Game
+            game.transfer(player.address);
+            store.set_game(game);
         }
 
         fn leave(self: @ContractState, world: IWorldDispatcher, game_id: u32,) {
@@ -134,17 +157,17 @@ mod host {
 
             // [Check] Player in lobby
             let mut game = store.game(game_id);
-            let player_address = get_caller_address();
-            let player = match store.find_player(game, player_address) {
+            let caller = get_caller_address();
+            let mut player = match store.find_player(game, caller) {
                 Option::Some(player) => player,
                 Option::None => panic(array![errors::HOST_PLAYER_NOT_IN_LOBBY]),
             };
 
-            // [Effect] Game
-            let last_index = game.leave(player_address);
+            // [Effect] Update Game
+            let last_index = game.leave(caller.into());
             store.set_game(game);
 
-            // [Effect] Player
+            // [Effect] Update Player
             let mut last_player = store.player(game, last_index);
             if last_player.index != player.index {
                 last_player.index = player.index;
@@ -152,7 +175,71 @@ mod host {
             }
 
             // [Interaction] Refund
-            self._refund(world, player_address, game.price);
+            let recipient = starknet::contract_address_try_from_felt252(player.address).unwrap();
+            self._refund(world, recipient, game.price);
+
+            // [Effect] Update Player
+            player.nullify();
+            store.set_player(player);
+        }
+
+        fn kick(self: @ContractState, world: IWorldDispatcher, game_id: u32, index: u32) {
+            // [Setup] Datastore
+            let mut store: Store = StoreTrait::new(world);
+
+            // [Check] Caller is the host
+            let mut game = store.game(game_id);
+            let caller = get_caller_address();
+            game.assert_is_host(caller.into());
+
+            // [Check] Player exists
+            let mut player = store.player(game, index);
+            player.assert_exists();
+
+            // [Effect] Update Game
+            let last_index = game.kick(player.address);
+            store.set_game(game);
+
+            // [Effect] Update last Player
+            let mut last_player = store.player(game, last_index);
+            if last_player.index != player.index {
+                last_player.index = player.index;
+                store.set_player(last_player);
+            }
+
+            // [Interaction] Refund
+            let address = starknet::contract_address_try_from_felt252(player.address).unwrap();
+            self._refund(world, address, game.price);
+
+            // [Effect] Update Player
+            player.nullify();
+            store.set_player(player);
+        }
+
+        fn delete(self: @ContractState, world: IWorldDispatcher, game_id: u32) {
+            // [Setup] Datastore
+            let mut store: Store = StoreTrait::new(world);
+
+            // [Check] Player exists
+            let mut game = store.game(game_id);
+            let caller = get_caller_address();
+            let mut player = match store.find_player(game, caller) {
+                Option::Some(player) => player,
+                Option::None => panic(array![errors::HOST_PLAYER_NOT_IN_LOBBY]),
+            };
+            player.assert_exists();
+
+            // [Interaction] Refund
+            let address = starknet::contract_address_try_from_felt252(player.address).unwrap();
+            self._refund(world, address, game.price);
+
+            // [Effect] Update Game
+            game.delete(player.address);
+            store.set_game(game);
+
+            // [Effect] Update Player
+            player.nullify();
+            store.set_player(player);
         }
 
         fn start(self: @ContractState, world: IWorldDispatcher, game_id: u32,) {
@@ -162,7 +249,7 @@ mod host {
             // [Check] Caller is the host
             let mut game = store.game(game_id);
             let caller = get_caller_address();
-            assert(caller == game.host, errors::HOST_CALLER_IS_NOT_THE_HOST);
+            game.assert_is_host(caller.into());
 
             // [Effect] Start game
             let mut addresses = array![];
@@ -173,10 +260,12 @@ mod host {
                     Option::None => { break; },
                 };
             };
-            game.start(addresses.span());
+
+            // [Effect] Update Game
+            game.start(addresses);
             store.set_game(game);
 
-            // [Effect] Tiles
+            // [Effect] Update Tiles
             let mut map = MapTrait::new(
                 game_id: game.id,
                 seed: game.seed,
@@ -199,7 +288,7 @@ mod host {
                 player_index += 1;
             };
 
-            // [Effect] Players
+            // [Effect] Update Players
             // Use the deck mechanism to define the player order
             // First player got his supply set
             let mut deck = DeckTrait::new(game.seed, game.player_count.into());
@@ -210,7 +299,7 @@ mod host {
                     break;
                 };
                 let index = deck.draw() - 1;
-                let mut player = store.player(game, index);
+                let mut player = store.player(game, index.into());
                 player.index = player_index;
                 if player_index == 0 {
                     let player_score = map.score(player_index.into());
@@ -262,7 +351,7 @@ mod host {
         }
 
         fn _refund(
-            self: @ContractState, world: IWorldDispatcher, caller: ContractAddress, amount: u256
+            self: @ContractState, world: IWorldDispatcher, recipient: ContractAddress, amount: u256
         ) {
             // [Check] Amount is not null, otherwise return
             if amount == 0 {
@@ -270,9 +359,8 @@ mod host {
             }
 
             // [Interaction] Transfer
-            let contract = get_contract_address();
             let erc20 = IERC20Dispatcher { contract_address: constants::ERC20_ADDRESS() };
-            let status = erc20.transfer(caller, amount);
+            let status = erc20.transfer(recipient, amount);
 
             // [Check] Status
             assert(status, errors::ERC20_REFUND_FAILED);
@@ -286,20 +374,26 @@ mod host {
 
             // [Setup] Top players
             let first = store.find_ranked_player(game, 1);
-            let first_address = match first {
-                Option::Some(player) => { player.address },
+            let first_address: ContractAddress = match first {
+                Option::Some(player) => {
+                    contract_address_try_from_felt252(player.address).unwrap()
+                },
                 Option::None => { constants::ZERO() },
             };
 
             let second = store.find_ranked_player(game, 2);
-            let second_address = match second {
-                Option::Some(player) => { player.address },
+            let second_address: ContractAddress = match second {
+                Option::Some(player) => {
+                    contract_address_try_from_felt252(player.address).unwrap()
+                },
                 Option::None => { constants::ZERO() },
             };
 
             let third = store.find_ranked_player(game, 3);
-            let third_address = match third {
-                Option::Some(player) => { player.address },
+            let third_address: ContractAddress = match third {
+                Option::Some(player) => {
+                    contract_address_try_from_felt252(player.address).unwrap()
+                },
                 Option::None => { constants::ZERO() },
             };
 

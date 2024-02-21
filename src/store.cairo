@@ -35,7 +35,7 @@ impl StoreImpl of StoreTrait {
         get!(self.world, id, (Game))
     }
 
-    fn player(ref self: Store, game: Game, index: u8) -> Player {
+    fn player(ref self: Store, game: Game, index: u32) -> Player {
         get!(self.world, (game.id, index), (Player))
     }
 
@@ -63,12 +63,12 @@ impl StoreImpl of StoreTrait {
     }
 
     fn find_player(ref self: Store, game: Game, account: ContractAddress) -> Option<Player> {
-        let mut index: u32 = game.real_player_count().into();
+        let mut index: u32 = game.player_count.into();
         loop {
             index -= 1;
             let player_key = (game.id, index);
-            let player = get!(self.world, player_key.into(), (Player));
-            if player.address == account {
+            let player: Player = get!(self.world, player_key.into(), (Player));
+            if player.address == account.into() {
                 break Option::Some(player);
             }
             if index == 0 {
@@ -78,11 +78,11 @@ impl StoreImpl of StoreTrait {
     }
 
     fn find_ranked_player(ref self: Store, game: Game, rank: u8) -> Option<Player> {
-        let mut index: u32 = game.real_player_count().into();
+        let mut index: u32 = game.player_count.into();
         loop {
             index -= 1;
             let player_key = (game.id, index);
-            let player = get!(self.world, player_key.into(), (Player));
+            let player: Player = get!(self.world, player_key.into(), (Player));
             if player.rank == rank {
                 break Option::Some(player);
             }

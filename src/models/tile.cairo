@@ -56,14 +56,6 @@ trait TileTrait {
     /// # Returns
     /// * The initialized `Tile`.
     fn new(game_id: u32, id: u8, army: u32, owner: u32) -> Tile;
-    /// Returns a new `Option<Tile>` struct.
-    /// # Arguments
-    /// * `id` - The territory id.
-    /// * `army` - The initial army supply.
-    /// * `owner` - The owner id of the territory.
-    /// # Returns
-    /// * The initialized `Option<Tile>`.
-    fn try_new(game_id: u32, id: u8, army: u32, owner: u32) -> Option<Tile>;
     /// Check validity.
     /// # Arguments
     /// * `self` - The tile.
@@ -109,20 +101,8 @@ impl TileImpl of TileTrait {
     #[inline(always)]
     fn new(game_id: u32, id: u8, army: u32, owner: u32) -> Tile {
         assert(config::TILE_NUMBER >= id.into() && id > 0, errors::INVALID_ID);
-        let neighbors = config::neighbors(id).expect(errors::INVALID_ID);
+        config::neighbors(id).expect(errors::INVALID_ID);
         Tile { game_id, id, army, owner, dispatched: 0, to: 0, from: 0, order: 0 }
-    }
-
-    #[inline(always)]
-    fn try_new(game_id: u32, id: u8, army: u32, owner: u32) -> Option<Tile> {
-        let wrapped_neighbors = config::neighbors(id);
-        match wrapped_neighbors {
-            Option::Some(neighbors) => {
-                let tile = TileTrait::new(game_id, id, army, owner);
-                Option::Some(tile)
-            },
-            Option::None => Option::None,
-        }
     }
 
     #[inline(always)]
@@ -245,7 +225,6 @@ impl TileImpl of TileTrait {
 /// * The defensive and offensive survivors.
 fn _battle(mut defensives: u32, mut offensives: u32, ref dice: Dice) -> (u32, u32) {
     // [Compute] Losses
-    let mut index = 0;
     loop {
         if defensives == 0 || offensives == 0 {
             break;
@@ -488,25 +467,8 @@ mod tests {
 
     #[test]
     #[available_gas(1_000_000)]
-    fn test_tile_try_new() {
-        let wrapped_tile = TileTrait::try_new(GAME_ID, 1, 4, PLAYER_1);
-        let tile = wrapped_tile.unwrap();
-        assert(tile.army == 4, 'Tile: wrong tile army');
-    }
-
-    #[test]
-    #[available_gas(1_000_000)]
-    #[should_panic(expected: ('Tile: invalid id',))]
-    fn test_tile_try_new_invalid_id() {
-        let invalid_id = config::TILE_NUMBER.try_into().unwrap() + 1;
-        let wrapped_tile = TileTrait::try_new(GAME_ID, invalid_id, 4, PLAYER_1);
-        wrapped_tile.expect('Tile: invalid id');
-    }
-
-    #[test]
-    #[available_gas(1_000_000)]
     fn test_tile_supply() {
-        let mut player: Player = Default::default();
+        let mut player: Player = Zeroable::zero();
         player.supply = 5;
         let mut tile = TileTrait::new(GAME_ID, 2, 4, PLAYER_1);
         assert(tile.army == 4, 'Tile: wrong tile army');
@@ -519,7 +481,7 @@ mod tests {
     #[should_panic(expected: ('Tile: invalid id',))]
     fn test_tile_supply_invalid_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap() + 1;
-        let mut player: Player = Default::default();
+        let mut player: Player = Zeroable::zero();
         player.supply = 4;
         let mut tile = TileTrait::new(GAME_ID, invalid_id, 4, PLAYER_1);
         tile.supply(ref player, 2);
@@ -529,7 +491,7 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid supply',))]
     fn test_tile_supply_invalid_supply() {
-        let mut player: Player = Default::default();
+        let mut player: Player = Zeroable::zero();
         player.supply = 1;
         let mut tile = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         tile.supply(ref player, 2);
@@ -960,7 +922,7 @@ mod tests {
     #[should_panic(expected: ('Tile: invalid array',))]
     fn test_tile_sort_revert_len_0() {
         let array = array![];
-        let sorted = _sort(array.span());
+        _sort(array.span());
     }
 
     #[test]
@@ -968,7 +930,7 @@ mod tests {
     #[should_panic(expected: ('Tile: invalid array',))]
     fn test_tile_sort_revert_len_4() {
         let array = array![1, 2, 3, 4];
-        let sorted = _sort(array.span());
+        _sort(array.span());
     }
 
     #[test]

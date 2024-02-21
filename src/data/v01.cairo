@@ -40,9 +40,6 @@ fn card_number() -> u32 {
 /// * The corresponding tile id and unit type.
 #[inline(always)]
 fn card(id: u8) -> Option<(u8, u16)> {
-    // Tile number + 5% if > 20, otherwise add 1
-    let count = card_number();
-
     // ID cannot be 0
     if id == 0 {
         return Option::None;
