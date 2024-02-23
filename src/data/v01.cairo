@@ -162,7 +162,7 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
     } else if id == 4 {
         return Option::Some(array![3, 5, 7].span());
     } else if id == 5 {
-        return Option::Some(array![4, 3, 6].span());
+        return Option::Some(array![4, 3, 6, 26].span());
     } else if id == 6 {
         return Option::Some(array![5, 3, 28].span());
     } else if id == 7 {
@@ -174,11 +174,11 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
     } else if id == 10 {
         return Option::Some(array![9, 11].span());
     } else if id == 11 {
-        return Option::Some(array![10, 13, 15, 42].span());
+        return Option::Some(array![10, 15, 42].span());
     } else if id == 12 {
         return Option::Some(array![9, 8, 13].span());
     } else if id == 13 {
-        return Option::Some(array![11, 12, 14, 16].span());
+        return Option::Some(array![12, 14, 16].span());
     } else if id == 14 {
         return Option::Some(array![13, 16, 17, 25].span());
     } else if id == 15 {
@@ -186,15 +186,15 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
     } else if id == 16 {
         return Option::Some(array![15, 13, 14, 17, 18].span());
     } else if id == 17 {
-        return Option::Some(array![16, 14].span());
+        return Option::Some(array![16, 14, 18].span());
     } else if id == 18 {
-        return Option::Some(array![16, 19].span());
+        return Option::Some(array![16, 19, 17].span());
     } else if id == 19 {
         return Option::Some(array![18, 20, 23].span());
     } else if id == 20 {
         return Option::Some(array![19, 21, 22].span());
     } else if id == 21 {
-        return Option::Some(array![20, 21].span());
+        return Option::Some(array![20, 31].span());
     } else if id == 22 {
         return Option::Some(array![20, 23].span());
     } else if id == 23 {
@@ -226,7 +226,7 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
     } else if id == 36 {
         return Option::Some(array![35].span());
     } else if id == 37 {
-        return Option::Some(array![33, 37, 38].span());
+        return Option::Some(array![33, 39, 38].span());
     } else if id == 38 {
         return Option::Some(array![37, 39].span());
     } else if id == 39 {
