@@ -4,6 +4,7 @@ mod store;
 mod data {
     mod v00;
     mod v01;
+    mod v02;
 }
 
 mod models {
