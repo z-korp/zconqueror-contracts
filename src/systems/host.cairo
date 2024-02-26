@@ -55,7 +55,7 @@ mod host {
     use zconqueror::models::tile::{Tile, TileTrait};
     use zconqueror::types::map::{Map, MapTrait};
     use zconqueror::types::reward::{Reward, RewardTrait};
-    use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
+    use zconqueror::config::{TILE_NUMBER, start_supply};
     use zconqueror::store::{Store, StoreTrait};
     use zconqueror::constants;
 
@@ -266,12 +266,13 @@ mod host {
             store.set_game(game);
 
             // [Effect] Update Tiles
+            let army_count = start_supply(game.player_count);
             let mut map = MapTrait::new(
                 game_id: game.id,
                 seed: game.seed,
                 player_count: game.player_count.into(),
                 tile_count: TILE_NUMBER,
-                army_count: ARMY_NUMBER
+                army_count: army_count,
             );
             let mut player_index = 0;
             loop {
@@ -302,12 +303,13 @@ mod host {
                 let mut player = store.player(game, index.into());
                 player.index = player_index;
                 if player_index == 0 {
-                    let player_score = map.score(player_index.into());
-                    player.supply = if player_score < 3 {
+                    let player_score = map.player_score(player_index.into());
+                    player.supply = if player_score < 12 {
                         3
                     } else {
-                        player_score
+                        player_score / 3
                     };
+                    player.supply += map.faction_score(player_index.into());
                 };
                 ordered_players.append(player);
                 player_index += 1;

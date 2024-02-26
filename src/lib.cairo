@@ -1,5 +1,6 @@
 mod constants;
 mod store;
+mod events;
 
 mod data {
     mod v00;
