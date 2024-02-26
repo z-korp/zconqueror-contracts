@@ -422,8 +422,7 @@ mod play {
         ) {
             // [Setup] Deck
             let mut deck = DeckTrait::new(*game.seed, TILE_NUMBER.into());
-            let nonce: u256 = (*game.nonce).into() % 255;
-            deck.nonce = nonce.try_into().unwrap();
+            deck.nonce = *game.nonce;
             loop {
                 match players.pop_front() {
                     Option::Some(player) => {
