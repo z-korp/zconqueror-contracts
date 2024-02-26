@@ -50,7 +50,7 @@ fn test_host_create_and_join() {
     assert(game.over == false, 'Game: wrong status');
     assert(game.player_count == PLAYER_COUNT, 'Game: wrong player count');
     assert(game.player() >= 0, 'Game: wrong player index');
-    assert(game.turn().into() == 0_u8, 'Game: wrong player index');
+    assert(game.turn().into() == 0_u32, 'Game: wrong player index');
 
     // [Assert] Players
     let mut player_index: u8 = 0;
