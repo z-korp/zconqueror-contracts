@@ -12,7 +12,7 @@ use zconqueror::models::player::{Player, PlayerTrait};
 
 const MINIMUM_PLAYER_COUNT: u8 = 2;
 const MAXIMUM_PLAYER_COUNT: u8 = 6;
-const TURN_COUNT: u8 = 3;
+const TURN_COUNT: u32 = 3;
 
 #[derive(Model, Copy, Drop, Serde)]
 struct Game {
@@ -22,7 +22,7 @@ struct Game {
     over: bool,
     seed: felt252,
     player_count: u8,
-    nonce: u8,
+    nonce: u32,
     price: u256,
 }
 
@@ -74,7 +74,7 @@ impl GameImpl of GameTrait {
 
     #[inline(always)]
     fn player(self: Game) -> u32 {
-        let index = self.nonce / TURN_COUNT % self.player_count;
+        let index = self.nonce / TURN_COUNT % self.player_count.into();
         index.into()
     }
 
@@ -86,7 +86,7 @@ impl GameImpl of GameTrait {
 
     #[inline(always)]
     fn next_player(self: Game) -> u32 {
-        let index = (self.nonce / TURN_COUNT + 1) % self.player_count;
+        let index = (self.nonce / TURN_COUNT + 1) % self.player_count.into();
         index.into()
     }
 
@@ -199,9 +199,9 @@ impl GameImpl of GameTrait {
     }
 }
 
-impl U8IntoTurn of Into<u8, Turn> {
+impl U32IntoTurn of Into<u32, Turn> {
     #[inline(always)]
-    fn into(self: u8) -> Turn {
+    fn into(self: u32) -> Turn {
         assert(self < 3, 'U8IntoTurn: invalid turn');
         if self == 0 {
             Turn::Supply
@@ -213,9 +213,9 @@ impl U8IntoTurn of Into<u8, Turn> {
     }
 }
 
-impl TurnIntoU8 of Into<Turn, u8> {
+impl TurnIntoU32 of Into<Turn, u32> {
     #[inline(always)]
-    fn into(self: Turn) -> u8 {
+    fn into(self: Turn) -> u32 {
         match self {
             Turn::Supply => 0,
             Turn::Attack => 1,
@@ -547,13 +547,13 @@ mod tests {
     #[available_gas(100_000)]
     fn test_game_get_turn_index() {
         let mut game = GameTrait::new(ID, HOST, PRICE);
-        assert(game.turn().into() == 0_u8, 'Game: wrong turn index 0');
+        assert(game.turn().into() == 0_u32, 'Game: wrong turn index 0');
         game.nonce += 1;
-        assert(game.turn().into() == 1_u8, 'Game: wrong turn index 1');
+        assert(game.turn().into() == 1_u32, 'Game: wrong turn index 1');
         game.nonce += 1;
-        assert(game.turn().into() == 2_u8, 'Game: wrong turn index 2');
+        assert(game.turn().into() == 2_u32, 'Game: wrong turn index 2');
         game.nonce += 1;
-        assert(game.turn().into() == 0_u8, 'Game: wrong turn index 3');
+        assert(game.turn().into() == 0_u32, 'Game: wrong turn index 3');
         game.nonce += 1;
     }
 

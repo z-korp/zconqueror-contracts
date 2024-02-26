@@ -36,7 +36,7 @@ struct Battle {
     #[key]
     game_id: u32,
     #[key]
-    nonce: felt252,
+    nonce: u32,
     #[key]
     battle_id: u32,
     duel_id: u32,
