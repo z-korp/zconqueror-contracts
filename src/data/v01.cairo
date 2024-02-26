@@ -257,3 +257,23 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
         return Option::None;
     }
 }
+
+/// Return the start army supply.
+/// # Arguments
+/// * `player_count` - The fcount of player.
+/// # Returns
+/// * The start army supply.
+#[inline(always)]
+fn start_supply(player_count: u8) -> u32 {
+    let felt: felt252 = player_count.into();
+    match felt {
+        0 => { 0 },
+        1 => { 0 },
+        2 => { 40 },
+        3 => { 35 },
+        4 => { 30 },
+        5 => { 25 },
+        6 => { 20 },
+        _ => { 0 },
+    }
+}

@@ -71,7 +71,8 @@ trait MapTrait {
     /// * `player_index` - The player index for whom to calculate the score.
     /// # Returns
     /// * The score.
-    fn score(ref self: Map, player_index: u32) -> u32;
+    fn player_score(ref self: Map, player_index: u32) -> u32;
+    fn faction_score(ref self: Map, player_index: u32) -> u32;
     /// Add supply for each owned tiles in the set.
     /// # Arguments
     /// * `self` - The map.
@@ -173,12 +174,15 @@ impl MapImpl of MapTrait {
         }
     }
 
-    fn score(ref self: Map, player_index: u32) -> u32 {
+    #[inline(always)]
+    fn player_score(ref self: Map, player_index: u32) -> u32 {
         // [Compute] Player tiles count
-        let mut player_tiles = self.player_tiles(player_index);
-        let mut score = player_tiles.len();
+        self.player_tiles(player_index).len()
+    }
 
+    fn faction_score(ref self: Map, player_index: u32) -> u32 {
         // [Compute] Convert player tiles from span into array for efficiency
+        let mut player_tiles = self.player_tiles(player_index);
         let mut player_ids: Array<u8> = array![];
         loop {
             match player_tiles.pop_front() {
@@ -188,28 +192,30 @@ impl MapImpl of MapTrait {
         };
 
         // [Compute] Increase score for each full owned factions
+        let mut score = 0;
         let mut factions: Span<felt252> = config::factions();
         loop {
             match factions.pop_front() {
                 Option::Some(faction) => {
                     let mut tile_ids: Array<u8> = array![];
+                    let mut index = player_ids.len();
                     loop {
-                        match player_tiles.pop_front() {
-                            Option::Some(tile) => {
-                                let tile_faction = config::faction(*tile.id)
-                                    .expect(errors::INVALID_TILE_ID);
-                                if tile_faction == *faction {
-                                    tile_ids.append(*tile.id);
-                                } else {
-                                    player_ids.append(*tile.id);
-                                };
-                            },
-                            Option::None => { break; },
+                        if index == 0 {
+                            break;
+                        }
+                        let tile_id = player_ids.pop_front().unwrap();
+                        let tile_faction = config::faction(tile_id).expect(errors::INVALID_TILE_ID);
+                        if tile_faction == *faction {
+                            tile_ids.append(tile_id);
+                        } else {
+                            player_ids.append(tile_id);
                         };
+                        index -= 1;
                     };
                     // [Effect] Increase score
                     let faction_ids = config::ids(*faction).unwrap();
                     if faction_ids.len() == tile_ids.len() {
+                        // Multiply by 3 because the score will be devided by 3 to compute the supply
                         score += config::score(*faction).unwrap();
                     };
                 },
@@ -344,7 +350,8 @@ mod tests {
         tiles.append(TileTrait::new(GAME_ID, 4, 0, PLAYER_1));
         tiles.append(TileTrait::new(GAME_ID, 5, 0, PLAYER_1));
         let mut map = MapTrait::from_tiles(PLAYER_NUMBER, tiles.span());
-        assert(map.score(PLAYER_1) >= 5, 'Map: wrong score');
+        assert(map.player_score(PLAYER_1) == 5, 'Map: wrong player score');
+        assert(map.faction_score(PLAYER_1) > 0, 'Map: wrong faction score');
     }
 
     #[test]

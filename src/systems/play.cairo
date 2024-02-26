@@ -76,8 +76,9 @@ mod play {
     use zconqueror::types::hand::HandTrait;
     use zconqueror::types::map::{Map, MapTrait};
     use zconqueror::types::set::SetTrait;
-    use zconqueror::config::{TILE_NUMBER, ARMY_NUMBER};
+    use zconqueror::config::{TILE_NUMBER};
     use zconqueror::store::{Store, StoreTrait};
+    use zconqueror::events::{Supply, Defend, Fortify, Battle};
     use zconqueror::constants;
 
     // Local imports
@@ -114,39 +115,7 @@ mod play {
         Supply: Supply,
         Defend: Defend,
         Fortify: Fortify,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct Supply {
-        #[key]
-        game_id: u32,
-        #[key]
-        player_name: felt252,
-        troops: u32,
-        region: u8,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct Defend {
-        #[key]
-        game_id: u32,
-        #[key]
-        attacker_name: felt252,
-        #[key]
-        defender_name: felt252,
-        target_tile: u8,
-        result: bool,
-    }
-
-    #[derive(Drop, starknet::Event)]
-    struct Fortify {
-        #[key]
-        game_id: u32,
-        #[key]
-        player_name: felt252,
-        from_tile: u8,
-        to_tile: u8,
-        troops: u32,
+        Battle: Battle,
     }
 
     #[abi(embed_v0)]
@@ -211,7 +180,8 @@ mod play {
             // [Compute] Defend
             let defender_player = store.player(game, defender.owner.try_into().unwrap());
             let order = get_tx_info().unbox().transaction_hash;
-            player.conqueror = defender.defend(ref attacker, game.seed, order);
+            let mut battles: Array<Battle> = array![];
+            player.conqueror = defender.defend(ref attacker, game.seed, order, ref battles);
 
             // [Effect] Update tiles
             store.set_tiles(array![attacker, defender].span());
@@ -224,12 +194,27 @@ mod play {
                 world,
                 Defend {
                     game_id: game_id,
-                    attacker_name: player.name,
-                    defender_name: defender_player.name,
+                    attacker_index: player.index,
+                    defender_index: defender_player.index,
                     target_tile: defender_index,
                     result: player.conqueror,
                 }
             );
+
+            // [Event] Battles
+            loop {
+                match battles.pop_front() {
+                    Option::Some(battle) => {
+                        let mut battle = battle;
+                        battle.game_id = game_id;
+                        battle.nonce = game.nonce.into();
+                        battle.attacker_index = player.index;
+                        battle.defender_index = defender_player.index;
+                        emit!(world, battle);
+                    },
+                    Option::None => { break; },
+                };
+            };
         }
 
         fn discard(
@@ -313,8 +298,8 @@ mod play {
                     }
 
                     // [Check] Player score is 0 means the player is dead but not yet ranked, rank then move to next player
-                    let score = map.score(next_player.index);
-                    if 0 == score.into() {
+                    let player_score = map.player_score(next_player.index);
+                    if 0 == player_score.into() {
                         // [Effect] Update player
                         next_player.rank(store.get_next_rank(game));
                         store.set_player(next_player);
@@ -323,11 +308,12 @@ mod play {
                         continue;
                     } else {
                         // [Effect] Update next player supply and leave the loop
-                        next_player.supply = if score < 3 {
+                        next_player.supply = if player_score < 12 {
                             3
                         } else {
-                            score
+                            player_score / 3
                         };
+                        next_player.supply += map.faction_score(next_player.index);
                         store.set_player(next_player);
                         break;
                     };
@@ -374,7 +360,10 @@ mod play {
             emit!(
                 world,
                 Supply {
-                    game_id: game_id, player_name: player.name, troops: supply, region: tile_index,
+                    game_id: game_id,
+                    player_index: player.index,
+                    troops: supply,
+                    region: tile_index,
                 }
             );
         }
@@ -417,7 +406,7 @@ mod play {
                 world,
                 Fortify {
                     game_id: game_id,
-                    player_name: player.name,
+                    player_index: player.index,
                     from_tile: from_index,
                     to_tile: to_index,
                     troops: army,
@@ -433,7 +422,8 @@ mod play {
         ) {
             // [Setup] Deck
             let mut deck = DeckTrait::new(*game.seed, TILE_NUMBER.into());
-            deck.nonce = *game.nonce;
+            let nonce: u256 = (*game.nonce).into() % 255;
+            deck.nonce = nonce.try_into().unwrap();
             loop {
                 match players.pop_front() {
                     Option::Some(player) => {

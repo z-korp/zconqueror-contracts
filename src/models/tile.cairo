@@ -15,6 +15,7 @@ use origami::random::dice::{Dice, DiceTrait};
 
 use zconqueror::constants::DICE_FACES_NUMBER;
 use zconqueror::config;
+use zconqueror::events::Battle;
 use zconqueror::models::player::Player;
 
 #[derive(Model, Copy, Drop, Serde)]
@@ -81,7 +82,13 @@ trait TileTrait {
     /// * `order` - The defend order (tx hash).
     /// # Returns
     /// * The defeated status, true if attacker beat the defender, false otherwise.
-    fn defend(ref self: Tile, ref attacker: Tile, seed: felt252, order: felt252) -> bool;
+    fn defend(
+        ref self: Tile,
+        ref attacker: Tile,
+        seed: felt252,
+        order: felt252,
+        ref battles: Array<Battle>
+    ) -> bool;
     /// Supplies the tile with an army.
     /// # Arguments
     /// * `self` - The tile.
@@ -144,7 +151,13 @@ impl TileImpl of TileTrait {
     }
 
     #[inline(always)]
-    fn defend(ref self: Tile, ref attacker: Tile, seed: felt252, order: felt252) -> bool {
+    fn defend(
+        ref self: Tile,
+        ref attacker: Tile,
+        seed: felt252,
+        order: felt252,
+        ref battles: Array<Battle>
+    ) -> bool {
         // [Check] Tile ids
         self.assert();
         attacker.assert();
@@ -164,7 +177,7 @@ impl TileImpl of TileTrait {
         state = state.update(attacker.order);
         let mut dice = DiceTrait::new(DICE_FACES_NUMBER, state.finalize());
         let (defensive_survivors, offensive_survivors) = _battle(
-            self.army, attacker.dispatched, ref dice
+            self.army, attacker.dispatched, ref dice, ref battles,
         );
         // [Effect] Apply losses and update ownership
         self.army = defensive_survivors;
@@ -223,8 +236,11 @@ impl TileImpl of TileTrait {
 /// * `offensives` - The offensive army.
 /// # Returns
 /// * The defensive and offensive survivors.
-fn _battle(mut defensives: u32, mut offensives: u32, ref dice: Dice) -> (u32, u32) {
+fn _battle(
+    mut defensives: u32, mut offensives: u32, ref dice: Dice, ref battles: Array<Battle>
+) -> (u32, u32) {
     // [Compute] Losses
+    let mut battle_id: u32 = 0;
     loop {
         if defensives == 0 || offensives == 0 {
             break;
@@ -236,14 +252,15 @@ fn _battle(mut defensives: u32, mut offensives: u32, ref dice: Dice) -> (u32, u3
         };
         let offensive = if offensives > 2 {
             3
-        } else if offensives > 1 {
-            2
         } else {
-            1
+            offensives
         };
-        let (defensive_losses, offensive_losses) = _round(defensive, offensive, ref dice);
+        let (defensive_losses, offensive_losses) = _round(
+            defensive, offensive, ref dice, battle_id, ref battles
+        );
         defensives -= defensive_losses;
         offensives -= offensive_losses;
+        battle_id += 1;
     };
     (defensives, offensives)
 }
@@ -254,7 +271,9 @@ fn _battle(mut defensives: u32, mut offensives: u32, ref dice: Dice) -> (u32, u3
 /// * `offensive` - The offensive values.
 /// # Returns
 /// * The defensive and offensive losses.
-fn _round(defensive: u32, offensive: u32, ref dice: Dice) -> (u32, u32) {
+fn _round(
+    defensive: u32, offensive: u32, ref dice: Dice, battle_id: u32, ref battles: Array<Battle>
+) -> (u32, u32) {
     // [Compute] Defensive dice roll values
     let mut defensive_values: Array<u8> = ArrayTrait::new();
     let mut index = 0;
@@ -280,7 +299,7 @@ fn _round(defensive: u32, offensive: u32, ref dice: Dice) -> (u32, u32) {
     let mut sorted_offensive_values = _sort(offensive_values.span());
 
     // [Compute] Resolve duel and return losses
-    _duel(ref sorted_defensive_values, ref sorted_offensive_values)
+    _duel(ref sorted_defensive_values, ref sorted_offensive_values, battle_id, ref battles)
 }
 
 /// Resolves a duel between two sorted arrays of values.
@@ -289,19 +308,35 @@ fn _round(defensive: u32, offensive: u32, ref dice: Dice) -> (u32, u32) {
 /// * `offensive` - The offensive values.
 /// # Returns
 /// * The defensive and offensive losses.
-fn _duel(ref defensive: Span<u8>, ref offensive: Span<u8>) -> (u32, u32) {
+fn _duel(
+    ref defensive: Span<u8>, ref offensive: Span<u8>, battle_id: u32, ref battles: Array<Battle>
+) -> (u32, u32) {
     let mut defensive_losses = 0;
     let mut offensive_losses = 0;
-
+    let mut duel_id = 0;
     loop {
         if offensive.is_empty() || defensive.is_empty() {
             break;
         };
-        if *defensive.pop_front().unwrap() < *offensive.pop_front().unwrap() {
+        let defensive_value = *defensive.pop_front().unwrap();
+        let offensive_value = *offensive.pop_front().unwrap();
+        if defensive_value < offensive_value {
             defensive_losses += 1;
         } else {
             offensive_losses += 1;
         };
+        let battle = Battle {
+            game_id: 0,
+            nonce: 0,
+            battle_id: battle_id,
+            duel_id: duel_id,
+            attacker_index: 0,
+            defender_index: 0,
+            attacker_value: offensive_value,
+            defender_value: defensive_value,
+        };
+        battles.append(battle);
+        duel_id += 1;
     };
 
     (defensive_losses, offensive_losses)
@@ -445,6 +480,7 @@ mod tests {
     use zconqueror::constants::DICE_FACES_NUMBER;
     use zconqueror::config;
     use zconqueror::models::player::Player;
+    use zconqueror::events::Battle;
 
     // Local imports
 
@@ -600,6 +636,7 @@ mod tests {
     #[test]
     #[available_gas(1_200_000)]
     fn test_tile_attack_and_defend_lose() {
+        let mut battles: Array<Battle> = array![];
         let mut attacker = TileTrait::new(GAME_ID, 1, 10, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
@@ -610,7 +647,7 @@ mod tests {
         attacker.attack(3, ref defender, 'ATTACK');
         assert(attacker.to == defender.id, 'Tile: wrong attacker to');
         assert(defender.from == attacker.id, 'Tile: wrong defender from');
-        let defeated = defender.defend(ref attacker, SEED, 'DEFEND');
+        let defeated = defender.defend(ref attacker, SEED, 'DEFEND', ref battles);
         assert(attacker.to == 0, 'Tile: wrong attacker to');
         assert(attacker.army == 7, 'Tile: wrong attacker army');
         assert(defender.from == 0, 'Tile: wrong defender from');
@@ -622,6 +659,7 @@ mod tests {
     #[test]
     #[available_gas(1_200_000)]
     fn test_tile_attack_and_defend_win() {
+        let mut battles: Array<Battle> = array![];
         let mut attacker = TileTrait::new(GAME_ID, 1, 10, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
@@ -632,7 +670,7 @@ mod tests {
         attacker.attack(9, ref defender, 'ATTACK');
         assert(attacker.to == defender.id, 'Tile: wrong attacker to');
         assert(defender.from == attacker.id, 'Tile: wrong defender from');
-        let defeated = defender.defend(ref attacker, SEED, 'DEFEND');
+        let defeated = defender.defend(ref attacker, SEED, 'DEFEND', ref battles);
         assert(attacker.to == 0, 'Tile: wrong attacker to');
         assert(attacker.army == 1, 'Tile: wrong attacker army');
         assert(defender.from == 0, 'Tile: wrong defender from');
@@ -780,70 +818,77 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid order status',))]
     fn test_tile_attack_and_defend_invalid_order() {
+        let mut battles: Array<Battle> = array![];
         let mut attacker = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
         let mut defender = TileTrait::new(GAME_ID, *neighbor, 2, PLAYER_2);
         attacker.attack(3, ref defender, 'ATTACK');
-        defender.defend(ref attacker, SEED, 'ATTACK');
+        defender.defend(ref attacker, SEED, 'ATTACK', ref battles);
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid id',))]
     fn test_tile_attack_and_defend_invalid_attacker_id() {
+        let mut battles: Array<Battle> = array![];
         let invalid_id = config::TILE_NUMBER.try_into().unwrap() + 1;
         let mut attacker = TileTrait::new(GAME_ID, invalid_id, 4, PLAYER_1);
         let mut defender = TileTrait::new(GAME_ID, 1, 2, PLAYER_1);
-        defender.defend(ref attacker, SEED, 'DEFEND');
+        defender.defend(ref attacker, SEED, 'DEFEND', ref battles);
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid id',))]
     fn test_tile_attack_and_defend_invalid_defender_id() {
+        let mut battles: Array<Battle> = array![];
         let invalid_id = config::TILE_NUMBER.try_into().unwrap() + 1;
         let mut attacker = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         let mut defender = TileTrait::new(GAME_ID, invalid_id, 2, PLAYER_1);
-        defender.defend(ref attacker, SEED, 'DEFEND');
+        defender.defend(ref attacker, SEED, 'DEFEND', ref battles);
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid id',))]
     fn test_tile_attack_and_defend_invalid_id() {
+        let mut battles: Array<Battle> = array![];
         let mut attacker = TileTrait::new(GAME_ID, 2, 4, PLAYER_1);
-        attacker.defend(ref attacker, SEED, 'DEFEND');
+        attacker.defend(ref attacker, SEED, 'DEFEND', ref battles);
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid attacker',))]
     fn test_tile_attack_and_defend_invalid_attacker_self_attack() {
+        let mut battles: Array<Battle> = array![];
         let mut attacker = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
         let mut defender = TileTrait::new(GAME_ID, *neighbor, 2, PLAYER_2);
-        defender.defend(ref attacker, SEED, 'DEFEND');
+        defender.defend(ref attacker, SEED, 'DEFEND', ref battles);
     }
 
     #[test]
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid owner',))]
     fn test_tile_attack_and_defend_invalid_owner_self_attack() {
+        let mut battles: Array<Battle> = array![];
         let mut attacker = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         let mut neighbors = config::neighbors(attacker.id).expect('Tile: invalid id');
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
         let mut defender = TileTrait::new(GAME_ID, *neighbor, 2, PLAYER_2);
         attacker.attack(3, ref defender, 'ATTACK');
         defender.owner = PLAYER_1;
-        defender.defend(ref attacker, SEED, 'DEFEND');
+        defender.defend(ref attacker, SEED, 'DEFEND', ref battles);
     }
 
     #[test]
     #[available_gas(5_000_000)]
     #[should_panic(expected: ('Tile: invalid neighbor',))]
     fn test_tile_attack_and_defend_invalid_neighbor() {
+        let mut battles: Array<Battle> = array![];
         let mut defender = TileTrait::new(GAME_ID, 2, 4, PLAYER_1);
         let mut neighbors = config::neighbors(defender.id).expect('Tile: invalid id');
         let neighbor = neighbors.pop_front().expect('Tile: no neighbors');
@@ -862,7 +907,7 @@ mod tests {
         attacker.attack(1, ref defender, 'ATTACK');
         attacker.id = *index; // Attacker is now at the foreigner location
         defender.from = attacker.id;
-        defender.defend(ref attacker, SEED, 'DEFEND');
+        defender.defend(ref attacker, SEED, 'DEFEND', ref battles);
     }
 
     #[test]
@@ -936,9 +981,12 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_duel_draw() {
+        let mut battles: Array<Battle> = array![];
         let mut defensives = array![2, 1].span();
         let mut offsensives = array![2, 1].span();
-        let (defensive_losses, offensive_losses) = _duel(ref defensives, ref offsensives);
+        let (defensive_losses, offensive_losses) = _duel(
+            ref defensives, ref offsensives, 0, ref battles
+        );
         assert(defensive_losses == 0, 'Tile: wrong defensive losses');
         assert(offensive_losses == 2, 'Tile: wrong offensive losses');
     }
@@ -946,9 +994,12 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_duel_conquered() {
+        let mut battles: Array<Battle> = array![];
         let mut defensives = array![2, 1].span();
         let mut offsensives = array![3, 2].span();
-        let (defensive_losses, offensive_losses) = _duel(ref defensives, ref offsensives);
+        let (defensive_losses, offensive_losses) = _duel(
+            ref defensives, ref offsensives, 0, ref battles
+        );
         assert(defensive_losses == 2, 'Tile: wrong defensive losses');
         assert(offensive_losses == 0, 'Tile: wrong offensive losses');
     }
@@ -956,9 +1007,12 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_duel_repelled() {
+        let mut battles: Array<Battle> = array![];
         let mut defensives = array![3, 2].span();
         let mut offsensives = array![2, 1].span();
-        let (defensive_losses, offensive_losses) = _duel(ref defensives, ref offsensives);
+        let (defensive_losses, offensive_losses) = _duel(
+            ref defensives, ref offsensives, 0, ref battles
+        );
         assert(defensive_losses == 0, 'Tile: wrong defensive losses');
         assert(offensive_losses == 2, 'Tile: wrong offensive losses');
     }
@@ -966,9 +1020,12 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_duel_tight() {
+        let mut battles: Array<Battle> = array![];
         let mut defensives = array![3, 1].span();
         let mut offsensives = array![2, 2].span();
-        let (defensive_losses, offensive_losses) = _duel(ref defensives, ref offsensives);
+        let (defensive_losses, offensive_losses) = _duel(
+            ref defensives, ref offsensives, 0, ref battles
+        );
         assert(defensive_losses == 1, 'Tile: wrong defensive losses');
         assert(offensive_losses == 1, 'Tile: wrong offensive losses');
     }
@@ -976,10 +1033,13 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_round() {
+        let mut battles: Array<Battle> = array![];
         let mut dice = DiceTrait::new(DICE_FACES_NUMBER, SEED);
         let defensive = 2;
         let offensive = 3;
-        let (defensive_losses, offensive_losses) = _round(defensive, offensive, ref dice);
+        let (defensive_losses, offensive_losses) = _round(
+            defensive, offensive, ref dice, 0, ref battles
+        );
         assert(defensive_losses == 1, 'Tile: wrong defensive losses');
         assert(offensive_losses == 1, 'Tile: wrong offensive losses');
     }
@@ -987,10 +1047,13 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_battle_small() {
+        let mut battles: Array<Battle> = array![];
         let mut dice = DiceTrait::new(DICE_FACES_NUMBER, SEED);
         let defensive = 2;
         let offensive = 3;
-        let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
+        let (defensive_survivors, offensive_survivors) = _battle(
+            defensive, offensive, ref dice, ref battles
+        );
         assert(defensive_survivors == 0, 'Tile: wrong defensive survivors');
         assert(offensive_survivors == 2, 'Tile: wrong offensive survivors');
     }
@@ -998,10 +1061,13 @@ mod tests {
     #[test]
     #[available_gas(10_000_000)]
     fn test_tile_battle_big_conquered() {
+        let mut battles: Array<Battle> = array![];
         let mut dice = DiceTrait::new(DICE_FACES_NUMBER, SEED);
         let defensive = 20;
         let offensive = 30;
-        let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
+        let (defensive_survivors, offensive_survivors) = _battle(
+            defensive, offensive, ref dice, ref battles
+        );
         assert(defensive_survivors == 0, 'Tile: wrong defensive survivors');
         assert(offensive_survivors == 13, 'Tile: wrong offensive survivors');
     }
@@ -1009,10 +1075,13 @@ mod tests {
     #[test]
     #[available_gas(10_000_000)]
     fn test_tile_battle_big_repelled() {
+        let mut battles: Array<Battle> = array![];
         let mut dice = DiceTrait::new(DICE_FACES_NUMBER, SEED);
         let defensive = 30;
         let offensive = 20;
-        let (defensive_survivors, offensive_survivors) = _battle(defensive, offensive, ref dice);
+        let (defensive_survivors, offensive_survivors) = _battle(
+            defensive, offensive, ref dice, ref battles
+        );
         assert(defensive_survivors == 9, 'Tile: wrong defensive survivors');
         assert(offensive_survivors == 0, 'Tile: wrong offensive survivors');
     }
