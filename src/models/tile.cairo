@@ -339,6 +339,42 @@ fn _duel(
         duel_id += 1;
     };
 
+    loop {
+        if offensive.is_empty() {
+            break;
+        };
+        let offensive_value = *offensive.pop_front().unwrap();
+        let battle = Battle {
+            game_id: 0,
+            nonce: 0,
+            battle_id: battle_id,
+            duel_id: duel_id,
+            attacker_index: 0,
+            defender_index: 0,
+            attacker_value: offensive_value,
+            defender_value: 0,
+        };
+        battles.append(battle);
+    };
+
+    loop {
+        if defensive.is_empty() {
+            break;
+        };
+        let defensive_value = *defensive.pop_front().unwrap();
+        let battle = Battle {
+            game_id: 0,
+            nonce: 0,
+            battle_id: battle_id,
+            duel_id: duel_id,
+            attacker_index: 0,
+            defender_index: 0,
+            attacker_value: 0,
+            defender_value: defensive_value,
+        };
+        battles.append(battle);
+    };
+
     (defensive_losses, offensive_losses)
 }
 
@@ -657,7 +693,7 @@ mod tests {
     }
 
     #[test]
-    #[available_gas(1_200_000)]
+    #[available_gas(2_000_000)]
     fn test_tile_attack_and_defend_win() {
         let mut battles: Array<Battle> = array![];
         let mut attacker = TileTrait::new(GAME_ID, 1, 10, PLAYER_1);
