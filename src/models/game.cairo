@@ -162,7 +162,7 @@ impl GameImpl of GameTrait {
         self.host = host;
     }
 
-    fn start(ref self: Game, mut players: Array<felt252>) {
+    fn start(ref self: Game, time: u64, mut players: Array<felt252>) {
         // [Check] Game is valid
         self.assert_exists();
         self.assert_not_over();
@@ -179,6 +179,7 @@ impl GameImpl of GameTrait {
             };
         };
         self.seed = state.finalize();
+        self.clock = time;
     }
 
     #[inline(always)]
@@ -343,6 +344,7 @@ mod tests {
     const PLAYER_COUNT: u8 = 4;
     const HOST: felt252 = 'HOST';
     const PLAYER: felt252 = 'PLAYER';
+    const TIME: u64 = 1337;
 
     #[test]
     #[available_gas(100_000)]
@@ -489,7 +491,7 @@ mod tests {
             game.join();
         };
         let players = array![HOST, PLAYER];
-        game.start(players);
+        game.start(TIME, players);
         assert(game.seed != 0, 'Game: wrong seed');
     }
 
@@ -500,7 +502,7 @@ mod tests {
         let mut game = GameTrait::new(ID, HOST, PRICE, PENALITY);
         game.player_count = 0;
         let players = array![HOST, PLAYER];
-        game.start(players);
+        game.start(TIME, players);
     }
 
     #[test]
@@ -510,7 +512,7 @@ mod tests {
         let mut game = GameTrait::new(ID, HOST, PRICE, PENALITY);
         game.over = true;
         let players = array![HOST, PLAYER];
-        game.start(players);
+        game.start(TIME, players);
     }
 
     #[test]
@@ -520,7 +522,7 @@ mod tests {
         let mut game = GameTrait::new(ID, HOST, PRICE, PENALITY);
         game.seed = 1;
         let players = array![HOST, PLAYER];
-        game.start(players);
+        game.start(TIME, players);
     }
 
     #[test]
