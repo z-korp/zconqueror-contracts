@@ -42,6 +42,8 @@ struct Battle {
     duel_id: u32,
     attacker_index: u32,
     defender_index: u32,
+    attacker_troops: u32,
+    defender_troops: u32,
     attacker_value: u8,
     defender_value: u8,
 }
