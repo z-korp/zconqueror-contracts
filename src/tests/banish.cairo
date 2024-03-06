@@ -27,7 +27,7 @@ const HOST_NAME: felt252 = 'HOST';
 const PLAYER_NAME: felt252 = 'PLAYER';
 const ANYONE_NAME: felt252 = 'ANYONE';
 const PRICE: u256 = 1_000_000_000_000_000_000;
-const PENALITY: u64 = 60;
+const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
 
@@ -40,7 +40,7 @@ fn test_banish_2_players() {
 
     // [Create]
     set_block_timestamp(1000);
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -49,9 +49,8 @@ fn test_banish_2_players() {
     // [Banish]
     set_contract_address(PLAYER());
     let game: Game = store.game(game_id);
-    set_block_timestamp(game.clock + PENALITY + 1);
-    let player: Player = store.current_player(game);
-    systems.play.banish(world, game_id, player.index);
+    set_block_timestamp(game.clock + PENALTY + 1);
+    systems.play.banish(world, game_id);
 
     // [Assert] Game
     let game: Game = store.game(game_id);
@@ -67,7 +66,7 @@ fn test_banish_3_players() {
 
     // [Create]
     set_block_timestamp(1000);
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(ANYONE());
@@ -78,9 +77,8 @@ fn test_banish_3_players() {
     // [Banish]
     set_contract_address(PLAYER());
     let game: Game = store.game(game_id);
-    set_block_timestamp(game.clock + PENALITY + 1);
-    let player: Player = store.current_player(game);
-    systems.play.banish(world, game_id, player.index);
+    set_block_timestamp(game.clock + PENALTY + 1);
+    systems.play.banish(world, game_id);
 
     // [Assert] Game
     let game: Game = store.game(game_id);
@@ -97,16 +95,15 @@ fn test_banish_revert_game_not_started() {
 
     // [Create]
     set_block_timestamp(1000);
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
 
     // [Banish]
     set_contract_address(PLAYER());
     let game: Game = store.game(game_id);
-    set_block_timestamp(game.clock + PENALITY + 1);
-    let player: Player = store.current_player(game);
-    systems.play.banish(world, game_id, player.index);
+    set_block_timestamp(game.clock + PENALTY + 1);
+    systems.play.banish(world, game_id);
 }
 
 #[test]
@@ -119,7 +116,7 @@ fn test_banish_revert_invalid_condition() {
 
     // [Create]
     set_block_timestamp(1000);
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -128,9 +125,8 @@ fn test_banish_revert_invalid_condition() {
     // [Banish]
     set_contract_address(PLAYER());
     let game: Game = store.game(game_id);
-    set_block_timestamp(game.clock + PENALITY - 1);
-    let player: Player = store.current_player(game);
-    systems.play.banish(world, game_id, player.index);
+    set_block_timestamp(game.clock + PENALTY - 1);
+    systems.play.banish(world, game_id);
 }
 
 #[test]
@@ -143,7 +139,7 @@ fn test_banish_revert_game_is_over() {
 
     // [Create]
     set_block_timestamp(1000);
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -152,8 +148,7 @@ fn test_banish_revert_game_is_over() {
     // [Banish]
     set_contract_address(PLAYER());
     let game: Game = store.game(game_id);
-    set_block_timestamp(game.clock + PENALITY + 1);
-    let player: Player = store.current_player(game);
-    systems.play.banish(world, game_id, player.index);
-    systems.play.banish(world, game_id, player.index);
+    set_block_timestamp(game.clock + PENALTY + 1);
+    systems.play.banish(world, game_id);
+    systems.play.banish(world, game_id);
 }

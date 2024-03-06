@@ -46,7 +46,7 @@ trait IPlay<TContractState> {
         army: u32
     );
     fn surrender(self: @TContractState, world: IWorldDispatcher, game_id: u32);
-    fn banish(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_index: u32);
+    fn banish(self: @TContractState, world: IWorldDispatcher, game_id: u32);
 }
 
 #[starknet::interface]
@@ -108,7 +108,7 @@ mod play {
         const TRANSFER_INVALID_TURN: felt252 = 'Transfer: invalid turn';
         const TRANSFER_INVALID_PLAYER: felt252 = 'Transfer: invalid player';
         const TRANSFER_INVALID_OWNER: felt252 = 'Transfer: invalid owner';
-        const BANISH_NO_PENALITY_SET: felt252 = 'Banish: no penality set';
+        const BANISH_NO_PENALTY_SET: felt252 = 'Banish: no penalty set';
         const BANISH_INVALID_PLAYER: felt252 = 'Banish: invalid player';
         const BANISH_INVALID_CONDITION: felt252 = 'Banish: invalid condition';
         const SURRENDER_INVALID_PLAYER: felt252 = 'Surrender: invalid player';
@@ -284,7 +284,6 @@ mod play {
             }
 
             // [Effect] Update game
-            game.clock = get_block_timestamp();
             store.set_game(game);
         }
 
@@ -394,22 +393,18 @@ mod play {
             // [Command] If current player, then update game turn and process next player
             let current_player = store.current_player(game);
             if (current_player.address == player.address) {
+                // [Effect] Update game
                 game.pass();
                 self._finish(world, player, ref game, ref store);
-
-                // [Effect] Update game
-                game.clock = get_block_timestamp();
                 store.set_game(game);
             } else if (store.get_next_rank(game) == 1) {
-                self._finish(world, player, ref game, ref store);
-
                 // [Effect] Update game
-                game.clock = get_block_timestamp();
+                self._finish(world, player, ref game, ref store);
                 store.set_game(game);
             };
         }
 
-        fn banish(self: @ContractState, world: IWorldDispatcher, game_id: u32, player_index: u32) {
+        fn banish(self: @ContractState, world: IWorldDispatcher, game_id: u32) {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
@@ -419,17 +414,13 @@ mod play {
             game.assert_not_over();
 
             // [Check] Game penamity is valid
-            assert(game.penality != 0, errors::BANISH_NO_PENALITY_SET);
-
-            // [Check] Targeted player is the current player
-            let current_player = store.current_player(game);
-            let mut player = store.player(game, player_index);
-            assert(current_player.address == player.address, errors::BANISH_INVALID_PLAYER);
+            assert(game.penalty != 0, errors::BANISH_NO_PENALTY_SET);
 
             // [Check] Player is banishable
             let mut game: Game = store.game(game_id);
+            let mut player = store.current_player(game);
             let time = get_block_timestamp();
-            assert(time > game.clock + game.penality, errors::BANISH_INVALID_CONDITION);
+            assert(time > game.clock + game.penalty, errors::BANISH_INVALID_CONDITION);
 
             // [Effect] Update player
             player.rank(store.get_next_rank(game));
@@ -440,7 +431,6 @@ mod play {
             self._finish(world, player, ref game, ref store);
 
             // [Effect] Update game
-            game.clock = get_block_timestamp();
             store.set_game(game);
         }
     }
@@ -555,6 +545,8 @@ mod play {
                     };
                     next_player.supply += map.faction_score(next_player.index);
                     store.set_player(next_player);
+                    // [Effect] Update game clock
+                    game.clock = get_block_timestamp();
                     break;
                 };
             };

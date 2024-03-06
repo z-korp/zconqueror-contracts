@@ -27,7 +27,7 @@ const HOST_NAME: felt252 = 'HOST';
 const PLAYER_NAME: felt252 = 'PLAYER';
 const ANYONE_NAME: felt252 = 'ANYONE';
 const PRICE: u256 = 1_000_000_000_000_000_000;
-const PENALITY: u64 = 60;
+const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
 
@@ -39,7 +39,7 @@ fn test_surrender_player_quits() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -62,7 +62,7 @@ fn test_surrender_host_quits() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -85,7 +85,7 @@ fn test_surrender_3_players_player_quits() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(ANYONE());
@@ -110,7 +110,7 @@ fn test_surrender_3_players_host_quits() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(ANYONE());
@@ -135,7 +135,7 @@ fn test_surrender_3_players_anyone_quits() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(ANYONE());
@@ -160,7 +160,7 @@ fn test_surrender_revert_game_not_started() {
     let (world, systems, _) = setup::spawn_game();
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
 
@@ -177,7 +177,7 @@ fn test_banish_revert_game_is_over() {
     let (world, systems, _) = setup::spawn_game();
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALITY);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
