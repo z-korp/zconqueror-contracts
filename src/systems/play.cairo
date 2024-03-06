@@ -45,6 +45,7 @@ trait IPlay<TContractState> {
         to_index: u8,
         army: u32
     );
+    fn banish(ref self: TContractState, world: IWorldDispatcher, game_id: u32, player_index: u8);
 }
 
 #[starknet::interface]
@@ -58,7 +59,7 @@ trait IERC20<TContractState> {
 mod play {
     // Starknet imports
 
-    use starknet::{get_tx_info, get_caller_address};
+    use starknet::{get_tx_info, get_caller_address, get_block_timestamp};
 
     // Dojo imports
 
@@ -104,6 +105,9 @@ mod play {
         const TRANSFER_INVALID_TURN: felt252 = 'Transfer: invalid turn';
         const TRANSFER_INVALID_PLAYER: felt252 = 'Transfer: invalid player';
         const TRANSFER_INVALID_OWNER: felt252 = 'Transfer: invalid owner';
+        const BANISH_NO_PENALITY_SET: felt252 = 'Banish: no penality set';
+        const BANISH_INVALID_PLAYER: felt252 = 'Banish: invalid player';
+        const BANISH_INVALID_CONDITION: felt252 = 'Banish: invalid condition';
     }
 
     #[storage]
@@ -252,18 +256,25 @@ mod play {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
-            // [Check] Caller is player
+            // [Check] Caller is player or player is dead
             let caller = get_caller_address();
             let mut game: Game = store.game(game_id);
             let mut player = store.current_player(game);
-            assert(player.address == caller.into(), errors::FINISH_INVALID_PLAYER);
+            assert(
+                player.address == caller.into() || player.is_dead(), errors::FINISH_INVALID_PLAYER
+            );
 
             // [Check] Player supply is empty
-            let mut player = store.current_player(game);
-            assert(player.supply == 0, errors::FINISH_INVALID_SUPPLY);
+            assert(player.supply == 0 || player.is_dead(), errors::FINISH_INVALID_SUPPLY);
 
-            // [Command] Update next player supply if next turn is supply
-            game.increment();
+            // [Command] Update game turn according to the player status
+            if player.is_dead() {
+                game.pass();
+            } else {
+                game.increment();
+            }
+
+            // [Effect] Update next player supply if next turn is supply
             if game.turn() == Turn::Supply {
                 // [Compute] Draw card if conqueror
                 if player.conqueror {
@@ -291,7 +302,7 @@ mod play {
                     };
 
                     // [Check] Player rank is not 0 means the player is dead, move to next player
-                    if next_player.rank > 0 {
+                    if next_player.is_dead() {
                         // [Effect] Move to next player
                         game.pass();
                         continue;
@@ -321,7 +332,34 @@ mod play {
             };
 
             // [Effect] Update game
+            let time = get_block_timestamp();
+            game.clock = time;
             store.set_game(game);
+        }
+
+        fn banish(
+            ref self: ContractState, world: IWorldDispatcher, game_id: u32, player_index: u8
+        ) {
+            // [Setup] Datastore
+            let mut store: Store = StoreTrait::new(world);
+
+            // [Check] Game penamity is valid
+            let game: Game = store.game(game_id);
+            assert(game.penality > 0, errors::BANISH_NO_PENALITY_SET);
+
+            // [Check] Targeted player is the current player
+            let mut current_player = store.current_player(game);
+            let mut player = store.player(game, player_index.into());
+            assert(current_player.address == player.address, errors::BANISH_INVALID_PLAYER);
+
+            // [Check] Player is banishable
+            let mut game: Game = store.game(game_id);
+            let time = get_block_timestamp();
+            assert(time > game.clock + game.penality, errors::BANISH_INVALID_CONDITION);
+
+            // [Effect] Update player
+            player.rank(store.get_next_rank(game));
+            store.set_player(player);
         }
 
         fn supply(

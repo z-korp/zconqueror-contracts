@@ -49,6 +49,11 @@ impl PlayerImpl of PlayerTrait {
         self.conqueror = false;
         self.rank = 0;
     }
+
+    #[inline(always)]
+    fn is_dead(ref self: Player) -> bool {
+        self.rank > 0
+    }
 }
 
 #[generate_trait]

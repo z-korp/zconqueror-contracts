@@ -11,7 +11,11 @@ use dojo::world::IWorldDispatcher;
 #[starknet::interface]
 trait IHost<TContractState> {
     fn create(
-        self: @TContractState, world: IWorldDispatcher, player_name: felt252, price: u256
+        self: @TContractState,
+        world: IWorldDispatcher,
+        player_name: felt252,
+        price: u256,
+        penality: u64
     ) -> u32;
     fn join(self: @TContractState, world: IWorldDispatcher, game_id: u32, player_name: felt252);
     fn leave(self: @TContractState, world: IWorldDispatcher, game_id: u32);
@@ -82,7 +86,11 @@ mod host {
     #[abi(embed_v0)]
     impl Host of IHost<ContractState> {
         fn create(
-            self: @ContractState, world: IWorldDispatcher, player_name: felt252, price: u256
+            self: @ContractState,
+            world: IWorldDispatcher,
+            player_name: felt252,
+            price: u256,
+            penality: u64
         ) -> u32 {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
@@ -93,7 +101,9 @@ mod host {
 
             // [Effect] Game
             let game_id = world.uuid();
-            let mut game = GameTrait::new(id: game_id, host: caller.into(), price: price);
+            let mut game = GameTrait::new(
+                id: game_id, host: caller.into(), price: price, penality: penality
+            );
             let player_index: u32 = game.join().into();
             store.set_game(game);
 
