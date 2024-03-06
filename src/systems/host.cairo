@@ -41,7 +41,8 @@ mod host {
     // Starknet imports
 
     use starknet::{
-        ContractAddress, get_caller_address, get_contract_address, contract_address_try_from_felt252
+        ContractAddress, get_caller_address, get_contract_address, get_block_timestamp,
+        contract_address_try_from_felt252
     };
 
     // Dojo imports
@@ -272,7 +273,8 @@ mod host {
             };
 
             // [Effect] Update Game
-            game.start(addresses);
+            let time = get_block_timestamp();
+            game.start(time, addresses);
             store.set_game(game);
 
             // [Effect] Update Tiles

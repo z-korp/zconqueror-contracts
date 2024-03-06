@@ -4,7 +4,7 @@ use debug::PrintTrait;
 
 // Starknet imports
 
-use starknet::testing::set_contract_address;
+use starknet::testing::{set_contract_address, set_block_timestamp};
 
 // Dojo imports
 

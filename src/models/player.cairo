@@ -11,6 +11,7 @@ mod errors {
     const PLAYER_INVALID_RANK: felt252 = 'Player: invalid rank';
     const PLAYER_NOT_EXISTS: felt252 = 'Player: does not exist';
     const PLAYER_DOES_EXIST: felt252 = 'Player: does exist';
+    const PLAYER_IS_DEAD: felt252 = 'Player: is dead';
 }
 
 #[derive(Model, Copy, Drop, Serde)]
@@ -35,8 +36,14 @@ impl PlayerImpl of PlayerTrait {
     }
 
     #[inline(always)]
+    fn is_dead(self: Player) -> bool {
+        self.rank > 0
+    }
+
+    #[inline(always)]
     fn rank(ref self: Player, rank: u8) {
-        assert(rank > 0, errors::PLAYER_INVALID_RANK);
+        assert(self.rank == 0, errors::PLAYER_IS_DEAD);
+        assert(rank != 0, errors::PLAYER_INVALID_RANK);
         self.rank = rank;
     }
 
@@ -48,11 +55,6 @@ impl PlayerImpl of PlayerTrait {
         self.cards = 0;
         self.conqueror = false;
         self.rank = 0;
-    }
-
-    #[inline(always)]
-    fn is_dead(ref self: Player) -> bool {
-        self.rank > 0
     }
 }
 
