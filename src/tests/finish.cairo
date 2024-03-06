@@ -4,7 +4,7 @@ use debug::PrintTrait;
 
 // Starknet imports
 
-use starknet::testing::set_contract_address;
+use starknet::testing::{set_contract_address, set_block_timestamp};
 
 // Dojo imports
 
@@ -26,6 +26,7 @@ use zconqueror::tests::setup::{setup, setup::{Systems, Context, HOST, PLAYER}};
 const HOST_NAME: felt252 = 'HOST';
 const PLAYER_NAME: felt252 = 'PLAYER';
 const PRICE: u256 = 1_000_000_000_000_000_000;
+const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
 
@@ -37,7 +38,7 @@ fn test_finish_next_player() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -104,7 +105,7 @@ fn test_finish_revert_invalid_supply() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -127,7 +128,7 @@ fn test_finish_revert_invalid_player() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());

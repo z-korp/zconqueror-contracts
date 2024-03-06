@@ -27,6 +27,7 @@ const HOST_NAME: felt252 = 'HOST';
 const PLAYER_NAME: felt252 = 'PLAYER';
 const ANYONE_NAME: felt252 = 'ANYONE';
 const PRICE: u256 = 1_000_000_000_000_000_000;
+const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 
 #[test]
@@ -37,7 +38,7 @@ fn test_host_create_and_join() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -100,7 +101,7 @@ fn test_host_create_and_host_deletes() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     systems.host.delete(world, game_id);
 
     // [Assert] Game
@@ -116,7 +117,7 @@ fn test_host_create_and_player_leaves() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     systems.host.leave(world, game_id);
@@ -134,7 +135,7 @@ fn test_host_create_and_tranfer_and_host_leaves() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -156,7 +157,7 @@ fn test_host_create_and_tranfer_and_kick_host() {
     let mut store = StoreTrait::new(world);
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -180,7 +181,7 @@ fn test_host_start_then_join_revert_started() {
     let (world, systems, _) = setup::spawn_game();
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
@@ -199,7 +200,7 @@ fn test_host_start_then_leave_revert_started() {
     let (world, systems, _) = setup::spawn_game();
 
     // [Create]
-    let game_id = systems.host.create(world, HOST_NAME, PRICE);
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());

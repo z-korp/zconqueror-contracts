@@ -949,7 +949,7 @@
     {
       "name": "zconqueror::systems::host::host",
       "address": "0x42ba8cd5a81edc1eabc83a50dd2f0e3671ce431b24aa9affec196ed18cf6b5b",
-      "class_hash": "0x5e0feeab84027da4a714d2800a63c844cecb8d5c062b001aec1de8c145820f7",
+      "class_hash": "0xf00d6815203344af664ee628d19460f0f44b521ad60abbded927615be3ca9",
       "abi": [
         {
           "type": "impl",
@@ -999,6 +999,10 @@
                 {
                   "name": "price",
                   "type": "core::integer::u256"
+                },
+                {
+                  "name": "penalty",
+                  "type": "core::integer::u64"
                 }
               ],
               "outputs": [
@@ -1038,6 +1042,62 @@
                 },
                 {
                   "name": "game_id",
+                  "type": "core::integer::u32"
+                }
+              ],
+              "outputs": [],
+              "state_mutability": "view"
+            },
+            {
+              "type": "function",
+              "name": "delete",
+              "inputs": [
+                {
+                  "name": "world",
+                  "type": "dojo::world::IWorldDispatcher"
+                },
+                {
+                  "name": "game_id",
+                  "type": "core::integer::u32"
+                }
+              ],
+              "outputs": [],
+              "state_mutability": "view"
+            },
+            {
+              "type": "function",
+              "name": "kick",
+              "inputs": [
+                {
+                  "name": "world",
+                  "type": "dojo::world::IWorldDispatcher"
+                },
+                {
+                  "name": "game_id",
+                  "type": "core::integer::u32"
+                },
+                {
+                  "name": "index",
+                  "type": "core::integer::u32"
+                }
+              ],
+              "outputs": [],
+              "state_mutability": "view"
+            },
+            {
+              "type": "function",
+              "name": "transfer",
+              "inputs": [
+                {
+                  "name": "world",
+                  "type": "dojo::world::IWorldDispatcher"
+                },
+                {
+                  "name": "game_id",
+                  "type": "core::integer::u32"
+                },
+                {
+                  "name": "index",
                   "type": "core::integer::u32"
                 }
               ],
@@ -1092,7 +1152,7 @@
     {
       "name": "zconqueror::systems::play::play",
       "address": "0x257da84810b6e148a0a5a8e0fb0d92a2a76a6d78d6d2d3b2e8e31d084c6b131",
-      "class_hash": "0x68a109aec50a011cd151436e18b76546532a31aa4d2c13677580803c05c70db",
+      "class_hash": "0x2954728248842ba40ae8d5b39c7b0b47bb69b610c489793d6ea98dabf6ad687",
       "abi": [
         {
           "type": "impl",
@@ -1163,7 +1223,7 @@
                 }
               ],
               "outputs": [],
-              "state_mutability": "external"
+              "state_mutability": "view"
             },
             {
               "type": "function",
@@ -1231,7 +1291,7 @@
                 }
               ],
               "outputs": [],
-              "state_mutability": "external"
+              "state_mutability": "view"
             },
             {
               "type": "function",
@@ -1259,13 +1319,45 @@
                 }
               ],
               "outputs": [],
-              "state_mutability": "external"
+              "state_mutability": "view"
+            },
+            {
+              "type": "function",
+              "name": "surrender",
+              "inputs": [
+                {
+                  "name": "world",
+                  "type": "dojo::world::IWorldDispatcher"
+                },
+                {
+                  "name": "game_id",
+                  "type": "core::integer::u32"
+                }
+              ],
+              "outputs": [],
+              "state_mutability": "view"
+            },
+            {
+              "type": "function",
+              "name": "banish",
+              "inputs": [
+                {
+                  "name": "world",
+                  "type": "dojo::world::IWorldDispatcher"
+                },
+                {
+                  "name": "game_id",
+                  "type": "core::integer::u32"
+                }
+              ],
+              "outputs": [],
+              "state_mutability": "view"
             }
           ]
         },
         {
           "type": "event",
-          "name": "zconqueror::systems::play::play::Supply",
+          "name": "zconqueror::events::Supply",
           "kind": "struct",
           "members": [
             {
@@ -1274,8 +1366,8 @@
               "kind": "key"
             },
             {
-              "name": "player_name",
-              "type": "core::felt252",
+              "name": "player_index",
+              "type": "core::integer::u32",
               "kind": "key"
             },
             {
@@ -1306,7 +1398,7 @@
         },
         {
           "type": "event",
-          "name": "zconqueror::systems::play::play::Defend",
+          "name": "zconqueror::events::Defend",
           "kind": "struct",
           "members": [
             {
@@ -1315,13 +1407,13 @@
               "kind": "key"
             },
             {
-              "name": "attacker_name",
-              "type": "core::felt252",
+              "name": "attacker_index",
+              "type": "core::integer::u32",
               "kind": "key"
             },
             {
-              "name": "defender_name",
-              "type": "core::felt252",
+              "name": "defender_index",
+              "type": "core::integer::u32",
               "kind": "key"
             },
             {
@@ -1338,7 +1430,7 @@
         },
         {
           "type": "event",
-          "name": "zconqueror::systems::play::play::Fortify",
+          "name": "zconqueror::events::Fortify",
           "kind": "struct",
           "members": [
             {
@@ -1347,8 +1439,8 @@
               "kind": "key"
             },
             {
-              "name": "player_name",
-              "type": "core::felt252",
+              "name": "player_index",
+              "type": "core::integer::u32",
               "kind": "key"
             },
             {
@@ -1370,22 +1462,74 @@
         },
         {
           "type": "event",
+          "name": "zconqueror::events::Battle",
+          "kind": "struct",
+          "members": [
+            {
+              "name": "game_id",
+              "type": "core::integer::u32",
+              "kind": "key"
+            },
+            {
+              "name": "nonce",
+              "type": "core::integer::u32",
+              "kind": "key"
+            },
+            {
+              "name": "battle_id",
+              "type": "core::integer::u32",
+              "kind": "key"
+            },
+            {
+              "name": "duel_id",
+              "type": "core::integer::u32",
+              "kind": "data"
+            },
+            {
+              "name": "attacker_index",
+              "type": "core::integer::u32",
+              "kind": "data"
+            },
+            {
+              "name": "defender_index",
+              "type": "core::integer::u32",
+              "kind": "data"
+            },
+            {
+              "name": "attacker_value",
+              "type": "core::integer::u8",
+              "kind": "data"
+            },
+            {
+              "name": "defender_value",
+              "type": "core::integer::u8",
+              "kind": "data"
+            }
+          ]
+        },
+        {
+          "type": "event",
           "name": "zconqueror::systems::play::play::Event",
           "kind": "enum",
           "variants": [
             {
               "name": "Supply",
-              "type": "zconqueror::systems::play::play::Supply",
+              "type": "zconqueror::events::Supply",
               "kind": "nested"
             },
             {
               "name": "Defend",
-              "type": "zconqueror::systems::play::play::Defend",
+              "type": "zconqueror::events::Defend",
               "kind": "nested"
             },
             {
               "name": "Fortify",
-              "type": "zconqueror::systems::play::play::Fortify",
+              "type": "zconqueror::events::Fortify",
+              "kind": "nested"
+            },
+            {
+              "name": "Battle",
+              "type": "zconqueror::events::Battle",
               "kind": "nested"
             }
           ]
@@ -1407,7 +1551,7 @@
         },
         {
           "name": "host",
-          "type": "ContractAddress",
+          "type": "felt252",
           "key": false
         },
         {
@@ -1426,22 +1570,27 @@
           "key": false
         },
         {
-          "name": "slots",
-          "type": "u8",
-          "key": false
-        },
-        {
           "name": "nonce",
-          "type": "u8",
+          "type": "u32",
           "key": false
         },
         {
           "name": "price",
           "type": "u256",
           "key": false
+        },
+        {
+          "name": "clock",
+          "type": "u64",
+          "key": false
+        },
+        {
+          "name": "penalty",
+          "type": "u64",
+          "key": false
         }
       ],
-      "class_hash": "0x120bf1da38511b4c6c3a33e03f1457c3fdf9f165345e2b3fa05422179143f5a",
+      "class_hash": "0x1f4488e1a8bb6af25e16a8514391fc519bcf1c148c0812d085c0c0fee7574c5",
       "abi": [
         {
           "type": "impl",
@@ -1650,7 +1799,7 @@
             },
             {
               "name": "host",
-              "type": "core::starknet::contract_address::ContractAddress"
+              "type": "core::felt252"
             },
             {
               "name": "over",
@@ -1665,16 +1814,20 @@
               "type": "core::integer::u8"
             },
             {
-              "name": "slots",
-              "type": "core::integer::u8"
-            },
-            {
               "name": "nonce",
-              "type": "core::integer::u8"
+              "type": "core::integer::u32"
             },
             {
               "name": "price",
               "type": "core::integer::u256"
+            },
+            {
+              "name": "clock",
+              "type": "core::integer::u64"
+            },
+            {
+              "name": "penalty",
+              "type": "core::integer::u64"
             }
           ]
         },
@@ -1719,7 +1872,7 @@
         },
         {
           "name": "address",
-          "type": "ContractAddress",
+          "type": "felt252",
           "key": false
         },
         {
@@ -1748,7 +1901,7 @@
           "key": false
         }
       ],
-      "class_hash": "0x7a3e09e6e12ee14091598d15a4c66bdd261b46eb414f933b1ec9835e634292e",
+      "class_hash": "0x55a27d9812c49f248ff29f78a4f360c95a2860f8f8d41731daec39a88e98e3",
       "abi": [
         {
           "type": "impl",
@@ -1947,7 +2100,7 @@
             },
             {
               "name": "address",
-              "type": "core::starknet::contract_address::ContractAddress"
+              "type": "core::felt252"
             },
             {
               "name": "name",

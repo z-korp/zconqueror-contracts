@@ -35,6 +35,8 @@ mod tests {
     mod defend;
     mod transfer;
     mod finish;
+    mod surrender;
+    mod banish;
 
     mod mocks {
         mod erc20;

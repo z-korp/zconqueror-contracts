@@ -19,7 +19,7 @@ trait IPlay<TContractState> {
         dispatched: u32
     );
     fn defend(
-        ref self: TContractState,
+        self: @TContractState,
         world: IWorldDispatcher,
         game_id: u32,
         attacker_index: u8,
@@ -35,16 +35,18 @@ trait IPlay<TContractState> {
     );
     fn finish(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn supply(
-        ref self: TContractState, world: IWorldDispatcher, game_id: u32, tile_index: u8, supply: u32
+        self: @TContractState, world: IWorldDispatcher, game_id: u32, tile_index: u8, supply: u32
     );
     fn transfer(
-        ref self: TContractState,
+        self: @TContractState,
         world: IWorldDispatcher,
         game_id: u32,
         from_index: u8,
         to_index: u8,
         army: u32
     );
+    fn surrender(self: @TContractState, world: IWorldDispatcher, game_id: u32);
+    fn banish(self: @TContractState, world: IWorldDispatcher, game_id: u32);
 }
 
 #[starknet::interface]
@@ -58,7 +60,9 @@ trait IERC20<TContractState> {
 mod play {
     // Starknet imports
 
-    use starknet::{get_tx_info, get_caller_address};
+    use core::option::OptionTrait;
+    use zconqueror::models::game::AssertTrait;
+    use starknet::{get_tx_info, get_caller_address, get_block_timestamp};
 
     // Dojo imports
 
@@ -104,6 +108,10 @@ mod play {
         const TRANSFER_INVALID_TURN: felt252 = 'Transfer: invalid turn';
         const TRANSFER_INVALID_PLAYER: felt252 = 'Transfer: invalid player';
         const TRANSFER_INVALID_OWNER: felt252 = 'Transfer: invalid owner';
+        const BANISH_NO_PENALTY_SET: felt252 = 'Banish: no penalty set';
+        const BANISH_INVALID_PLAYER: felt252 = 'Banish: invalid player';
+        const BANISH_INVALID_CONDITION: felt252 = 'Banish: invalid condition';
+        const SURRENDER_INVALID_PLAYER: felt252 = 'Surrender: invalid player';
     }
 
     #[storage]
@@ -154,7 +162,7 @@ mod play {
         }
 
         fn defend(
-            ref self: ContractState,
+            self: @ContractState,
             world: IWorldDispatcher,
             game_id: u32,
             attacker_index: u8,
@@ -256,18 +264,18 @@ mod play {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
-            // [Check] Caller is player
+            // [Check] Caller is player or player is dead
             let caller = get_caller_address();
             let mut game: Game = store.game(game_id);
             let mut player = store.current_player(game);
             assert(player.address == caller.into(), errors::FINISH_INVALID_PLAYER);
 
             // [Check] Player supply is empty
-            let mut player = store.current_player(game);
             assert(player.supply == 0, errors::FINISH_INVALID_SUPPLY);
 
-            // [Command] Update next player supply if next turn is supply
+            // [Command] Update game turn and process next player
             game.increment();
+            // [Effect] Update next player supply if next turn is supply
             if game.turn() == Turn::Supply {
                 // [Compute] Draw card if conqueror
                 if player.conqueror {
@@ -276,64 +284,15 @@ mod play {
                     player.conqueror = false;
                     store.set_player(player);
                 };
-
-                // [Compute] Update player
-                let tiles = store.tiles(game).span();
-                let mut map = MapTrait::from_tiles(game.player_count.into(), tiles);
-
-                // [Compute] Update next player to not dead player
-                loop {
-                    let mut next_player = store.current_player(game);
-                    // [Check] Next player is the current player means game is over
-                    if next_player.address == caller.into() {
-                        // [Effect] Update player
-                        next_player.rank(store.get_next_rank(game));
-                        store.set_player(next_player);
-                        // [Effect] Update game
-                        game.over = true;
-                        break;
-                    };
-
-                    // [Check] Player rank is not 0 means the player is dead, move to next player
-                    if next_player.rank > 0 {
-                        // [Effect] Move to next player
-                        game.pass();
-                        continue;
-                    }
-
-                    // [Check] Player score is 0 means the player is dead but not yet ranked, rank then move to next player
-                    let player_score = map.player_score(next_player.index);
-                    if 0 == player_score.into() {
-                        // [Effect] Update player
-                        next_player.rank(store.get_next_rank(game));
-                        store.set_player(next_player);
-                        // [Effect] Move to next player
-                        game.pass();
-                        continue;
-                    } else {
-                        // [Effect] Update next player supply and leave the loop
-                        next_player.supply = if player_score < 12 {
-                            3
-                        } else {
-                            player_score / 3
-                        };
-                        next_player.supply += map.faction_score(next_player.index);
-                        store.set_player(next_player);
-                        break;
-                    };
-                };
-            };
+                self._finish(world, player, ref game, ref store);
+            }
 
             // [Effect] Update game
             store.set_game(game);
         }
 
         fn supply(
-            ref self: ContractState,
-            world: IWorldDispatcher,
-            game_id: u32,
-            tile_index: u8,
-            supply: u32
+            self: @ContractState, world: IWorldDispatcher, game_id: u32, tile_index: u8, supply: u32
         ) {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
@@ -373,7 +332,7 @@ mod play {
         }
 
         fn transfer(
-            ref self: ContractState,
+            self: @ContractState,
             world: IWorldDispatcher,
             game_id: u32,
             from_index: u8,
@@ -416,6 +375,67 @@ mod play {
                     troops: army,
                 }
             );
+        }
+
+        fn surrender(self: @ContractState, world: IWorldDispatcher, game_id: u32) {
+            // [Setup] Datastore
+            let mut store: Store = StoreTrait::new(world);
+
+            // [Check] Game has started
+            let mut game: Game = store.game(game_id);
+            game.assert_has_started();
+            game.assert_not_over();
+
+            // [Effect] Update player
+            let caller = get_caller_address();
+            let mut player = store
+                .find_player(game, caller)
+                .expect(errors::SURRENDER_INVALID_PLAYER);
+            player.rank(store.get_next_rank(game));
+            store.set_player(player);
+
+            // [Command] If current player, then update game turn and process next player
+            let current_player = store.current_player(game);
+            if (current_player.address == player.address) {
+                // [Effect] Update game
+                game.pass();
+                self._finish(world, player, ref game, ref store);
+                store.set_game(game);
+            } else if (store.get_next_rank(game) == 1) {
+                // [Effect] Update game
+                self._finish(world, player, ref game, ref store);
+                store.set_game(game);
+            };
+        }
+
+        fn banish(self: @ContractState, world: IWorldDispatcher, game_id: u32) {
+            // [Setup] Datastore
+            let mut store: Store = StoreTrait::new(world);
+
+            // [Check] Game has started and not over
+            let mut game: Game = store.game(game_id);
+            game.assert_has_started();
+            game.assert_not_over();
+
+            // [Check] Game penamity is valid
+            assert(game.penalty != 0, errors::BANISH_NO_PENALTY_SET);
+
+            // [Check] Player is banishable
+            let mut game: Game = store.game(game_id);
+            let mut player = store.current_player(game);
+            let time = get_block_timestamp();
+            assert(time > game.clock + game.penalty, errors::BANISH_INVALID_CONDITION);
+
+            // [Effect] Update player
+            player.rank(store.get_next_rank(game));
+            store.set_player(player);
+
+            // [Command] Update game turn and process next player
+            game.pass();
+            self._finish(world, player, ref game, ref store);
+
+            // [Effect] Update game
+            store.set_game(game);
         }
     }
 
@@ -484,6 +504,62 @@ mod play {
                 };
             };
             tiles.span()
+        }
+
+        fn _finish(
+            self: @ContractState,
+            world: IWorldDispatcher,
+            player: Player,
+            ref game: Game,
+            ref store: Store
+        ) {
+            // [Compute] Update next player to not dead player
+            let tiles = store.tiles(game).span();
+            let mut map = MapTrait::from_tiles(game.player_count.into(), tiles);
+            let rank = store.get_next_rank(game);
+
+            loop {
+                let mut next_player = store.current_player(game);
+                // [Check] Next player is the current player or next rank is 1, means game is over
+                if next_player.address == player.address || rank == 1 {
+                    // [Effect] Update player
+                    next_player.rank(rank);
+                    store.set_player(next_player);
+                    // [Effect] Update game
+                    game.over = true;
+                    break;
+                };
+
+                // [Check] Player rank is not 0 means the player is dead, move to next player
+                if next_player.is_dead() {
+                    // [Effect] Move to next player
+                    game.pass();
+                    continue;
+                }
+
+                // [Check] Player score is 0 means the player is dead but not yet ranked, rank then move to next player
+                let player_score = map.player_score(next_player.index);
+                if 0 == player_score.into() {
+                    // [Effect] Update player
+                    next_player.rank(store.get_next_rank(game));
+                    store.set_player(next_player);
+                    // [Effect] Move to next player
+                    game.pass();
+                    continue;
+                } else {
+                    // [Effect] Update next player supply and leave the loop
+                    next_player.supply = if player_score < 12 {
+                        3
+                    } else {
+                        player_score / 3
+                    };
+                    next_player.supply += map.faction_score(next_player.index);
+                    store.set_player(next_player);
+                    // [Effect] Update game clock
+                    game.clock = get_block_timestamp();
+                    break;
+                };
+            };
         }
     }
 }
