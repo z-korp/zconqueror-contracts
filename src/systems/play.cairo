@@ -182,7 +182,9 @@ mod play {
 
             // [Check] Tiles owner
             let mut attacker = store.tile(game, attacker_index);
+            let attacker_troops = attacker.dispatched;
             let mut defender = store.tile(game, defender_index);
+            let defender_troops = defender.army;
             assert(attacker.owner == player.index.into(), errors::DEFEND_INVALID_OWNER);
 
             // [Compute] Defend
@@ -218,8 +220,9 @@ mod play {
                         battle.nonce = game.nonce.into();
                         battle.attacker_index = player.index;
                         battle.defender_index = defender_player.index;
-                        battle.attacker_troops = attacker.army;
-                        battle.defender_troops = defender.army;
+                        battle.attacker_troops = attacker_troops;
+                        battle.defender_troops = defender_troops;
+                        battle.tx_hash = get_tx_info().unbox().transaction_hash;
                         emit!(world, battle);
                     },
                     Option::None => {
