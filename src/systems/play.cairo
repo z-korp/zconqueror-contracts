@@ -225,9 +225,7 @@ mod play {
                         battle.tx_hash = get_tx_info().unbox().transaction_hash;
                         emit!(world, battle);
                     },
-                    Option::None => {
-                        break;
-                    },
+                    Option::None => { break; },
                 };
             };
         }
@@ -457,9 +455,7 @@ mod play {
                         let hand = HandTrait::load(player);
                         deck.remove(hand.cards.span());
                     },
-                    Option::None => {
-                        break;
-                    },
+                    Option::None => { break; },
                 };
             };
 
@@ -498,12 +494,8 @@ mod play {
             let mut tiles: Array<Tile> = array![];
             loop {
                 match player_tiles.pop_front() {
-                    Option::Some(tile) => {
-                        tiles.append(*tile);
-                    },
-                    Option::None => {
-                        break;
-                    },
+                    Option::Some(tile) => { tiles.append(*tile); },
+                    Option::None => { break; },
                 };
             };
             tiles.span()

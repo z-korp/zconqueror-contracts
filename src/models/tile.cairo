@@ -480,9 +480,7 @@ fn _connected_iter(
             }
             return _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds);
         },
-        Option::None => {
-            return false;
-        },
+        Option::None => { return false; },
     }
 }
 
@@ -509,9 +507,7 @@ fn _owned_dedup(ref array: Span<u8>, tiles: Span<Tile>, drops: Span<u8>, owner: 
                     result.append(element);
                 };
             },
-            Option::None => {
-                break;
-            },
+            Option::None => { break; },
         };
     };
     result.span()
@@ -665,9 +661,7 @@ mod tests {
                         break index;
                     };
                 },
-                Option::None => {
-                    panic(array!['Tile: foreigner not found']);
-                },
+                Option::None => { panic(array!['Tile: foreigner not found']); },
             };
         };
         let mut to = TileTrait::new(GAME_ID, *index, 2, PLAYER_1);
@@ -771,14 +765,10 @@ mod tests {
         let mut allies = config::neighbors(attacker.id).expect('Tile: invalid id');
         let index = loop {
             match allies.pop_front() {
-                Option::Some(index) => {
-                    if index != @defender.id {
-                        break index;
-                    };
-                },
-                Option::None => {
-                    panic(array!['Tile: ally not found']);
-                },
+                Option::Some(index) => { if index != @defender.id {
+                    break index;
+                }; },
+                Option::None => { panic(array!['Tile: ally not found']); },
             };
         };
         let mut ally = TileTrait::new(GAME_ID, *index, 2, PLAYER_1);
@@ -862,9 +852,7 @@ mod tests {
                         break index;
                     };
                 },
-                Option::None => {
-                    panic(array!['Tile: foreigner not found']);
-                },
+                Option::None => { panic(array!['Tile: foreigner not found']); },
             };
         };
         let mut foreigner = TileTrait::new(GAME_ID, *index, 2, PLAYER_2);
@@ -958,9 +946,7 @@ mod tests {
                         break index;
                     };
                 },
-                Option::None => {
-                    panic(array!['Tile: ally not found']);
-                },
+                Option::None => { panic(array!['Tile: ally not found']); },
             };
         };
         attacker.attack(1, ref defender, 'ATTACK');
