@@ -1,7 +1,7 @@
 {
   "world": {
     "name": "dojo::world::world",
-    "address": "0x4daffaec6ca974909b68f7868dd33a99151e11217751b27fef94753db48e9ec",
+    "address": "0x3a0e782a770361f8119970bfc1cdd7cd91a387a918a537d2808329b8e85e929",
     "class_hash": "0x5ac623f0c96059936bd2d0904bdd31799e430fe08a0caff7a5f497260b16497",
     "abi": [
       {
@@ -948,8 +948,8 @@
   "contracts": [
     {
       "name": "zconqueror::systems::host::host",
-      "address": "0x42ba8cd5a81edc1eabc83a50dd2f0e3671ce431b24aa9affec196ed18cf6b5b",
-      "class_hash": "0xf00d6815203344af664ee628d19460f0f44b521ad60abbded927615be3ca9",
+      "address": "0x55bac3cb43efa8a014bed327fdf470f528374f1e2208663bae331dbc2658da3",
+      "class_hash": "0x5460e2297d93aa007a46315c843aaede5b32f16acea25427af848e920ce7f1d",
       "abi": [
         {
           "type": "impl",
@@ -1151,8 +1151,8 @@
     },
     {
       "name": "zconqueror::systems::play::play",
-      "address": "0x257da84810b6e148a0a5a8e0fb0d92a2a76a6d78d6d2d3b2e8e31d084c6b131",
-      "class_hash": "0x2954728248842ba40ae8d5b39c7b0b47bb69b610c489793d6ea98dabf6ad687",
+      "address": "0x127f3efb89714e50194dab6d7a5875eb63ebee78e04adf36584b8748bf14ac7",
+      "class_hash": "0x22b0d82b6cb70bbe61e21a5f560deb92b6cd7a0cdd84d6270ecdd07fda7c1c7",
       "abi": [
         {
           "type": "impl",
@@ -1481,6 +1481,11 @@
               "kind": "key"
             },
             {
+              "name": "tx_hash",
+              "type": "core::felt252",
+              "kind": "key"
+            },
+            {
               "name": "duel_id",
               "type": "core::integer::u32",
               "kind": "data"
@@ -1492,6 +1497,16 @@
             },
             {
               "name": "defender_index",
+              "type": "core::integer::u32",
+              "kind": "data"
+            },
+            {
+              "name": "attacker_troops",
+              "type": "core::integer::u32",
+              "kind": "data"
+            },
+            {
+              "name": "defender_troops",
               "type": "core::integer::u32",
               "kind": "data"
             },
