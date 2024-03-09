@@ -250,7 +250,7 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
     } else if id == 48 {
         return Option::Some(array![47].span());
     } else if id == 49 {
-        return Option::Some(array![50, 48].span());
+        return Option::Some(array![50, 47].span());
     } else if id == 50 {
         return Option::Some(array![32, 49].span());
     } else {
