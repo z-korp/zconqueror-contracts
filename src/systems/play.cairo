@@ -191,7 +191,8 @@ mod play {
             let defender_player = store.player(game, defender.owner.try_into().unwrap());
             let order = get_tx_info().unbox().transaction_hash;
             let mut battles: Array<Battle> = array![];
-            player.conqueror = defender.defend(ref attacker, game.seed, order, ref battles);
+            let status = defender.defend(ref attacker, game.seed, order, ref battles);
+            player.conqueror = player.conqueror || status;
 
             // [Effect] Update tiles
             store.set_tiles(array![attacker, defender].span());
