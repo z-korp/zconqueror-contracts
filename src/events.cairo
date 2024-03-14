@@ -36,11 +36,8 @@ struct Battle {
     #[key]
     game_id: u32,
     #[key]
-    nonce: u32,
-    #[key]
-    battle_id: u32,
-    #[key]
     tx_hash: felt252,
+    battle_id: u32,
     duel_id: u32,
     attacker_index: u32,
     defender_index: u32,

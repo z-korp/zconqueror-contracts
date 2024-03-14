@@ -218,7 +218,6 @@ mod play {
                     Option::Some(battle) => {
                         let mut battle = battle;
                         battle.game_id = game_id;
-                        battle.nonce = game.nonce.into();
                         battle.attacker_index = player.index;
                         battle.defender_index = defender_player.index;
                         battle.attacker_troops = attacker_troops;
@@ -226,7 +225,9 @@ mod play {
                         battle.tx_hash = get_tx_info().unbox().transaction_hash;
                         emit!(world, battle);
                     },
-                    Option::None => { break; },
+                    Option::None => {
+                        break;
+                    },
                 };
             };
         }
@@ -456,7 +457,9 @@ mod play {
                         let hand = HandTrait::load(player);
                         deck.remove(hand.cards.span());
                     },
-                    Option::None => { break; },
+                    Option::None => {
+                        break;
+                    },
                 };
             };
 
@@ -495,8 +498,12 @@ mod play {
             let mut tiles: Array<Tile> = array![];
             loop {
                 match player_tiles.pop_front() {
-                    Option::Some(tile) => { tiles.append(*tile); },
-                    Option::None => { break; },
+                    Option::Some(tile) => {
+                        tiles.append(*tile);
+                    },
+                    Option::None => {
+                        break;
+                    },
                 };
             };
             tiles.span()
