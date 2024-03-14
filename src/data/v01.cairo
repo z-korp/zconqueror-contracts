@@ -119,15 +119,15 @@ fn ids(faction: felt252) -> Option<Span<u8>> {
     } else if faction == FACTION_03 {
         return Option::Some(array![15, 16, 17, 18, 19].span());
     } else if faction == FACTION_04 {
-        return Option::Some(array![20, 21, 22, 23, 24, 25, 26].span());
+        return Option::Some(array![20, 22, 23, 24, 25, 26].span());
     } else if faction == FACTION_05 {
-        return Option::Some(array![27, 28, 29, 30, 31, 32].span());
+        return Option::Some(array![21, 27, 28, 29, 30, 31, 32].span());
     } else if faction == FACTION_06 {
         return Option::Some(array![33, 34, 35, 36].span());
     } else if faction == FACTION_07 {
         return Option::Some(array![37, 38, 39, 40, 41].span());
     } else if faction == FACTION_08 {
-        return Option::Some(array![42, 43, 44, 45, 46, 47, 48, 49,].span());
+        return Option::Some(array![42, 43, 44, 45, 46, 47, 48, 49, 50].span());
     } else {
         return Option::None;
     }
@@ -141,8 +141,12 @@ fn ids(faction: felt252) -> Option<Span<u8>> {
 #[inline(always)]
 fn score(faction: felt252) -> Option<u32> {
     match ids(faction) {
-        Option::Some(_ids) => { Option::Some((_ids.len() - 1) / 2) },
-        Option::None => { Option::None },
+        Option::Some(_ids) => {
+            Option::Some((_ids.len() / 2) + 1)
+        },
+        Option::None => {
+            Option::None
+        },
     }
 }
 
@@ -267,13 +271,29 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
 fn start_supply(player_count: u8) -> u32 {
     let felt: felt252 = player_count.into();
     match felt {
-        0 => { 0 },
-        1 => { 0 },
-        2 => { 40 },
-        3 => { 35 },
-        4 => { 30 },
-        5 => { 25 },
-        6 => { 20 },
-        _ => { 0 },
+        0 => {
+            0
+        },
+        1 => {
+            0
+        },
+        2 => {
+            40
+        },
+        3 => {
+            35
+        },
+        4 => {
+            30
+        },
+        5 => {
+            25
+        },
+        6 => {
+            20
+        },
+        _ => {
+            0
+        },
     }
 }
