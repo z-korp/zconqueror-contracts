@@ -6,7 +6,7 @@ on:
 
 env:
   DOJO_VERSION: v0.5.1
-  SCARB_VERSION: v2.5.3
+  SCARB_VERSION: v2.6.3
 
 jobs:
   check:

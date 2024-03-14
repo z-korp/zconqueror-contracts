@@ -141,12 +141,8 @@ fn ids(faction: felt252) -> Option<Span<u8>> {
 #[inline(always)]
 fn score(faction: felt252) -> Option<u32> {
     match ids(faction) {
-        Option::Some(_ids) => {
-            Option::Some((_ids.len() / 2) + 1)
-        },
-        Option::None => {
-            Option::None
-        },
+        Option::Some(_ids) => { Option::Some((_ids.len() / 2) + 1) },
+        Option::None => { Option::None },
     }
 }
 
@@ -271,29 +267,13 @@ fn neighbors(id: u8) -> Option<Span<u8>> {
 fn start_supply(player_count: u8) -> u32 {
     let felt: felt252 = player_count.into();
     match felt {
-        0 => {
-            0
-        },
-        1 => {
-            0
-        },
-        2 => {
-            40
-        },
-        3 => {
-            35
-        },
-        4 => {
-            30
-        },
-        5 => {
-            25
-        },
-        6 => {
-            20
-        },
-        _ => {
-            0
-        },
+        0 => { 0 },
+        1 => { 0 },
+        2 => { 40 },
+        3 => { 35 },
+        4 => { 30 },
+        5 => { 25 },
+        6 => { 20 },
+        _ => { 0 },
     }
 }

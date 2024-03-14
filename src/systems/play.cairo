@@ -80,7 +80,7 @@ mod play {
     use zconqueror::types::hand::HandTrait;
     use zconqueror::types::map::{Map, MapTrait};
     use zconqueror::types::set::SetTrait;
-    use zconqueror::config::{TILE_NUMBER};
+    use zconqueror::config;
     use zconqueror::store::{Store, StoreTrait};
     use zconqueror::events::{Supply, Defend, Fortify, Battle};
     use zconqueror::constants;
@@ -225,9 +225,7 @@ mod play {
                         battle.tx_hash = get_tx_info().unbox().transaction_hash;
                         emit!(world, battle);
                     },
-                    Option::None => {
-                        break;
-                    },
+                    Option::None => { break; },
                 };
             };
         }
@@ -448,7 +446,7 @@ mod play {
             self: @ContractState, game: @Game, ref player: Player, ref players: Span<Player>,
         ) {
             // [Setup] Deck
-            let mut deck = DeckTrait::new(*game.seed, TILE_NUMBER.into());
+            let mut deck = DeckTrait::new(*game.seed, config::card_number().into());
             let nonce: u32 = (*game.nonce) % integer::BoundedU32::max();
             deck.nonce = nonce.try_into().unwrap();
             loop {
@@ -457,9 +455,7 @@ mod play {
                         let hand = HandTrait::load(player);
                         deck.remove(hand.cards.span());
                     },
-                    Option::None => {
-                        break;
-                    },
+                    Option::None => { break; },
                 };
             };
 
@@ -498,12 +494,8 @@ mod play {
             let mut tiles: Array<Tile> = array![];
             loop {
                 match player_tiles.pop_front() {
-                    Option::Some(tile) => {
-                        tiles.append(*tile);
-                    },
-                    Option::None => {
-                        break;
-                    },
+                    Option::Some(tile) => { tiles.append(*tile); },
+                    Option::None => { break; },
                 };
             };
             tiles.span()
