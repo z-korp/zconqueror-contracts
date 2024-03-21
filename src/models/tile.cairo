@@ -8,11 +8,11 @@ use core::hash::HashStateTrait;
 
 // External imports
 
-use alexandria_data_structures::array_ext::SpanTraitExt;
 use origami::random::dice::{Dice, DiceTrait};
 
 // Internal imports
 
+use zconqueror::helpers::extension::{SpanTraitExt, ArrayTraitExt};
 use zconqueror::constants::DICE_FACES_NUMBER;
 use zconqueror::config;
 use zconqueror::events::Battle;
@@ -514,11 +514,11 @@ fn _owned_dedup(ref array: Span<u8>, tiles: Span<Tile>, drops: Span<u8>, owner: 
 mod tests {
     // External imports
 
-    use alexandria_data_structures::array_ext::SpanTraitExt;
     use origami::random::dice::{Dice, DiceTrait};
 
     // Internal imports
 
+    use zconqueror::helpers::extension::{SpanTraitExt, ArrayTraitExt};
     use zconqueror::constants::DICE_FACES_NUMBER;
     use zconqueror::config;
     use zconqueror::models::player::Player;
