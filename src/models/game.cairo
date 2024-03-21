@@ -1,8 +1,8 @@
-use core::zeroable::Zeroable;
+use core::Zeroable;
 // Core imports
 
-use hash::HashStateTrait;
-use poseidon::PoseidonTrait;
+use core::hash::HashStateTrait;
+use core::poseidon::PoseidonTrait;
 
 // Internal imports
 
@@ -296,7 +296,7 @@ impl GameAssert of AssertTrait {
     }
 }
 
-impl ZeroableGame of Zeroable<Game> {
+impl ZeroableGame of core::Zeroable<Game> {
     #[inline(always)]
     fn zero() -> Game {
         Game {
@@ -327,7 +327,7 @@ impl ZeroableGame of Zeroable<Game> {
 mod tests {
     // Core imports
 
-    use debug::PrintTrait;
+    use core::debug::PrintTrait;
 
     // Local imports
 
@@ -370,7 +370,7 @@ mod tests {
     #[available_gas(100_000)]
     #[should_panic(expected: ('Game: does not exist',))]
     fn test_game_join_revert_does_not_exist() {
-        let mut game: Game = Zeroable::zero();
+        let mut game: Game = core::Zeroable::zero();
         game.join();
     }
 

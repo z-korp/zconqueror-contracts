@@ -2,11 +2,11 @@
 
 // Core imports
 
-use dict::{Felt252Dict, Felt252DictTrait};
-use hash::HashStateTrait;
-use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
-use poseidon::PoseidonTrait;
-use traits::{Into, Drop};
+use core::dict::{Felt252Dict, Felt252DictTrait};
+use core::hash::HashStateTrait;
+use core::nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
+use core::poseidon::PoseidonTrait;
+use core::traits::{Into, Drop};
 
 // External imports
 
@@ -195,7 +195,7 @@ fn _unpack(mut packed: u128) -> Array<u8> {
 mod tests {
     // Core imports
 
-    use debug::PrintTrait;
+    use core::debug::PrintTrait;
 
     // Internal imports
 
@@ -232,7 +232,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_hand_load() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x0a09080605040302010b;
         let hand = HandTrait::load(@player);
         assert(hand.cards == _unpack(0x0a09080605040302010b), 'Hand: wrong load');
@@ -241,7 +241,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_hand_dump() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x0a09080605040302010b;
         let hand = HandTrait::load(@player);
         let cards = hand.dump();
@@ -274,7 +274,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_hand_check() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x01020303;
         let hand = HandTrait::load(@player);
         let set = SetTrait::new(1, 2, 3);
@@ -284,7 +284,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_hand_uncheck() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x10202;
         let hand = HandTrait::load(@player);
         let set = SetTrait::new(1, 2, 3);
@@ -295,7 +295,7 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Hand: invalid set',))]
     fn test_hand_deploy_invalid_set_not_owned() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x10202;
         let mut hand = HandTrait::load(@player);
         let set = SetTrait::new(1, 2, 3);
@@ -306,7 +306,7 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Hand: invalid set',))]
     fn test_hand_deploy_invalid_set_not_scored() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x1020203;
         let mut hand = HandTrait::load(@player);
         let set = SetTrait::new(1, 2, 2);
@@ -316,7 +316,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_hand_deploy() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x1020303;
         let mut hand = HandTrait::load(@player);
         let set = SetTrait::new(1, 2, 3);
@@ -327,10 +327,10 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_hand_merge() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x1020303;
         let mut main = HandTrait::load(@player);
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.cards = 0x4050603;
         let mut hand = HandTrait::load(@player);
         main.merge(@hand);

@@ -116,7 +116,7 @@ impl SetImpl of SetTrait {
 mod tests {
     // Core imports
 
-    use debug::PrintTrait;
+    use core::debug::PrintTrait;
 
     // Internal imports
 

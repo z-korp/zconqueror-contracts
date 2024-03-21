@@ -47,7 +47,11 @@ mod host {
 
     // Dojo imports
 
-    use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
+    use dojo::world;
+    use dojo::world::IWorldDispatcher;
+    use dojo::world::IWorldDispatcherTrait;
+    use dojo::world::IWorldProvider;
+    use dojo::world::IDojoResourceProvider;
 
     // External imports
 
@@ -81,8 +85,26 @@ mod host {
         const HOST_GAME_NOT_OVER: felt252 = 'Host: game not over';
     }
 
+    // Storage
+
     #[storage]
     struct Storage {}
+
+    // Implementations
+
+    #[abi(embed_v0)]
+    impl DojoResourceProviderImpl of IDojoResourceProvider<ContractState> {
+        fn dojo_resource(self: @ContractState) -> felt252 {
+            'host'
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl WorldProviderImpl of IWorldProvider<ContractState> {
+        fn world(self: @ContractState) -> IWorldDispatcher {
+            IWorldDispatcher { contract_address: constants::WORLD() }
+        }
+    }
 
     #[abi(embed_v0)]
     impl Host of IHost<ContractState> {
