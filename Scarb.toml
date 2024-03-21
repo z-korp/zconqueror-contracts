@@ -25,8 +25,8 @@ private_key = "0x1800000000300000180000000000030000000000003006001800006600"
 
 # Slot
 # rpc_url = "https://api.cartridge.gg/x/zconqueror/katana"
-# account_address = "0x603e42dd660816a9e5c2fc935633018db30df30764d452e6b4064700bc8e6e0"
-# private_key = "0x4fd0675d3ec5e0d035c213de935696cdd1284d79525cd3275d24626c32825e7"
+# account_address = "0x74760fa19c8db4ce5cdc4b9e195edaf74910a4164047133c9fe83f584befc35"
+# private_key = "0x253d0d1cbcd524a7425eaa6bd67919f6104c03e2675161d9edd6b48fee0011b"
 
 # Realms
 # rpc_url = "https://api.cartridge.gg/x/realms/katana/"
