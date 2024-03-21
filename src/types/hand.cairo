@@ -8,12 +8,9 @@ use core::nullable::{NullableTrait, nullable_from_box, match_nullable, FromNulla
 use core::poseidon::PoseidonTrait;
 use core::traits::{Into, Drop};
 
-// External imports
-
-use alexandria_data_structures::array_ext::{SpanTraitExt, ArrayTraitExt};
-
 // Internal imports
 
+use zconqueror::helpers::extension::{SpanTraitExt, ArrayTraitExt};
 use zconqueror::constants::HAND_MAX_SIZE;
 use zconqueror::config::{INFANTRY, CAVALRY, ARTILLERY, JOCKER, card as config_card};
 use zconqueror::models::player::Player;

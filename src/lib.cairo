@@ -8,6 +8,10 @@ mod data {
     mod v02;
 }
 
+mod helpers {
+    mod extension;
+}
+
 mod models {
     mod game;
     mod player;

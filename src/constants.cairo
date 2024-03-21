@@ -12,7 +12,9 @@ fn ZERO() -> starknet::ContractAddress {
 
 #[inline(always)]
 fn ERC20_ADDRESS() -> starknet::ContractAddress {
-    starknet::contract_address_const::<0x3>()
+    starknet::contract_address_const::<
+        0x5ec0436d2502b2d0a68787c5b80215691466bdfbe3cc2de0275bbbaa665bc90
+    >()
 }
 
 #[inline(always)]

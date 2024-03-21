@@ -331,7 +331,9 @@ mod tests {
 
     // Local imports
 
-    use super::{Game, GameTrait, Turn, TURN_COUNT, MAXIMUM_PLAYER_COUNT, MINIMUM_PLAYER_COUNT};
+    use super::{
+        Game, GameTrait, Turn, ZeroableGame, TURN_COUNT, MAXIMUM_PLAYER_COUNT, MINIMUM_PLAYER_COUNT
+    };
 
     // Constants
 

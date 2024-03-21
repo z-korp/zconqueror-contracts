@@ -63,7 +63,7 @@ mod setup {
 
     fn spawn_game() -> (IWorldDispatcher, Systems, Context) {
         // [Setup] World
-        let mut models = array::ArrayTrait::new();
+        let mut models = core::array::ArrayTrait::new();
         models.append(game::TEST_CLASS_HASH);
         models.append(player::TEST_CLASS_HASH);
         models.append(tile::TEST_CLASS_HASH);

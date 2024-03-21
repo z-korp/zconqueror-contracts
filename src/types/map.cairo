@@ -10,11 +10,11 @@ use core::hash::HashStateTrait;
 
 // External imports
 
-use alexandria_data_structures::array_ext::ArrayTraitExt;
 use origami::random::deck::{Deck, DeckTrait};
 
 // Internal imports
 
+use zconqueror::helpers::extension::{SpanTraitExt, ArrayTraitExt};
 use zconqueror::config;
 use zconqueror::models::tile::{Tile, TileTrait};
 use zconqueror::types::set::{Set, SetTrait};
