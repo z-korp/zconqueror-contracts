@@ -66,7 +66,11 @@ mod play {
 
     // Dojo imports
 
-    use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
+    use dojo::world;
+    use dojo::world::IWorldDispatcher;
+    use dojo::world::IWorldDispatcherTrait;
+    use dojo::world::IWorldProvider;
+    use dojo::world::IDojoResourceProvider;
 
     // External imports
 
@@ -114,9 +118,6 @@ mod play {
         const SURRENDER_INVALID_PLAYER: felt252 = 'Surrender: invalid player';
     }
 
-    #[storage]
-    struct Storage {}
-
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -124,6 +125,27 @@ mod play {
         Defend: Defend,
         Fortify: Fortify,
         Battle: Battle,
+    }
+
+    // Storage
+
+    #[storage]
+    struct Storage {}
+
+    // Implementations
+
+    #[abi(embed_v0)]
+    impl DojoResourceProviderImpl of IDojoResourceProvider<ContractState> {
+        fn dojo_resource(self: @ContractState) -> felt252 {
+            'play'
+        }
+    }
+
+    #[abi(embed_v0)]
+    impl WorldProviderImpl of IWorldProvider<ContractState> {
+        fn world(self: @ContractState) -> IWorldDispatcher {
+            IWorldDispatcher { contract_address: constants::WORLD() }
+        }
     }
 
     #[abi(embed_v0)]
@@ -447,7 +469,7 @@ mod play {
         ) {
             // [Setup] Deck
             let mut deck = DeckTrait::new(*game.seed, config::card_number().into());
-            let nonce: u32 = (*game.nonce) % integer::BoundedU32::max();
+            let nonce: u32 = (*game.nonce) % core::integer::BoundedU32::max();
             deck.nonce = nonce.try_into().unwrap();
             loop {
                 match players.pop_front() {

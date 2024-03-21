@@ -2,11 +2,11 @@
 
 // Core imports
 
-use dict::{Felt252Dict, Felt252DictTrait};
-use array::{ArrayTrait, SpanTrait};
-use nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
-use poseidon::PoseidonTrait;
-use hash::HashStateTrait;
+use core::dict::{Felt252Dict, Felt252DictTrait};
+use core::array::{ArrayTrait, SpanTrait};
+use core::nullable::{NullableTrait, nullable_from_box, match_nullable, FromNullableResult};
+use core::poseidon::PoseidonTrait;
+use core::hash::HashStateTrait;
 
 // External imports
 
@@ -282,7 +282,7 @@ fn _random(seed: felt252, nonce: u32) -> (u8, u32) {
 mod tests {
     // Core imports
 
-    use debug::PrintTrait;
+    use core::debug::PrintTrait;
 
     // Internal imports
 

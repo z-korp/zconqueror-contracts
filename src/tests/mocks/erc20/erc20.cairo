@@ -11,7 +11,8 @@
 /// for examples.
 #[starknet::component]
 mod ERC20Component {
-    use integer::BoundedInt;
+    use core::integer::BoundedInt;
+    use core::Zeroable;
     use zconqueror::tests::mocks::erc20::interface;
     use starknet::ContractAddress;
     use starknet::get_caller_address;
@@ -259,7 +260,7 @@ mod ERC20Component {
             assert(!recipient.is_zero(), Errors::MINT_TO_ZERO);
             self.ERC20_total_supply.write(self.ERC20_total_supply.read() + amount);
             self.ERC20_balances.write(recipient, self.ERC20_balances.read(recipient) + amount);
-            self.emit(Transfer { from: Zeroable::zero(), to: recipient, value: amount });
+            self.emit(Transfer { from: core::Zeroable::zero(), to: recipient, value: amount });
         }
 
         /// Destroys `amount` of tokens from `account`.
@@ -274,7 +275,7 @@ mod ERC20Component {
             assert(!account.is_zero(), Errors::BURN_FROM_ZERO);
             self.ERC20_total_supply.write(self.ERC20_total_supply.read() - amount);
             self.ERC20_balances.write(account, self.ERC20_balances.read(account) - amount);
-            self.emit(Transfer { from: account, to: Zeroable::zero(), value: amount });
+            self.emit(Transfer { from: account, to: core::Zeroable::zero(), value: amount });
         }
 
         /// Updates `owner`s allowance for `spender` based on spent `amount`.

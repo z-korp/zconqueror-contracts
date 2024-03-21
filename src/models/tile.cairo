@@ -2,9 +2,9 @@
 
 // Core imports
 
-use array::{ArrayTrait, SpanTrait};
-use poseidon::PoseidonTrait;
-use hash::HashStateTrait;
+use core::array::{ArrayTrait, SpanTrait};
+use core::poseidon::PoseidonTrait;
+use core::hash::HashStateTrait;
 
 // External imports
 
@@ -546,7 +546,7 @@ mod tests {
     #[test]
     #[available_gas(1_000_000)]
     fn test_tile_supply() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.supply = 5;
         let mut tile = TileTrait::new(GAME_ID, 2, 4, PLAYER_1);
         assert(tile.army == 4, 'Tile: wrong tile army');
@@ -559,7 +559,7 @@ mod tests {
     #[should_panic(expected: ('Tile: invalid id',))]
     fn test_tile_supply_invalid_id() {
         let invalid_id = config::TILE_NUMBER.try_into().unwrap() + 1;
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.supply = 4;
         let mut tile = TileTrait::new(GAME_ID, invalid_id, 4, PLAYER_1);
         tile.supply(ref player, 2);
@@ -569,7 +569,7 @@ mod tests {
     #[available_gas(1_000_000)]
     #[should_panic(expected: ('Tile: invalid supply',))]
     fn test_tile_supply_invalid_supply() {
-        let mut player: Player = Zeroable::zero();
+        let mut player: Player = core::Zeroable::zero();
         player.supply = 1;
         let mut tile = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         tile.supply(ref player, 2);

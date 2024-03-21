@@ -71,7 +71,7 @@ impl PlayerAssert of AssertTrait {
     }
 }
 
-impl ZeroablePlayer of Zeroable<Player> {
+impl ZeroablePlayer of core::Zeroable<Player> {
     #[inline(always)]
     fn zero() -> Player {
         Player {

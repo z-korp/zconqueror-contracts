@@ -1,7 +1,7 @@
 mod setup {
     // Core imports
 
-    use debug::PrintTrait;
+    use core::debug::PrintTrait;
 
     // Starknet imports
 
