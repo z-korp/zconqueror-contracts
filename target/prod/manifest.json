@@ -1,7 +1,7 @@
 {
   "world": {
     "name": "dojo::world::world",
-    "address": "0x1e3b79a25df98dd5032e519c0637d0136f2e69f2cb1906d22dc336420a3ca16",
+    "address": "0x2a5166722226399e3b6123f6938c90c79003e39fac9fffca62019b1848a45ce",
     "class_hash": "0x5ad96ceea29160aa7305bb078d1ade41f73b487363ae12778dbea6393cc00b2",
     "abi": [
       {
@@ -968,8 +968,8 @@
   "contracts": [
     {
       "name": "zconqueror::systems::host::host",
-      "address": "0x769f303985531754b2072e8e4f65f23164cb795ed302157feb5b91a989908b1",
-      "class_hash": "0x5a2d1b89d6e0789a855c3701ac05ac1a8b0170e61ce2e81fbd2507936604a44",
+      "address": "0x45649bd710c1cf8aa9fad91dd089ed3e80e1b596f622b437d0d10c819eb527e",
+      "class_hash": "0x1cddb18eb0b65fe0d4dc8134e515b6ff831d495e66c1591cdc415c97ecf1bb7",
       "abi": [
         {
           "type": "impl",
@@ -1215,8 +1215,8 @@
     },
     {
       "name": "zconqueror::systems::play::play",
-      "address": "0x6e158c72f7b00239577dbefb40331b2387ca0e37ed2ad789e6fce37d8dbb877",
-      "class_hash": "0x27f744e53cbf990e590710e68c657cb4de6d43af6b0777e32ca1b8be9cf4767",
+      "address": "0x472114e9ee9fec0448f6f3d952980e2d6a04e44f273d13369162ec933deae8f",
+      "class_hash": "0x2cb21372de4b34015a8bec33cdc12c8f9c17d78334b868cdedccf4850146e1b",
       "abi": [
         {
           "type": "impl",
