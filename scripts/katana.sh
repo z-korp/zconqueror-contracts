@@ -10,7 +10,7 @@ export HOST_ADDRESS=$(cat ./target/dev/manifest.json | jq -r '.contracts[] | sel
 export PLAY_ADDRESS=$(cat ./target/dev/manifest.json | jq -r '.contracts[] | select(.name == "zconqueror::systems::play::play" ).address')
 
 echo "---------------------------------------------------------------------------"
-echo world : $WORLD_ADDRESS 
+echo world : $DOJO_WORLD_ADDRESS 
 echo " "
 echo host : $HOST_ADDRESS
 echo play : $PLAY_ADDRESS
@@ -19,7 +19,7 @@ echo "--------------------------------------------------------------------------
 # enable system -> model authorizations
 
 MODELS=("Game" "Player" "Tile")
-ACTIONS=($HOST_ADDRESS $MANAGE_ADDRESS $PLAY_ADDRESS)
+ACTIONS=($HOST_ADDRESS $PLAY_ADDRESS)
 
 command="sozo auth grant writer "
 for model in "${MODELS[@]}"; do
