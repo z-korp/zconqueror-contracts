@@ -230,7 +230,7 @@ mod play {
                     attacker_index: player.index,
                     defender_index: defender_player.index,
                     target_tile: defender_index,
-                    result: player.conqueror,
+                    result: status,
                 }
             );
 
