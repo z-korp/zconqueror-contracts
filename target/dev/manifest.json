@@ -969,7 +969,7 @@
     {
       "name": "zconqueror::systems::host::host",
       "address": "0x180fabadd0de73ba727024458511d6785f77a63ee073a7134e589cccaf0728a",
-      "class_hash": "0x5a2d1b89d6e0789a855c3701ac05ac1a8b0170e61ce2e81fbd2507936604a44",
+      "class_hash": "0x1cddb18eb0b65fe0d4dc8134e515b6ff831d495e66c1591cdc415c97ecf1bb7",
       "abi": [
         {
           "type": "impl",
@@ -1216,7 +1216,7 @@
     {
       "name": "zconqueror::systems::play::play",
       "address": "0x371a10816be8a758416d856b63eec02881ff0465140b36c36746f4860c75db5",
-      "class_hash": "0x27f744e53cbf990e590710e68c657cb4de6d43af6b0777e32ca1b8be9cf4767",
+      "class_hash": "0x43309cc5cfb2dcacb553c792eb89beaaca53b060fd35266e1e918a51be6299",
       "abi": [
         {
           "type": "impl",

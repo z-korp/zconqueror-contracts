@@ -2,7 +2,8 @@
 
 // Core imports
 
-use core::array::{ArrayTrait, SpanTrait};
+use core::array::{Array, ArrayTrait, SpanTrait};
+use core::dict::{Felt252Dict, Felt252DictTrait};
 use core::poseidon::PoseidonTrait;
 use core::hash::HashStateTrait;
 
@@ -100,7 +101,7 @@ trait TileTrait {
     /// * `to` - The tile to transfer the army to.
     /// * `army` - The army to transfer.
     /// * `tiles` - The graph of tiles.
-    fn transfer(ref self: Tile, ref to: Tile, army: u32, tiles: Span<Tile>);
+    fn transfer(ref self: Tile, ref to: Tile, army: u32, ref tiles: Array<Tile>);
 }
 
 /// Implementation of the `TileTrait` for the `Tile` struct.
@@ -211,7 +212,7 @@ impl TileImpl of TileTrait {
     }
 
     #[inline(always)]
-    fn transfer(ref self: Tile, ref to: Tile, army: u32, tiles: Span<Tile>) {
+    fn transfer(ref self: Tile, ref to: Tile, army: u32, ref tiles: Array<Tile>) {
         // [Check] Tile ids
         self.assert();
         to.assert();
@@ -221,8 +222,9 @@ impl TileImpl of TileTrait {
         // [Check] From tile army is greater than the transfered army
         assert(self.army > army, errors::INVALID_ARMY_TRANSFER);
         // [Check] Both tiles are connected by a owned path
-        let mut visiteds: Array<u8> = ArrayTrait::new();
-        let connection = _connected(self.id, to.id, @self.owner, tiles, ref visiteds);
+        let mut visiteds: Felt252Dict<bool> = Default::default();
+        let owned_tiles: Span<u8> = _owned_tiles(ref tiles, self.owner);
+        let connection = _connected(self.id, to.id, @self.owner, owned_tiles, ref visiteds);
         assert(connection, errors::INVALID_CONNECTION);
         // [Effect] Update armies
         self.army -= army;
@@ -447,37 +449,37 @@ fn _sort(values: Span<u8>) -> Span<u8> {
 /// # Returns
 /// * The connection status.
 fn _connected(
-    source: u8, target: u8, owner: @u32, tiles: Span<Tile>, ref visiteds: Array<u8>
+    source: u8, target: u8, owner: @u32, tiles: Span<u8>, ref visiteds: Felt252Dict<bool>
 ) -> bool {
+    // [Check] Source is not visited
+    if visiteds.get(source.into()) {
+        return false;
+    };
+
+    // [Check] Source is owned
+    if !tiles.contains(source) {
+        return false;
+    };
+
+    // [Check] Source is the target
     if source == target {
         return true;
     };
-    let mut neighbors = config::neighbors(source).expect(errors::INVALID_ID);
-    let mut unvisiteds = _owned_dedup(ref neighbors, tiles, visiteds.span(), owner);
-    visiteds.append(source);
-    _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds)
-}
 
-/// The connected sub function used for recursion.
-/// # Arguments
-/// * `target` - The tile id to find out.
-/// * `owner` - The owner id of the path.
-/// * `tiles` - The tiles including their respective owner.
-/// * `visiteds` - The visited tiles.
-/// * `unvisiteds` - The unvisited tiles.
-/// # Returns
-/// * The connection status.
-fn _connected_iter(
-    target: u8, owner: @u32, tiles: Span<Tile>, ref visiteds: Array<u8>, ref unvisiteds: Span<u8>
-) -> bool {
-    match unvisiteds.pop_front() {
-        Option::Some(neighbour) => {
-            if _connected(*neighbour, target, owner, tiles, ref visiteds) {
-                return true;
-            }
-            return _connected_iter(target, owner, tiles, ref visiteds, ref unvisiteds);
-        },
-        Option::None => { return false; },
+    // [Effect] Mark source as visited
+    visiteds.insert(source.into(), true);
+
+    // [Compute] Check neighbors
+    let mut neighbors = config::neighbors(source).expect(errors::INVALID_ID);
+    loop {
+        match neighbors.pop_front() {
+            Option::Some(neighbor) => {
+                if _connected(*neighbor, target, owner, tiles, ref visiteds) {
+                    break true;
+                }
+            },
+            Option::None => { break false; },
+        };
     }
 }
 
@@ -489,25 +491,17 @@ fn _connected_iter(
 /// * `owner` - The owner to match.
 /// # Returns
 /// * The deduped array.
-fn _owned_dedup(ref array: Span<u8>, tiles: Span<Tile>, drops: Span<u8>, owner: @u32) -> Span<u8> {
-    // [Check] Drops is not empty, otherwise return the input array
-    if drops.is_empty() {
-        return array;
-    };
-    let mut result: Array<u8> = array![];
+fn _owned_tiles(ref tiles: Array<Tile>, owner: u32) -> Span<u8> {
+    let mut owneds: Array<u8> = array![];
     loop {
-        match array.pop_front() {
-            Option::Some(value) => {
-                let element = *value;
-                let tile = tiles.at(element.into() - 1);
-                if !drops.contains(element) && tile.owner == owner {
-                    result.append(element);
-                };
-            },
+        match tiles.pop_front() {
+            Option::Some(tile) => { if tile.owner == owner {
+                owneds.append(tile.id);
+            }; },
             Option::None => { break; },
         };
     };
-    result.span()
+    owneds.span()
 }
 
 #[cfg(test)]
@@ -526,7 +520,7 @@ mod tests {
 
     // Local imports
 
-    use super::{Tile, TileTrait, _sort, _battle, _round, _duel, _connected, _owned_dedup};
+    use super::{Tile, TileTrait, _sort, _battle, _round, _duel, _connected, _owned_tiles};
 
     // Constants
 
@@ -589,7 +583,7 @@ mod tests {
             tiles.append(TileTrait::new(GAME_ID, tile_index, 0, PLAYER_1));
             tile_index += 1;
         };
-        from.transfer(ref to, 2, tiles.span());
+        from.transfer(ref to, 2, ref tiles);
         assert(from.army == 2, 'Tile: wrong from army');
         assert(to.army == 4, 'Tile: wrong to army');
     }
@@ -600,7 +594,8 @@ mod tests {
     fn test_tile_transfer_invalid_owner() {
         let mut from = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         let mut to = TileTrait::new(GAME_ID, 2, 2, PLAYER_2);
-        from.transfer(ref to, 2, array![].span());
+        let mut tiles: Array<Tile> = array![];
+        from.transfer(ref to, 2, ref tiles);
     }
 
     #[test]
@@ -610,7 +605,8 @@ mod tests {
         let invalid_id: u8 = config::TILE_NUMBER.try_into().unwrap() + 1;
         let mut from = TileTrait::new(GAME_ID, invalid_id, 4, PLAYER_1);
         let mut to = TileTrait::new(GAME_ID, 2, 2, PLAYER_1);
-        from.transfer(ref to, 2, array![].span());
+        let mut tiles: Array<Tile> = array![];
+        from.transfer(ref to, 2, ref tiles);
     }
 
     #[test]
@@ -620,7 +616,8 @@ mod tests {
         let invalid_id: u8 = config::TILE_NUMBER.try_into().unwrap() + 1;
         let mut from = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         let mut to = TileTrait::new(GAME_ID, invalid_id, 2, PLAYER_1);
-        from.transfer(ref to, 2, array![].span());
+        let mut tiles: Array<Tile> = array![];
+        from.transfer(ref to, 2, ref tiles);
     }
 
     #[test]
@@ -629,7 +626,8 @@ mod tests {
     fn test_tile_transfer_invalid_id() {
         let mut from = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         let mut to = TileTrait::new(GAME_ID, 1, 2, PLAYER_1);
-        from.transfer(ref to, 2, array![].span());
+        let mut tiles: Array<Tile> = array![];
+        from.transfer(ref to, 2, ref tiles);
     }
 
     #[test]
@@ -638,7 +636,8 @@ mod tests {
     fn test_tile_transfer_invalid_army_transfer() {
         let mut from = TileTrait::new(GAME_ID, 1, 4, PLAYER_1);
         let mut to = TileTrait::new(GAME_ID, 2, 2, PLAYER_1);
-        from.transfer(ref to, 5, array![].span());
+        let mut tiles: Array<Tile> = array![];
+        from.transfer(ref to, 5, ref tiles);
     }
 
     #[test]
@@ -672,7 +671,7 @@ mod tests {
             tiles.append(TileTrait::new(GAME_ID, tile_index, 0, PLAYER_2));
             tile_index += 1;
         };
-        from.transfer(ref to, 2, tiles.span());
+        from.transfer(ref to, 2, ref tiles);
     }
 
     #[test]
@@ -1135,10 +1134,8 @@ mod tests {
         tiles.append(TileTrait::new(GAME_ID, 2, 0, PLAYER_1));
         tiles.append(TileTrait::new(GAME_ID, 3, 0, PLAYER_1));
         tiles.append(TileTrait::new(GAME_ID, 4, 0, PLAYER_1));
-        let mut array = array![1, 2, 3].span();
-        let mut drops = array![2, 3].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![1].span(), 'Tile: wrong dedup');
+        let owned_tiles = _owned_tiles(ref tiles, PLAYER_1);
+        assert(owned_tiles == array![2, 3, 4].span(), 'Tile: wrong dedup');
     }
 
     #[test]
@@ -1148,10 +1145,8 @@ mod tests {
         tiles.append(TileTrait::new(GAME_ID, 1, 0, PLAYER_2));
         tiles.append(TileTrait::new(GAME_ID, 2, 0, PLAYER_1));
         tiles.append(TileTrait::new(GAME_ID, 3, 0, PLAYER_1));
-        let mut array = array![1, 2, 3].span();
-        let mut drops = array![2, 3].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![].span(), 'Tile: wrong dedup');
+        let owned_tiles = _owned_tiles(ref tiles, PLAYER_1);
+        assert(owned_tiles == array![2, 3].span(), 'Tile: wrong dedup');
     }
 
     #[test]
@@ -1161,20 +1156,16 @@ mod tests {
         tiles.append(TileTrait::new(GAME_ID, 1, 0, PLAYER_1));
         tiles.append(TileTrait::new(GAME_ID, 2, 0, PLAYER_1));
         tiles.append(TileTrait::new(GAME_ID, 3, 0, PLAYER_1));
-        let mut array = array![1, 2, 3].span();
-        let mut drops = array![4, 5, 6].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![1, 2, 3].span(), 'Tile: wrong dedup');
+        let owned_tiles = _owned_tiles(ref tiles, PLAYER_1);
+        assert(owned_tiles == array![1, 2, 3].span(), 'Tile: wrong dedup');
     }
 
     #[test]
     #[available_gas(500_000)]
     fn test_tile_dedup_array_empty() {
         let mut tiles: Array<Tile> = array![];
-        let mut array = array![].span();
-        let mut drops = array![3, 4, 5].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![].span(), 'Tile: wrong dedup');
+        let owned_tiles = _owned_tiles(ref tiles, PLAYER_1);
+        assert(owned_tiles == array![].span(), 'Tile: wrong dedup');
     }
 
     #[test]
@@ -1184,10 +1175,8 @@ mod tests {
         tiles.append(TileTrait::new(GAME_ID, 1, 0, PLAYER_1));
         tiles.append(TileTrait::new(GAME_ID, 2, 0, PLAYER_1));
         tiles.append(TileTrait::new(GAME_ID, 3, 0, PLAYER_1));
-        let mut array = array![1, 2, 3].span();
-        let mut drops = array![].span();
-        let deduped = _owned_dedup(ref array, tiles.span(), drops, @PLAYER_1);
-        assert(deduped == array![1, 2, 3].span(), 'Tile: wrong dedup');
+        let owned_tiles = _owned_tiles(ref tiles, PLAYER_1);
+        assert(owned_tiles == array![1, 2, 3].span(), 'Tile: wrong dedup');
     }
 
     #[test]
@@ -1203,8 +1192,9 @@ mod tests {
             tiles.append(TileTrait::new(GAME_ID, index, 0, PLAYER_1));
             index += 1;
         };
-        let mut visiteds = array![];
-        let connection = _connected(1, tile_count, @PLAYER_1, tiles.span(), ref visiteds);
+        let mut visiteds: Felt252Dict<bool> = Default::default();
+        let owned_tiles = _owned_tiles(ref tiles, PLAYER_1);
+        let connection = _connected(1, tile_count, @PLAYER_1, owned_tiles, ref visiteds);
         assert(connection, 'Tile: wrong connection status');
     }
 
@@ -1223,8 +1213,9 @@ mod tests {
             tiles.append(TileTrait::new(GAME_ID, index, 0, PLAYER_2));
             index += 1;
         };
-        let mut visiteds = array![];
-        let connection = _connected(1, tile_count, @PLAYER_1, tiles.span(), ref visiteds);
+        let mut visiteds: Felt252Dict<bool> = Default::default();
+        let owned_tiles = _owned_tiles(ref tiles, PLAYER_1);
+        let connection = _connected(1, tile_count, @PLAYER_1, owned_tiles, ref visiteds);
         assert(!connection, 'Tile: wrong connection status');
     }
 }

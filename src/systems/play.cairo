@@ -380,8 +380,8 @@ mod play {
             assert(from.owner == player.index.into(), errors::TRANSFER_INVALID_OWNER);
 
             // [Compute] Transfer
-            let tiles = store.tiles(game).span();
-            from.transfer(ref to, army, tiles);
+            let mut tiles = store.tiles(game);
+            from.transfer(ref to, army, ref tiles);
 
             // [Effect] Update tiles
             store.set_tile(from);
