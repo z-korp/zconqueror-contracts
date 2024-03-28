@@ -1,4 +1,12 @@
 #[derive(Drop, starknet::Event)]
+struct Emote {
+    #[key]
+    game_id: u32,
+    player_index: u32,
+    emote: felt252
+}
+
+#[derive(Drop, starknet::Event)]
 struct Supply {
     #[key]
     game_id: u32,

@@ -10,6 +10,13 @@ use dojo::world::IWorldDispatcher;
 
 #[starknet::interface]
 trait IPlay<TContractState> {
+    fn emote(
+        self: @TContractState, 
+        world: IWorldDispatcher, 
+        game_id: u32, 
+        player_index: u32,
+        emote: felt252
+        );
     fn attack(
         self: @TContractState,
         world: IWorldDispatcher,
@@ -86,7 +93,7 @@ mod play {
     use zconqueror::types::set::SetTrait;
     use zconqueror::config;
     use zconqueror::store::{Store, StoreTrait};
-    use zconqueror::events::{Supply, Defend, Fortify, Battle};
+    use zconqueror::events::{Supply, Defend, Fortify, Battle, Emote};
     use zconqueror::constants;
 
     // Local imports
@@ -125,6 +132,7 @@ mod play {
         Defend: Defend,
         Fortify: Fortify,
         Battle: Battle,
+        Emote: Emote,
     }
 
     // Storage
@@ -150,6 +158,41 @@ mod play {
 
     #[abi(embed_v0)]
     impl Play of IPlay<ContractState> {
+
+        fn emote(
+            self: @ContractState, 
+            world: IWorldDispatcher, 
+            game_id: u32,
+            player_index: u32, 
+            emote: felt252
+        ) {
+            // Initialisation du datastore
+            let mut store: Store = StoreTrait::new(world);
+
+            // Ici, vous pourriez ajouter des vérifications telles que :
+            // - S'assurer que le jeu est en cours
+            // - Vérifier que le joueur est bien celui qui envoie l'émoticône
+            // - Vérifier que l'ID de l'émoticône est valide, etc.
+
+            let game: Game = store.game(game_id);
+
+            // [Check] Caller is player
+            let caller = get_caller_address();
+            let player = store.player(game,player_index);
+            assert(player.address == caller.into(), errors::ATTACK_INVALID_PLAYER);
+
+            // Une fois les vérifications passées, vous pouvez émettre un événement avec les détails de l'émoticône envoyée
+            // [Event] Supply
+            emit!(
+                world,
+                Emote {
+                    game_id: game_id,
+                    player_index: player_index,
+                    emote: emote,
+                }
+            );
+        }
+
         fn attack(
             self: @ContractState,
             world: IWorldDispatcher,
