@@ -11,12 +11,8 @@ use dojo::world::IWorldDispatcher;
 #[starknet::interface]
 trait IPlay<TContractState> {
     fn emote(
-        self: @TContractState, 
-        world: IWorldDispatcher, 
-        game_id: u32, 
-        player_index: u32,
-        emote: felt252
-        );
+        self: @TContractState, world: IWorldDispatcher, game_id: u32, player_index: u32, emote: u32
+    );
     fn attack(
         self: @TContractState,
         world: IWorldDispatcher,
@@ -123,6 +119,7 @@ mod play {
         const BANISH_INVALID_PLAYER: felt252 = 'Banish: invalid player';
         const BANISH_INVALID_CONDITION: felt252 = 'Banish: invalid condition';
         const SURRENDER_INVALID_PLAYER: felt252 = 'Surrender: invalid player';
+        const EMOTE_INVALID_PLAYER: felt252 = 'Emote invalid player';
     }
 
     #[event]
@@ -158,13 +155,12 @@ mod play {
 
     #[abi(embed_v0)]
     impl Play of IPlay<ContractState> {
-
         fn emote(
-            self: @ContractState, 
-            world: IWorldDispatcher, 
+            self: @ContractState,
+            world: IWorldDispatcher,
             game_id: u32,
-            player_index: u32, 
-            emote: felt252
+            player_index: u32,
+            emote: u32
         ) {
             // Initialisation du datastore
             let mut store: Store = StoreTrait::new(world);
@@ -178,19 +174,12 @@ mod play {
 
             // [Check] Caller is player
             let caller = get_caller_address();
-            let player = store.player(game,player_index);
-            assert(player.address == caller.into(), errors::ATTACK_INVALID_PLAYER);
+            let player = store.player(game, player_index);
+            assert(player.address == caller.into(), errors::EMOTE_INVALID_PLAYER);
 
             // Une fois les vérifications passées, vous pouvez émettre un événement avec les détails de l'émoticône envoyée
-            // [Event] Supply
-            emit!(
-                world,
-                Emote {
-                    game_id: game_id,
-                    player_index: player_index,
-                    emote: emote,
-                }
-            );
+            // [Event] Emote
+            emit!(world, Emote { game_id: game_id, player_index: player_index, emote: emote, });
         }
 
         fn attack(
