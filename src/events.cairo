@@ -3,7 +3,7 @@ struct Emote {
     #[key]
     game_id: u32,
     player_index: u32,
-    emote: u32
+    emote_index: u8
 }
 
 #[derive(Drop, starknet::Event)]
