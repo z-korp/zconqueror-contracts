@@ -35,6 +35,7 @@ mod tests {
     mod setup;
     mod host;
     mod supply;
+    mod emote;
     mod attack;
     mod defend;
     mod transfer;
