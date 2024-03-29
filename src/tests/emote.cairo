@@ -34,6 +34,30 @@ const EMOTE_INDEX: u8 = 12;
 
 #[test]
 #[available_gas(1_000_000_000)]
+fn test_emote_valid_player() {
+    // [Setup]
+    let (world, systems, _) = setup::spawn_game();
+    let mut store = StoreTrait::new(world);
+
+    // [Create]
+    let game_id = systems.host.create(world, HOST_NAME, PRICE, PENALTY);
+    set_contract_address(PLAYER());
+    systems.host.join(world, game_id, PLAYER_NAME);
+    set_contract_address(HOST());
+    systems.host.start(world, game_id);
+
+    // [Emote]
+    let game: Game = store.game(game_id);
+    let current_player: Player = store.current_player(game);
+
+    let contract_address = starknet::contract_address_try_from_felt252(current_player.address);
+    set_contract_address(contract_address.unwrap());
+    // Execute the emote function
+    systems.play.emote(world, game_id, current_player.index, EMOTE_INDEX);
+}
+
+#[test]
+#[available_gas(1_000_000_000)]
 #[should_panic(expected: ('Emote: invalid player', 'ENTRYPOINT_FAILED',))]
 fn test_emote_revert_invalid_player() {
     // [Setup]
