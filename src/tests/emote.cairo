@@ -29,6 +29,7 @@ const PRICE: u256 = 1_000_000_000_000_000_000;
 const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
+const EMOTE_INDEX: u8 = 12;
 
 
 #[test]
@@ -51,9 +52,8 @@ fn test_emote_revert_invalid_player() {
     let current_player: Player = store.current_player(game);
     let player: Player = store.next_player(game);
 
-    let emote = 12;
     let contract_address = starknet::contract_address_try_from_felt252(player.address);
     set_contract_address(contract_address.unwrap());
     // Execute the emote function
-    systems.play.emote(world, game_id, current_player.index, emote);
+    systems.play.emote(world, game_id, current_player.index, EMOTE_INDEX);
 }
