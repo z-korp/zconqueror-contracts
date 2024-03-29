@@ -31,7 +31,6 @@ const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
 
 
-
 #[test]
 #[available_gas(1_000_000_000)]
 #[should_panic(expected: ('Emote: invalid player', 'ENTRYPOINT_FAILED',))]
@@ -57,5 +56,4 @@ fn test_emote_revert_invalid_player() {
     set_contract_address(contract_address.unwrap());
     // Execute the emote function
     systems.play.emote(world, game_id, current_player.index, emote);
-
 }
