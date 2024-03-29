@@ -11,12 +11,8 @@ use dojo::world::IWorldDispatcher;
 #[starknet::interface]
 trait IPlay<TContractState> {
     fn emote(
-        self: @TContractState, 
-        world: IWorldDispatcher, 
-        game_id: u32, 
-        player_index: u32,
-        emote: u32
-        );
+        self: @TContractState, world: IWorldDispatcher, game_id: u32, player_index: u32, emote: u32
+    );
     fn attack(
         self: @TContractState,
         world: IWorldDispatcher,
@@ -159,12 +155,11 @@ mod play {
 
     #[abi(embed_v0)]
     impl Play of IPlay<ContractState> {
-
         fn emote(
-            self: @ContractState, 
-            world: IWorldDispatcher, 
+            self: @ContractState,
+            world: IWorldDispatcher,
             game_id: u32,
-            player_index: u32, 
+            player_index: u32,
             emote: u32
         ) {
             // Initialisation du datastore
@@ -174,19 +169,12 @@ mod play {
 
             // [Check] Caller is player
             let caller = get_caller_address();
-            let player = store.player(game,player_index);
+            let player = store.player(game, player_index);
             assert(player.address == caller.into(), errors::EMOTE_INVALID_PLAYER);
 
             // Une fois les vérifications passées, vous pouvez émettre un événement avec les détails de l'émoticône envoyée
             // [Event] Emote
-            emit!(
-                world,
-                Emote {
-                    game_id: game_id,
-                    player_index: player_index,
-                    emote: emote,
-                }
-            );
+            emit!(world, Emote { game_id: game_id, player_index: player_index, emote: emote, });
         }
 
         fn attack(
