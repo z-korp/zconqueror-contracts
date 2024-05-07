@@ -22,7 +22,7 @@ trait IHost<TContractState> {
     fn delete(self: @TContractState, world: IWorldDispatcher, game_id: u32);
     fn kick(self: @TContractState, world: IWorldDispatcher, game_id: u32, index: u32);
     fn transfer(self: @TContractState, world: IWorldDispatcher, game_id: u32, index: u32);
-    fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32);
+    fn start(self: @TContractState, world: IWorldDispatcher, game_id: u32, round_count: u32);
     fn claim(self: @TContractState, world: IWorldDispatcher, game_id: u32);
 }
 
@@ -275,7 +275,7 @@ mod host {
             store.set_player(player);
         }
 
-        fn start(self: @ContractState, world: IWorldDispatcher, game_id: u32,) {
+        fn start(self: @ContractState, world: IWorldDispatcher, game_id: u32, round_count: u32) {
             // [Setup] Datastore
             let mut store: Store = StoreTrait::new(world);
 
@@ -296,7 +296,7 @@ mod host {
 
             // [Effect] Update Game
             let time = get_block_timestamp();
-            game.start(time, addresses);
+            game.start(time, round_count, addresses);
             store.set_game(game);
 
             // [Effect] Update Tiles

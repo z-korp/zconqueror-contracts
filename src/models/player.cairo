@@ -1,3 +1,7 @@
+// Core imports
+
+use core::zeroable::Zeroable;
+
 // Starknet imports
 
 use starknet::ContractAddress;
@@ -71,7 +75,7 @@ impl PlayerAssert of AssertTrait {
     }
 }
 
-impl ZeroablePlayer of core::Zeroable<Player> {
+impl ZeroablePlayer of Zeroable<Player> {
     #[inline(always)]
     fn zero() -> Player {
         Player {

@@ -29,6 +29,7 @@ const PRICE: u256 = 1_000_000_000_000_000_000;
 const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
+const ROUND_COUNT: u32 = 10;
 
 #[test]
 #[available_gas(1_000_000_000)]
@@ -42,7 +43,7 @@ fn test_transfer_valid() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = store.game(game_id);
@@ -111,7 +112,7 @@ fn test_transfer_revert_invalid_player() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = store.game(game_id);
@@ -156,7 +157,7 @@ fn test_transfer_revert_invalid_owner() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Compute] Tile army and player available supply
     let game: Game = store.game(game_id);

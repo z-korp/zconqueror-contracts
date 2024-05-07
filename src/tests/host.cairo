@@ -29,6 +29,7 @@ const ANYONE_NAME: felt252 = 'ANYONE';
 const PRICE: u256 = 1_000_000_000_000_000_000;
 const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
+const ROUND_COUNT: u32 = 10;
 
 #[test]
 #[available_gas(1_000_000_000)]
@@ -42,7 +43,7 @@ fn test_host_create_and_join() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Assert] Game
     let game: Game = store.game(game_id);
@@ -185,7 +186,7 @@ fn test_host_start_then_join_revert_started() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Join]
     set_contract_address(ANYONE());
@@ -204,7 +205,7 @@ fn test_host_start_then_leave_revert_started() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Join]
     set_contract_address(PLAYER());

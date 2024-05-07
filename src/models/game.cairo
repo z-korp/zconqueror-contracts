@@ -26,6 +26,7 @@ struct Game {
     price: u256,
     clock: u64,
     penalty: u64,
+    limit: u32,
 }
 
 #[derive(Drop, PartialEq)]
@@ -62,7 +63,18 @@ impl GameImpl of GameTrait {
         assert(host != 0, errors::GAME_INVALID_HOST);
 
         // [Return] Default game
-        Game { id, host, over: false, seed: 0, player_count: 0, nonce: 0, price, clock: 0, penalty }
+        Game {
+            id,
+            host,
+            over: false,
+            seed: 0,
+            player_count: 0,
+            nonce: 0,
+            price,
+            clock: 0,
+            penalty,
+            limit: 0
+        }
     }
 
     #[inline(always)]
@@ -160,7 +172,7 @@ impl GameImpl of GameTrait {
         self.host = host;
     }
 
-    fn start(ref self: Game, time: u64, mut players: Array<felt252>) {
+    fn start(ref self: Game, time: u64, round_count: u32, mut players: Array<felt252>) {
         // [Check] Game is valid
         self.assert_exists();
         self.assert_not_over();
@@ -178,6 +190,7 @@ impl GameImpl of GameTrait {
         };
         self.seed = state.finalize();
         self.clock = time;
+        self.limit = self.player_count.into() * round_count * TURN_COUNT;
     }
 
     #[inline(always)]
@@ -308,7 +321,8 @@ impl ZeroableGame of core::Zeroable<Game> {
             nonce: 0,
             price: 0,
             clock: 0,
-            penalty: 0
+            penalty: 0,
+            limit: 0,
         }
     }
 
@@ -345,6 +359,7 @@ mod tests {
     const HOST: felt252 = 'HOST';
     const PLAYER: felt252 = 'PLAYER';
     const TIME: u64 = 1337;
+    const ROUND_COUNT: u32 = 100;
 
     #[test]
     #[available_gas(100_000)]
@@ -491,7 +506,7 @@ mod tests {
             game.join();
         };
         let players = array![HOST, PLAYER];
-        game.start(TIME, players);
+        game.start(TIME, ROUND_COUNT, players);
         assert(game.seed != 0, 'Game: wrong seed');
     }
 
@@ -502,7 +517,7 @@ mod tests {
         let mut game = GameTrait::new(ID, HOST, PRICE, PENALTY);
         game.player_count = 0;
         let players = array![HOST, PLAYER];
-        game.start(TIME, players);
+        game.start(TIME, ROUND_COUNT, players);
     }
 
     #[test]
@@ -512,7 +527,7 @@ mod tests {
         let mut game = GameTrait::new(ID, HOST, PRICE, PENALTY);
         game.over = true;
         let players = array![HOST, PLAYER];
-        game.start(TIME, players);
+        game.start(TIME, ROUND_COUNT, players);
     }
 
     #[test]
@@ -522,7 +537,7 @@ mod tests {
         let mut game = GameTrait::new(ID, HOST, PRICE, PENALTY);
         game.seed = 1;
         let players = array![HOST, PLAYER];
-        game.start(TIME, players);
+        game.start(TIME, ROUND_COUNT, players);
     }
 
     #[test]

@@ -11,8 +11,9 @@ use dojo::world::{IWorldDispatcher, IWorldDispatcherTrait};
 // Components imports
 
 use zconqueror::models::game::{Game, GameTrait};
-use zconqueror::models::player::{Player, PlayerTrait};
+use zconqueror::models::player::{Player, PlayerTrait, ZeroablePlayer};
 use zconqueror::models::tile::Tile;
+use zconqueror::types::map::{Map, MapTrait};
 
 // Internal imports
 
@@ -106,6 +107,28 @@ impl StoreImpl of StoreTrait {
             };
         };
         rank - 1
+    }
+
+    fn get_last_unranked_player(ref self: Store, game: Game, ref map: Map) -> Option<Player> {
+        let mut index = game.player_count;
+        let mut score = 0;
+        let mut last: Player = ZeroablePlayer::zero();
+        loop {
+            if index == 0 {
+                break;
+            };
+            index -= 1;
+            let player = self.player(game, index.into());
+            let player_score = map.player_score(player.index);
+            if player.rank == 0 && (player_score < score || score == 0) {
+                last = player;
+            };
+        };
+        if last.is_zero() {
+            Option::None
+        } else {
+            Option::Some(last)
+        }
     }
 
     fn tile(ref self: Store, game: Game, id: u8) -> Tile {

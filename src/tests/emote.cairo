@@ -30,6 +30,7 @@ const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
 const EMOTE_INDEX: u8 = 12;
+const ROUND_COUNT: u32 = 10;
 
 
 #[test]
@@ -44,7 +45,7 @@ fn test_emote_valid_player() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Emote]
     let game: Game = store.game(game_id);
@@ -69,7 +70,7 @@ fn test_emote_revert_invalid_player() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Emote]
     let game: Game = store.game(game_id);

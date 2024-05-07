@@ -30,6 +30,7 @@ const PRICE: u256 = 1_000_000_000_000_000_000;
 const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
+const ROUND_COUNT: u32 = 10;
 
 #[test]
 #[available_gas(1_000_000_000)]
@@ -44,7 +45,7 @@ fn test_banish_2_players() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(PLAYER());
@@ -72,7 +73,7 @@ fn test_banish_3_players() {
     set_contract_address(ANYONE());
     systems.host.join(world, game_id, ANYONE_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(PLAYER());
@@ -120,7 +121,7 @@ fn test_banish_revert_invalid_condition() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(PLAYER());
@@ -143,7 +144,7 @@ fn test_banish_revert_game_is_over() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(PLAYER());

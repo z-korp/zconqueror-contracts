@@ -30,6 +30,7 @@ const PRICE: u256 = 1_000_000_000_000_000_000;
 const PENALTY: u64 = 60;
 const PLAYER_COUNT: u8 = 2;
 const PLAYER_INDEX: u32 = 0;
+const ROUND_COUNT: u32 = 10;
 
 #[test]
 #[available_gas(1_000_000_000)]
@@ -43,7 +44,7 @@ fn test_surrender_player_quits() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(PLAYER());
@@ -66,7 +67,7 @@ fn test_surrender_host_quits() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(HOST());
@@ -91,7 +92,7 @@ fn test_surrender_3_players_player_quits() {
     set_contract_address(ANYONE());
     systems.host.join(world, game_id, ANYONE_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(PLAYER());
@@ -116,7 +117,7 @@ fn test_surrender_3_players_host_quits() {
     set_contract_address(ANYONE());
     systems.host.join(world, game_id, ANYONE_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(HOST());
@@ -141,7 +142,7 @@ fn test_surrender_3_players_anyone_quits() {
     set_contract_address(ANYONE());
     systems.host.join(world, game_id, ANYONE_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(ANYONE());
@@ -181,7 +182,7 @@ fn test_banish_revert_game_is_over() {
     set_contract_address(PLAYER());
     systems.host.join(world, game_id, PLAYER_NAME);
     set_contract_address(HOST());
-    systems.host.start(world, game_id);
+    systems.host.start(world, game_id, ROUND_COUNT);
 
     // [Banish]
     set_contract_address(PLAYER());

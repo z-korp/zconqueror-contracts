@@ -278,7 +278,7 @@ mod play {
                         battle.attacker_troops = attacker_troops;
                         battle.defender_troops = defender_troops;
                         battle.tx_hash = get_tx_info().unbox().transaction_hash;
-                        emit!(world, battle);
+                        emit!(world, (Event::Battle(battle)));
                     },
                     Option::None => { break; },
                 };
@@ -565,9 +565,26 @@ mod play {
         ) {
             // [Compute] Update next player to not dead player
             let tiles = store.tiles(game).span();
-            let mut map = MapTrait::from_tiles(game.player_count.into(), tiles);
-            let rank = store.get_next_rank(game);
+            let mut map: Map = MapTrait::from_tiles(game.player_count.into(), tiles);
 
+            // [Check] Game reached the last round
+            if game.limit == game.nonce {
+                // [Effect] Rank every remaining players
+                loop {
+                    let last_unranked = store.get_last_unranked_player(game, ref map);
+                    match last_unranked {
+                        Option::Some(mut player) => {
+                            let rank = store.get_next_rank(game);
+                            player.rank(rank);
+                            store.set_player(player);
+                        },
+                        Option::None => { break; },
+                    };
+                };
+                return;
+            };
+
+            let rank = store.get_next_rank(game);
             loop {
                 let mut next_player = store.current_player(game);
                 // [Check] Next player is the current player or next rank is 1, means game is over
@@ -591,7 +608,7 @@ mod play {
                 let player_score = map.player_score(next_player.index);
                 if 0 == player_score.into() {
                     // [Effect] Update player
-                    next_player.rank(store.get_next_rank(game));
+                    next_player.rank(rank);
                     store.set_player(next_player);
                     // [Effect] Move to next player
                     game.pass();
