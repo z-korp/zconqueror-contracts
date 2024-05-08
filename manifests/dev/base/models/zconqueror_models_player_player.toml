@@ -1,0 +1,45 @@
+kind = "DojoModel"
+class_hash = "0x44fbe1e14dd0b4c87c5dfb042a6668e6fae3cf5f093a827f9a740a7af7f860c"
+original_class_hash = "0x44fbe1e14dd0b4c87c5dfb042a6668e6fae3cf5f093a827f9a740a7af7f860c"
+abi = "manifests/dev/abis/base/models/zconqueror_models_player_player.json"
+name = "zconqueror::models::player::player"
+
+[[members]]
+name = "game_id"
+type = "u32"
+key = true
+
+[[members]]
+name = "index"
+type = "u32"
+key = true
+
+[[members]]
+name = "address"
+type = "felt252"
+key = false
+
+[[members]]
+name = "name"
+type = "felt252"
+key = false
+
+[[members]]
+name = "supply"
+type = "u32"
+key = false
+
+[[members]]
+name = "cards"
+type = "u128"
+key = false
+
+[[members]]
+name = "conqueror"
+type = "bool"
+key = false
+
+[[members]]
+name = "rank"
+type = "u8"
+key = false

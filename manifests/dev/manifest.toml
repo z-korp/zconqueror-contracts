@@ -1,0 +1,191 @@
+[world]
+kind = "Contract"
+class_hash = "0x799bc4e9da10bfb3dd88e6f223c9cfbf7745435cd14f5d69675ea448e578cd"
+original_class_hash = "0x799bc4e9da10bfb3dd88e6f223c9cfbf7745435cd14f5d69675ea448e578cd"
+abi = "abis/deployments/dojo_world_world.json"
+address = "0x61106090d6cb10ae5a61fb80ed08599ec7ab330971db14d1a67e13e2330a845"
+transaction_hash = "0x2f5b42e0703c169cc8716e96c56c49c3f1fbed363ac22e118b1f5c9b7312814"
+block_number = 1814
+seed = "v9"
+name = "dojo::world::world"
+
+[base]
+kind = "Class"
+class_hash = "0x4861487b5a2c1fad2559e88ad1fa7e9a278ed5718adac7fdc89c7a716685d63"
+original_class_hash = "0x4861487b5a2c1fad2559e88ad1fa7e9a278ed5718adac7fdc89c7a716685d63"
+name = "dojo::base::base"
+
+[[contracts]]
+kind = "DojoContract"
+address = "0x5ccef3f076677d7acac3bad804717b27a7c7655613e3e83cbc60416d20f0f97"
+class_hash = "0x580a590b6aabb3657547cb2a20783d5d22c01a27d4de41552b043ed0c50ad70"
+original_class_hash = "0x580a590b6aabb3657547cb2a20783d5d22c01a27d4de41552b043ed0c50ad70"
+base_class_hash = "0x4861487b5a2c1fad2559e88ad1fa7e9a278ed5718adac7fdc89c7a716685d63"
+abi = "abis/deployments/contracts/zconqueror_systems_host_host.json"
+reads = []
+writes = []
+computed = []
+name = "zconqueror::systems::host::host"
+
+[[contracts]]
+kind = "DojoContract"
+address = "0x62de0c8539046f42f5b05db64fe25b687c96777a7ba2c8cb9504a7daadcfa21"
+class_hash = "0x6f5d7e42d0b4e3386f3ceb79a6a10f8272547f2eb3ea7d3e84ed9feb840c9b1"
+original_class_hash = "0x6f5d7e42d0b4e3386f3ceb79a6a10f8272547f2eb3ea7d3e84ed9feb840c9b1"
+base_class_hash = "0x4861487b5a2c1fad2559e88ad1fa7e9a278ed5718adac7fdc89c7a716685d63"
+abi = "abis/deployments/contracts/zconqueror_systems_play_play.json"
+reads = []
+writes = []
+computed = []
+name = "zconqueror::systems::play::play"
+
+[[models]]
+kind = "DojoModel"
+class_hash = "0xd53f957653143e1ddcd56ddf7cd5fc9d89e77cd2f8ad436891940c27f538db"
+original_class_hash = "0xd53f957653143e1ddcd56ddf7cd5fc9d89e77cd2f8ad436891940c27f538db"
+abi = "abis/deployments/models/zconqueror_models_game_game.json"
+name = "zconqueror::models::game::game"
+
+[[models.members]]
+name = "id"
+type = "u32"
+key = true
+
+[[models.members]]
+name = "host"
+type = "felt252"
+key = false
+
+[[models.members]]
+name = "over"
+type = "bool"
+key = false
+
+[[models.members]]
+name = "seed"
+type = "felt252"
+key = false
+
+[[models.members]]
+name = "player_count"
+type = "u8"
+key = false
+
+[[models.members]]
+name = "nonce"
+type = "u32"
+key = false
+
+[[models.members]]
+name = "price"
+type = "u256"
+key = false
+
+[[models.members]]
+name = "clock"
+type = "u64"
+key = false
+
+[[models.members]]
+name = "penalty"
+type = "u64"
+key = false
+
+[[models.members]]
+name = "limit"
+type = "u32"
+key = false
+
+[[models]]
+kind = "DojoModel"
+class_hash = "0x44fbe1e14dd0b4c87c5dfb042a6668e6fae3cf5f093a827f9a740a7af7f860c"
+original_class_hash = "0x44fbe1e14dd0b4c87c5dfb042a6668e6fae3cf5f093a827f9a740a7af7f860c"
+abi = "abis/deployments/models/zconqueror_models_player_player.json"
+name = "zconqueror::models::player::player"
+
+[[models.members]]
+name = "game_id"
+type = "u32"
+key = true
+
+[[models.members]]
+name = "index"
+type = "u32"
+key = true
+
+[[models.members]]
+name = "address"
+type = "felt252"
+key = false
+
+[[models.members]]
+name = "name"
+type = "felt252"
+key = false
+
+[[models.members]]
+name = "supply"
+type = "u32"
+key = false
+
+[[models.members]]
+name = "cards"
+type = "u128"
+key = false
+
+[[models.members]]
+name = "conqueror"
+type = "bool"
+key = false
+
+[[models.members]]
+name = "rank"
+type = "u8"
+key = false
+
+[[models]]
+kind = "DojoModel"
+class_hash = "0x529f1f4fd1c6a6f1191e4bf5a955eed5ef5bcce81c5917faaac352daa3c32cd"
+original_class_hash = "0x529f1f4fd1c6a6f1191e4bf5a955eed5ef5bcce81c5917faaac352daa3c32cd"
+abi = "abis/deployments/models/zconqueror_models_tile_tile.json"
+name = "zconqueror::models::tile::tile"
+
+[[models.members]]
+name = "game_id"
+type = "u32"
+key = true
+
+[[models.members]]
+name = "id"
+type = "u8"
+key = true
+
+[[models.members]]
+name = "army"
+type = "u32"
+key = false
+
+[[models.members]]
+name = "owner"
+type = "u32"
+key = false
+
+[[models.members]]
+name = "dispatched"
+type = "u32"
+key = false
+
+[[models.members]]
+name = "to"
+type = "u8"
+key = false
+
+[[models.members]]
+name = "from"
+type = "u8"
+key = false
+
+[[models.members]]
+name = "order"
+type = "felt252"
+key = false

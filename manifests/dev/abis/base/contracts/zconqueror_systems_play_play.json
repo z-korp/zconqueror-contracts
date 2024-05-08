@@ -1,0 +1,487 @@
+[
+  {
+    "type": "impl",
+    "name": "DojoResourceProviderImpl",
+    "interface_name": "dojo::world::IDojoResourceProvider"
+  },
+  {
+    "type": "interface",
+    "name": "dojo::world::IDojoResourceProvider",
+    "items": [
+      {
+        "type": "function",
+        "name": "dojo_resource",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::felt252"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "WorldProviderImpl",
+    "interface_name": "dojo::world::IWorldProvider"
+  },
+  {
+    "type": "struct",
+    "name": "dojo::world::IWorldDispatcher",
+    "members": [
+      {
+        "name": "contract_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "dojo::world::IWorldProvider",
+    "items": [
+      {
+        "type": "function",
+        "name": "world",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "dojo::world::IWorldDispatcher"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "impl",
+    "name": "Play",
+    "interface_name": "zconqueror::systems::play::IPlay"
+  },
+  {
+    "type": "interface",
+    "name": "zconqueror::systems::play::IPlay",
+    "items": [
+      {
+        "type": "function",
+        "name": "emote",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "player_index",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "emote_index",
+            "type": "core::integer::u8"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "attack",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "attacker_index",
+            "type": "core::integer::u8"
+          },
+          {
+            "name": "defender_index",
+            "type": "core::integer::u8"
+          },
+          {
+            "name": "dispatched",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "defend",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "attacker_index",
+            "type": "core::integer::u8"
+          },
+          {
+            "name": "defender_index",
+            "type": "core::integer::u8"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "discard",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "card_one",
+            "type": "core::integer::u8"
+          },
+          {
+            "name": "card_two",
+            "type": "core::integer::u8"
+          },
+          {
+            "name": "card_three",
+            "type": "core::integer::u8"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "finish",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "supply",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "tile_index",
+            "type": "core::integer::u8"
+          },
+          {
+            "name": "supply",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "transfer",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          },
+          {
+            "name": "from_index",
+            "type": "core::integer::u8"
+          },
+          {
+            "name": "to_index",
+            "type": "core::integer::u8"
+          },
+          {
+            "name": "army",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "surrender",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "banish",
+        "inputs": [
+          {
+            "name": "world",
+            "type": "dojo::world::IWorldDispatcher"
+          },
+          {
+            "name": "game_id",
+            "type": "core::integer::u32"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "zconqueror::events::Supply",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "game_id",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "player_index",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "troops",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "region",
+        "type": "core::integer::u8",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "enum",
+    "name": "core::bool",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "zconqueror::events::Defend",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "game_id",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "attacker_index",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "defender_index",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "target_tile",
+        "type": "core::integer::u8",
+        "kind": "data"
+      },
+      {
+        "name": "result",
+        "type": "core::bool",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "zconqueror::events::Fortify",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "game_id",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "player_index",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "from_tile",
+        "type": "core::integer::u8",
+        "kind": "data"
+      },
+      {
+        "name": "to_tile",
+        "type": "core::integer::u8",
+        "kind": "data"
+      },
+      {
+        "name": "troops",
+        "type": "core::integer::u32",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "zconqueror::events::Battle",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "game_id",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "tx_hash",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "battle_id",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "duel_id",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "attacker_index",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "defender_index",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "attacker_troops",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "defender_troops",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "attacker_value",
+        "type": "core::integer::u8",
+        "kind": "data"
+      },
+      {
+        "name": "defender_value",
+        "type": "core::integer::u8",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "zconqueror::events::Emote",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "game_id",
+        "type": "core::integer::u32",
+        "kind": "key"
+      },
+      {
+        "name": "player_index",
+        "type": "core::integer::u32",
+        "kind": "data"
+      },
+      {
+        "name": "emote_index",
+        "type": "core::integer::u8",
+        "kind": "data"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "zconqueror::systems::play::play::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "Supply",
+        "type": "zconqueror::events::Supply",
+        "kind": "nested"
+      },
+      {
+        "name": "Defend",
+        "type": "zconqueror::events::Defend",
+        "kind": "nested"
+      },
+      {
+        "name": "Fortify",
+        "type": "zconqueror::events::Fortify",
+        "kind": "nested"
+      },
+      {
+        "name": "Battle",
+        "type": "zconqueror::events::Battle",
+        "kind": "nested"
+      },
+      {
+        "name": "Emote",
+        "type": "zconqueror::events::Emote",
+        "kind": "nested"
+      }
+    ]
+  }
+]

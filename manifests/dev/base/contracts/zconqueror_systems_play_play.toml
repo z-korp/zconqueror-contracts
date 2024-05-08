@@ -1,0 +1,9 @@
+kind = "DojoContract"
+class_hash = "0x6f5d7e42d0b4e3386f3ceb79a6a10f8272547f2eb3ea7d3e84ed9feb840c9b1"
+original_class_hash = "0x6f5d7e42d0b4e3386f3ceb79a6a10f8272547f2eb3ea7d3e84ed9feb840c9b1"
+base_class_hash = "0x0"
+abi = "manifests/dev/abis/base/contracts/zconqueror_systems_play_play.json"
+reads = []
+writes = []
+computed = []
+name = "zconqueror::systems::play::play"

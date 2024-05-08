@@ -1,0 +1,45 @@
+kind = "DojoModel"
+class_hash = "0x529f1f4fd1c6a6f1191e4bf5a955eed5ef5bcce81c5917faaac352daa3c32cd"
+original_class_hash = "0x529f1f4fd1c6a6f1191e4bf5a955eed5ef5bcce81c5917faaac352daa3c32cd"
+abi = "manifests/dev/abis/base/models/zconqueror_models_tile_tile.json"
+name = "zconqueror::models::tile::tile"
+
+[[members]]
+name = "game_id"
+type = "u32"
+key = true
+
+[[members]]
+name = "id"
+type = "u8"
+key = true
+
+[[members]]
+name = "army"
+type = "u32"
+key = false
+
+[[members]]
+name = "owner"
+type = "u32"
+key = false
+
+[[members]]
+name = "dispatched"
+type = "u32"
+key = false
+
+[[members]]
+name = "to"
+type = "u8"
+key = false
+
+[[members]]
+name = "from"
+type = "u8"
+key = false
+
+[[members]]
+name = "order"
+type = "felt252"
+key = false

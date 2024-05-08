@@ -1,0 +1,55 @@
+kind = "DojoModel"
+class_hash = "0xd53f957653143e1ddcd56ddf7cd5fc9d89e77cd2f8ad436891940c27f538db"
+original_class_hash = "0xd53f957653143e1ddcd56ddf7cd5fc9d89e77cd2f8ad436891940c27f538db"
+abi = "manifests/dev/abis/base/models/zconqueror_models_game_game.json"
+name = "zconqueror::models::game::game"
+
+[[members]]
+name = "id"
+type = "u32"
+key = true
+
+[[members]]
+name = "host"
+type = "felt252"
+key = false
+
+[[members]]
+name = "over"
+type = "bool"
+key = false
+
+[[members]]
+name = "seed"
+type = "felt252"
+key = false
+
+[[members]]
+name = "player_count"
+type = "u8"
+key = false
+
+[[members]]
+name = "nonce"
+type = "u32"
+key = false
+
+[[members]]
+name = "price"
+type = "u256"
+key = false
+
+[[members]]
+name = "clock"
+type = "u64"
+key = false
+
+[[members]]
+name = "penalty"
+type = "u64"
+key = false
+
+[[members]]
+name = "limit"
+type = "u32"
+key = false
