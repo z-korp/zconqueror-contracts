@@ -8,8 +8,8 @@ edition = "2023_10"
 sierra-replace-ids = true
 
 [dependencies]
-origami = { git = "https://github.com/dojoengine/origami", tag = "v0.6.0-alpha.3" }
-dojo = { git = "https://github.com/dojoengine/dojo", tag = "v0.6.0-alpha.3" }
+origami = { git = "https://github.com/dojoengine/origami", tag = "v0.6.0" }
+dojo = { git = "https://github.com/dojoengine/dojo", tag = "v0.6.0" }
 
 [[target.dojo]]
 

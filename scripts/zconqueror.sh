@@ -4,10 +4,10 @@ pushd $(dirname "$0")/..
 
 export STARKNET_RPC_URL="https://api.cartridge.gg/x/zconqueror/katana";
 
-export DOJO_WORLD_ADDRESS=$(cat ./target/prod/manifest.json | jq -r '.world.address')
+export DOJO_WORLD_ADDRESS=$(cat ./manifests/prod/manifest.json | jq -r '.world.address')
 
-export HOST_ADDRESS=$(cat ./target/prod/manifest.json | jq -r '.contracts[] | select(.name == "zconqueror::systems::host::host" ).address')
-export PLAY_ADDRESS=$(cat ./target/prod/manifest.json | jq -r '.contracts[] | select(.name == "zconqueror::systems::play::play" ).address')
+export HOST_ADDRESS=$(cat ./manifests/prod/manifest.json | jq -r '.contracts[] | select(.name == "zconqueror::systems::host::host" ).address')
+export PLAY_ADDRESS=$(cat ./manifests/prod/manifest.json | jq -r '.contracts[] | select(.name == "zconqueror::systems::play::play" ).address')
 
 echo "---------------------------------------------------------------------------"
 echo world : $DOJO_WORLD_ADDRESS 

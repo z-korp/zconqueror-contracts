@@ -177,10 +177,10 @@ mod play {
             assert(player.address == caller.into(), errors::EMOTE_INVALID_PLAYER);
 
             // [Event] Emote
-            emit!(
-                world,
-                Emote { game_id: game_id, player_index: player_index, emote_index: emote_index, }
-            );
+            let _event = Emote {
+                game_id: game_id, player_index: player_index, emote_index: emote_index,
+            };
+            emit!(world, (Event::Emote(_event)));
         }
 
         fn attack(
@@ -256,16 +256,14 @@ mod play {
             store.set_player(player);
 
             // [Event] Defend
-            emit!(
-                world,
-                Defend {
-                    game_id: game_id,
-                    attacker_index: player.index,
-                    defender_index: defender_player.index,
-                    target_tile: defender_index,
-                    result: status,
-                }
-            );
+            let _event = Defend {
+                game_id: game_id,
+                attacker_index: player.index,
+                defender_index: defender_player.index,
+                target_tile: defender_index,
+                result: status,
+            };
+            emit!(world, (Event::Defend(_event)));
 
             // [Event] Battles
             loop {
@@ -376,15 +374,10 @@ mod play {
             store.set_player(player);
 
             // [Event] Supply
-            emit!(
-                world,
-                Supply {
-                    game_id: game_id,
-                    player_index: player.index,
-                    troops: supply,
-                    region: tile_index,
-                }
-            );
+            let _event = Supply {
+                game_id: game_id, player_index: player.index, troops: supply, region: tile_index,
+            };
+            emit!(world, (Event::Supply(_event)));
         }
 
         fn transfer(
@@ -421,16 +414,14 @@ mod play {
             store.set_tile(to);
 
             // [Event] Fortify
-            emit!(
-                world,
-                Fortify {
-                    game_id: game_id,
-                    player_index: player.index,
-                    from_tile: from_index,
-                    to_tile: to_index,
-                    troops: army,
-                }
-            );
+            let _event = Fortify {
+                game_id: game_id,
+                player_index: player.index,
+                from_tile: from_index,
+                to_tile: to_index,
+                troops: army,
+            };
+            emit!(world, (Event::Fortify(_event)));
         }
 
         fn surrender(self: @ContractState, world: IWorldDispatcher, game_id: u32) {
