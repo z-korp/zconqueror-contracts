@@ -1,4 +1,5 @@
 target/CACHEDIR.TAG
-target/dev/*
-!target/dev/manifest.json
+target/*
+manifests/*/abis
+manifests/*/base
 *.log

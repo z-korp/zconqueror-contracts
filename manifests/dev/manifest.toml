@@ -1,13 +1,17 @@
 [world]
-kind = "Contract"
+kind = "WorldContract"
 class_hash = "0x799bc4e9da10bfb3dd88e6f223c9cfbf7745435cd14f5d69675ea448e578cd"
 original_class_hash = "0x799bc4e9da10bfb3dd88e6f223c9cfbf7745435cd14f5d69675ea448e578cd"
 abi = "abis/deployments/dojo_world_world.json"
-address = "0x6224ed2efcca24390d36641961412fd47dfd4ab06df8d39c103423c648a3454"
-transaction_hash = "0x3c7c098cb4f7aa27abed42d2fc174edcfc9da522bcf4d9da6dbb54db96af092"
-block_number = 1886
-seed = "v11"
+address = "0x1336f9f011acd76da000a09fc4290497359c377ac778b96d3342703cd6b652d"
+transaction_hash = "0x2e02b3c7d0f110521e2084035a944e1f25770349f13cc19166b60591755e13e"
+block_number = 32
+seed = "zconqueror"
 name = "dojo::world::world"
+
+[world.metadata]
+profile_name = "dev"
+rpc_url = "http://localhost:5050/"
 
 [base]
 kind = "Class"
@@ -17,7 +21,7 @@ name = "dojo::base::base"
 
 [[contracts]]
 kind = "DojoContract"
-address = "0x4c0dedd57f5b73a05a96ec125fe96d1838a24e5ceb79e796db5c41bb2e6da9c"
+address = "0x649d00e14bddf690f083329777e6708d4ec702e5e39a70efc443f4400a88a46"
 class_hash = "0x580a590b6aabb3657547cb2a20783d5d22c01a27d4de41552b043ed0c50ad70"
 original_class_hash = "0x580a590b6aabb3657547cb2a20783d5d22c01a27d4de41552b043ed0c50ad70"
 base_class_hash = "0x679177a2cb757694ac4f326d01052ff0963eac0bc2a17116a2b87badcdf6f76"
@@ -29,7 +33,7 @@ name = "zconqueror::systems::host::host"
 
 [[contracts]]
 kind = "DojoContract"
-address = "0x329d1744a1d76ad7adb9a2419eb5013ed071e5137017fac21f1160599e890fb"
+address = "0x3ecf8fa32758e56e5a4c675b84feddd12d5b44a84116b65689c45f7dcd65dd4"
 class_hash = "0x249b903f99ec16e9267a6890453ab2e11e262c114952c77156a24243557f240"
 original_class_hash = "0x249b903f99ec16e9267a6890453ab2e11e262c114952c77156a24243557f240"
 base_class_hash = "0x679177a2cb757694ac4f326d01052ff0963eac0bc2a17116a2b87badcdf6f76"
